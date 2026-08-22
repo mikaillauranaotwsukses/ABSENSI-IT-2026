@@ -24,7 +24,11 @@ export default function AdminLoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError(error.message || 'Email atau password salah. Silakan coba lagi.');
+      if (error.message?.includes('Failed to fetch') || error.message?.includes('fetch')) {
+        setError('Gagal terhubung ke Supabase (Failed to fetch). Pastikan NEXT_PUBLIC_SUPABASE_URL & NEXT_PUBLIC_SUPABASE_ANON_KEY sudah dimasukkan di Vercel Settings > Environment Variables, lalu klik REDEPLOY.');
+      } else {
+        setError(error.message || 'Email atau password salah. Silakan coba lagi.');
+      }
       setLoading(false);
     } else {
       router.push('/portal-it-admin');
