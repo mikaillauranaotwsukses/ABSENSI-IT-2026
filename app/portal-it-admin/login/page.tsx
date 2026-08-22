@@ -24,7 +24,7 @@ export default function AdminLoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError('Email atau password salah. Silakan coba lagi.');
+      setError(error.message || 'Email atau password salah. Silakan coba lagi.');
       setLoading(false);
     } else {
       router.push('/portal-it-admin');

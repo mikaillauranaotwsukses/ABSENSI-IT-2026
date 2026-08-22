@@ -10,10 +10,13 @@ interface Props {
 }
 
 type Tab = 'semua' | 'hadir' | 'belum';
+type SortOrder = 'asc' | 'desc';
 
 export default function AbsensiReportClient({ event, allAnggota, absensiList }: Props) {
-  const [tab,    setTab]    = useState<Tab>('semua');
-  const [search, setSearch] = useState('');
+  const [tab,       setTab]       = useState<Tab>('semua');
+  const [search,    setSearch]    = useState('');
+  const [sortKey,   setSortKey]   = useState<string>('nrp');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   const formFields: FormField[] = (event.form_schema ?? []).filter(
     (f) => f.type !== 'info'   // Info blocks have no data in responses
@@ -30,17 +33,31 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
   const merged = useMemo(() =>
     allAnggota.map((a) => ({
       ...a,
-      hadir:    !!absensiMap[a.nrp],
-      absensi:  absensiMap[a.nrp] ?? null,
+      hadir:   !!absensiMap[a.nrp],
+      absensi: absensiMap[a.nrp] ?? null,
     })),
     [allAnggota, absensiMap]
   );
 
-  // Filter by tab then by search
-  const filtered = useMemo(() => {
+  // Handle column header click
+  const handleSort = (key: string) => {
+    if (sortKey === key) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder('asc');
+    }
+  };
+
+  // Filter by tab then by search then sort
+  const processedList = useMemo(() => {
     let list = merged;
+
+    // 1. Tab Filter
     if (tab === 'hadir')  list = list.filter((a) =>  a.hadir);
     if (tab === 'belum')  list = list.filter((a) => !a.hadir);
+
+    // 2. Search Filter
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -50,8 +67,47 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
           a.program_studi.toLowerCase().includes(q)
       );
     }
-    return list;
-  }, [merged, tab, search]);
+
+    // 3. Sorting
+    const sorted = [...list].sort((a, b) => {
+      let valA: string | number | boolean = '';
+      let valB: string | number | boolean = '';
+
+      if (sortKey === 'nrp') {
+        valA = a.nrp;
+        valB = b.nrp;
+      } else if (sortKey === 'nama') {
+        valA = a.nama;
+        valB = b.nama;
+      } else if (sortKey === 'program_studi') {
+        valA = a.program_studi;
+        valB = b.program_studi;
+      } else if (sortKey === 'status') {
+        valA = a.hadir ? 1 : 0;
+        valB = b.hadir ? 1 : 0;
+      } else if (sortKey === 'waktu') {
+        valA = a.absensi ? new Date(a.absensi.created_at).getTime() : 0;
+        valB = b.absensi ? new Date(b.absensi.created_at).getTime() : 0;
+      } else {
+        // Dynamic form field response
+        valA = String(a.absensi?.data_respons?.[sortKey] ?? '');
+        valB = String(b.absensi?.data_respons?.[sortKey] ?? '');
+      }
+
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return sortOrder === 'asc' ? valA - valB : valB - valA;
+      }
+
+      const strA = String(valA).toLowerCase();
+      const strB = String(valB).toLowerCase();
+
+      if (strA < strB) return sortOrder === 'asc' ? -1 : 1;
+      if (strA > strB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [merged, tab, search, sortKey, sortOrder]);
 
   const hadirCount = merged.filter((a) => a.hadir).length;
   const belumCount = merged.filter((a) => !a.hadir).length;
@@ -63,7 +119,7 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
       ...formFields.map((f) => f.label),
       'Waktu Absen',
     ];
-    const rows = merged.map((a, idx) => [
+    const rows = processedList.map((a, idx) => [
       idx + 1,
       a.nrp,
       a.nama,
@@ -84,6 +140,17 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
     a.download = `absensi_${event.nama_event.replace(/\s+/g, '_')}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const renderSortIcon = (key: string) => {
+    if (sortKey !== key) {
+      return <span className="text-slate-600 ml-1 font-normal opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
+    }
+    return (
+      <span className="text-indigo-400 ml-1 font-bold">
+        {sortOrder === 'asc' ? '▲' : '▼'}
+      </span>
+    );
   };
 
   return (
@@ -111,8 +178,8 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
           ))}
         </div>
 
-        {/* Search + export */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Search + Sort Selector + Export */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -125,9 +192,36 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
               className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-slate-500 text-sm transition-all"
             />
           </div>
+
+          {/* Quick Sort Dropdown for mobile/accessibility */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 whitespace-nowrap hidden md:inline">Urutkan:</span>
+            <select
+              value={sortKey}
+              onChange={(e) => handleSort(e.target.value)}
+              className="bg-slate-800/80 border border-slate-600/50 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
+            >
+              <option value="nrp">NRP</option>
+              <option value="nama">Nama</option>
+              <option value="program_studi">Program Studi</option>
+              <option value="status">Status Kehadiran</option>
+              <option value="waktu">Waktu Absen</option>
+              {formFields.map((f) => (
+                <option key={f.label} value={f.label}>{f.label}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              title={`Urutan: ${sortOrder === 'asc' ? 'Naik (A-Z)' : 'Turun (Z-A)'}`}
+              className="px-2.5 py-2 rounded-xl bg-slate-800/80 border border-slate-600/50 text-indigo-300 text-xs hover:bg-slate-700 transition-colors"
+            >
+              {sortOrder === 'asc' ? '▲ (A-Z)' : '▼ (Z-A)'}
+            </button>
+          </div>
+
           <button
             onClick={exportCsv}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400 text-sm font-medium transition-all whitespace-nowrap"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 text-green-400 text-sm font-medium transition-all whitespace-nowrap"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -143,20 +237,49 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
           <thead>
             <tr className="border-b border-slate-700/50 bg-slate-800/30">
               <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider w-10">No</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">NRP</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Nama</th>
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell">Program Studi</th>
-              <th className="text-center px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+              <th
+                onClick={() => handleSort('nrp')}
+                className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-white group select-none"
+              >
+                NRP {renderSortIcon('nrp')}
+              </th>
+              <th
+                onClick={() => handleSort('nama')}
+                className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-white group select-none"
+              >
+                Nama {renderSortIcon('nama')}
+              </th>
+              <th
+                onClick={() => handleSort('program_studi')}
+                className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden md:table-cell cursor-pointer hover:text-white group select-none"
+              >
+                Program Studi {renderSortIcon('program_studi')}
+              </th>
+              <th
+                onClick={() => handleSort('status')}
+                className="text-center px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-white group select-none"
+              >
+                Status {renderSortIcon('status')}
+              </th>
               {formFields.map((f, i) => (
-                <th key={i} className="text-left px-4 py-3.5 text-xs font-semibold text-indigo-400 uppercase tracking-wider whitespace-nowrap">
-                  {f.label}
+                <th
+                  key={i}
+                  onClick={() => handleSort(f.label)}
+                  className="text-left px-4 py-3.5 text-xs font-semibold text-indigo-400 uppercase tracking-wider whitespace-nowrap cursor-pointer hover:text-indigo-300 group select-none"
+                >
+                  {f.label} {renderSortIcon(f.label)}
                 </th>
               ))}
-              <th className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:table-cell whitespace-nowrap">Waktu</th>
+              <th
+                onClick={() => handleSort('waktu')}
+                className="text-left px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:table-cell whitespace-nowrap cursor-pointer hover:text-white group select-none"
+              >
+                Waktu {renderSortIcon('waktu')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-700/30">
-            {filtered.map((row, idx) => (
+            {processedList.map((row, idx) => (
               <tr
                 key={row.nrp}
                 className={`transition-colors ${
@@ -191,7 +314,6 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
                   return (
                     <td key={i} className="px-4 py-3 text-slate-300 max-w-[200px]">
                       {val ? (
-                        // If it looks like a URL (file upload), show a link
                         typeof val === 'string' && val.startsWith('http') ? (
                           <a
                             href={val}
@@ -227,7 +349,7 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
           </tbody>
         </table>
 
-        {filtered.length === 0 && (
+        {processedList.length === 0 && (
           <div className="text-center py-12">
             <div className="text-4xl mb-3">
               {tab === 'belum' ? '✅' : '📭'}
@@ -242,7 +364,7 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
         )}
 
         <div className="px-5 py-3 border-t border-slate-700/30 text-xs text-slate-500 flex items-center justify-between">
-          <span>Menampilkan {filtered.length} dari {merged.length} anggota</span>
+          <span>Menampilkan {processedList.length} dari {merged.length} anggota</span>
           {tab !== 'semua' && (
             <button onClick={() => setTab('semua')} className="text-indigo-400 hover:text-indigo-300 transition-colors">
               Lihat semua

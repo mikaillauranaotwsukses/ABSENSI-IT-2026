@@ -7,14 +7,22 @@ export type FormFieldType =
   | 'file'   // Member uploads a file/image/video
   | 'info';  // Admin-inserted info block (text + optional image)
 
+export interface FormFieldCondition {
+  field_label: string;                  // Target field to watch (e.g. "Status Kehadiran")
+  operator: 'equals' | 'not_equals';    // Operator
+  value: string;                        // Target value (e.g. "Hadir" or "Tidak Hadir")
+}
+
 export interface FormField {
   label: string;
   type: FormFieldType;
-  options?: string[];    // for select / radio
+  options?: string[];                   // for select / radio
   required?: boolean;
   // For 'info' blocks only:
-  content?: string;      // descriptive text / explanation
-  image_url?: string;    // optional image from Supabase Storage
+  content?: string;                     // descriptive text / explanation
+  image_url?: string;                   // optional image from Supabase Storage or Base64
+  // Branching / Conditional logic:
+  condition?: FormFieldCondition;       // optional condition for visibility
 }
 
 export interface Anggota {
@@ -42,7 +50,6 @@ export interface Absensi {
   event?: Event;
 }
 
-// Merged type used in full-roster report
 export interface AnggotaWithStatus extends Anggota {
   hadir: boolean;
   absensi?: Absensi;
