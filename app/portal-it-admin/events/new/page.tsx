@@ -7,6 +7,8 @@ import { FormField } from '@/lib/types';
 import FormBuilder from '@/components/FormBuilder';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default function NewEventPage() {
   const supabase = createClient();
   const router = useRouter();
