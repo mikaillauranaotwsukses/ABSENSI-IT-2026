@@ -2,18 +2,16 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default function AdminLoginPage() {
   const supabase = createClient();
-  const router = useRouter();
 
-  const [email, setEmail] = useState('');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
   const [showPass, setShowPass] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -22,21 +20,32 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      // 8-second timeout guard to prevent infinite loading state
+      const timeoutPromise = new Promise<{ data: any; error: any }>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Koneksi timeout. Silakan periksa jaringan/koneksi Supabase Anda.')),
+          8000
+        )
+      );
 
-      if (error) {
-        if (error.message?.includes('Failed to fetch') || error.message?.includes('fetch')) {
-          setError('Gagal terhubung ke Supabase (Failed to fetch). Silakan periksa koneksi internet Anda atau coba lagi.');
+      const res = await Promise.race([
+        supabase.auth.signInWithPassword({ email: email.trim(), password }),
+        timeoutPromise,
+      ]);
+
+      if (res.error) {
+        if (res.error.message?.includes('Failed to fetch') || res.error.message?.includes('fetch')) {
+          setError('Gagal terhubung ke Supabase. Periksa koneksi internet Anda atau coba lagi.');
         } else {
-          setError(error.message || 'Email atau password salah. Silakan coba lagi.');
+          setError(res.error.message || 'Email atau password salah. Silakan coba lagi.');
         }
         setLoading(false);
       } else {
-        // Full page redirect ensures Supabase cookies are sent in HTTP headers to server component
+        // Successful login: perform full browser redirect to send session cookies to server
         window.location.href = '/portal-it-admin';
       }
     } catch (err: any) {
-      setError(err?.message || 'Terjadi kesalahan. Silakan coba lagi.');
+      setError(err?.message || 'Terjadi kesalahan saat login. Silakan coba lagi.');
       setLoading(false);
     }
   };
