@@ -1,27 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vomaluikqvcryocefoke.supabase.co';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvbWFsdWlrcXZjcnlvY2Vmb2tlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNjA1OTYsImV4cCI6MjEwMjkzNjU5Nn0.vXXUKihuEx3f3o5oe-h-6NuCyKISVcdVCg4G5etUCTo';
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  // If Supabase environment variables are missing on Vercel, redirect unauthenticated admin traffic safely
-  if (!url || !key) {
-    if (
-      request.nextUrl.pathname.startsWith('/portal-it-admin') &&
-      !request.nextUrl.pathname.startsWith('/portal-it-admin/login')
-    ) {
-      const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = '/portal-it-admin/login';
-      return NextResponse.redirect(redirectUrl);
-    }
-    return supabaseResponse;
-  }
-
   try {
-    const supabase = createServerClient(url, key, {
+    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
