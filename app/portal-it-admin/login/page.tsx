@@ -21,18 +21,23 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError('');
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      if (error.message?.includes('Failed to fetch') || error.message?.includes('fetch')) {
-        setError('Gagal terhubung ke Supabase (Failed to fetch). Pastikan NEXT_PUBLIC_SUPABASE_URL & NEXT_PUBLIC_SUPABASE_ANON_KEY sudah dimasukkan di Vercel Settings > Environment Variables, lalu klik REDEPLOY.');
+      if (error) {
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('fetch')) {
+          setError('Gagal terhubung ke Supabase (Failed to fetch). Silakan periksa koneksi internet Anda atau coba lagi.');
+        } else {
+          setError(error.message || 'Email atau password salah. Silakan coba lagi.');
+        }
+        setLoading(false);
       } else {
-        setError(error.message || 'Email atau password salah. Silakan coba lagi.');
+        // Full page redirect ensures Supabase cookies are sent in HTTP headers to server component
+        window.location.href = '/portal-it-admin';
       }
+    } catch (err: any) {
+      setError(err?.message || 'Terjadi kesalahan. Silakan coba lagi.');
       setLoading(false);
-    } else {
-      router.push('/portal-it-admin');
-      router.refresh();
     }
   };
 
