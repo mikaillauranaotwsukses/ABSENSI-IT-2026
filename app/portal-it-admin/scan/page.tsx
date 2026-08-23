@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Event, Anggota } from '@/lib/types';
+import { Html5Qrcode } from 'html5-qrcode';
+import { Event } from '@/lib/types';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -10,10 +11,13 @@ export const dynamic = 'force-dynamic';
 export default function AdminScanQRPage() {
   const supabase = createClient();
 
-  const [events,        setEvents]        = useState<Event[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<string>('');
-  const [inputNrp,      setInputNrp]      = useState('');
-  const [loading,       setLoading]       = useState(false);
+  const [events,           setEvents]           = useState<Event[]>([]);
+  const [selectedEvent,    setSelectedEvent]    = useState<string>('');
+  const [inputNrp,         setInputNrp]         = useState('');
+  const [loading,          setLoading]          = useState(false);
+  const [isCameraActive,   setIsCameraActive]   = useState(false);
+  const [cameraError,      setCameraError]      = useState('');
+
   const [lastScanResult, setLastScanResult] = useState<{
     success: boolean;
     nama?: string;
@@ -21,6 +25,9 @@ export default function AdminScanQRPage() {
     prodi?: string;
     message?: string;
   } | null>(null);
+
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const isProcessingRef = useRef(false);
 
   // Load events
   useEffect(() => {
@@ -39,12 +46,23 @@ export default function AdminScanQRPage() {
     loadEvents();
   }, [supabase]);
 
-  // Process QR code data (string formatted as JSON or raw NRP)
-  const processQrScan = async (rawCode: string) => {
+  // Clean up camera scanner on unmount
+  useEffect(() => {
+    return () => {
+      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+        html5QrCodeRef.current.stop().catch((e) => console.warn(e));
+      }
+    };
+  }, []);
+
+  // Process Check-in via API Route
+  const handleCheckIn = async (rawCode: string) => {
     if (!selectedEvent) {
       alert('Pilih event terlebih dahulu.');
       return;
     }
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
 
     setLoading(true);
     setLastScanResult(null);
@@ -64,74 +82,76 @@ export default function AdminScanQRPage() {
     }
 
     try {
-      // 1. Verify Anggota exists
-      const { data: anggota, error: errAnggota } = await supabase
-        .from('anggota')
-        .select('*')
-        .eq('nrp', scannedNrp)
-        .maybeSingle();
+      const res = await fetch('/api/admin/scan-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: scannedEventId, nrp: scannedNrp }),
+      });
 
-      if (errAnggota || !anggota) {
-        setLastScanResult({
-          success: false,
-          message: `NRP "${scannedNrp}" tidak ditemukan dalam database anggota.`,
-        });
-        setLoading(false);
-        return;
-      }
+      const data = await res.json();
+      setLastScanResult(data);
 
-      // 2. Fetch existing absensi record
-      const { data: existing } = await supabase
-        .from('absensi')
-        .select('*')
-        .eq('event_id', scannedEventId)
-        .eq('nrp', scannedNrp)
-        .maybeSingle();
-
-      // 3. Mark as QR Scanned with automatic fallback
-      const payload: any = {
-        ...(existing ? { id: existing.id } : {}),
-        event_id:       scannedEventId,
-        nrp:            scannedNrp,
-        is_qr_scanned:  true,
-        qr_scanned_at:  new Date().toISOString(),
-        is_form_filled: existing?.is_form_filled ?? false,
-        data_respons:   existing?.data_respons ?? {},
-      };
-
-      let { error: errUpsert } = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
-
-      // Fallback if columns don't exist in Supabase DB yet
-      if (errUpsert && (errUpsert.message?.includes('is_qr_scanned') || errUpsert.message?.includes('schema cache') || errUpsert.code === 'PGRST204')) {
-        delete payload.is_qr_scanned;
-        delete payload.qr_scanned_at;
-        delete payload.is_form_filled;
-        const fallbackRes = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
-        errUpsert = fallbackRes.error;
-      }
-
-      if (errUpsert) {
-        setLastScanResult({
-          success: false,
-          message: 'Gagal update database: ' + errUpsert.message,
-        });
-      } else {
-        setLastScanResult({
-          success: true,
-          nama: (anggota as Anggota).nama,
-          nrp: (anggota as Anggota).nrp,
-          prodi: (anggota as Anggota).program_studi,
-          message: 'Berhasil Check-in via QR Code!',
-        });
+      if (data.success) {
         setInputNrp('');
+        // Play success audio beep / vibration feedback
+        if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+          navigator.vibrate(200);
+        }
       }
     } catch (err: any) {
       setLastScanResult({
         success: false,
-        message: err?.message || 'Terjadi kesalahan sistem.',
+        message: err?.message || 'Terjadi kesalahan koneksi server.',
       });
     } finally {
       setLoading(false);
+      // Wait 2.5s before allowing next scan
+      setTimeout(() => {
+        isProcessingRef.current = false;
+      }, 2500);
+    }
+  };
+
+  // Toggle Live Camera Scanner
+  const startCamera = async () => {
+    setCameraError('');
+    try {
+      if (!html5QrCodeRef.current) {
+        html5QrCodeRef.current = new Html5Qrcode('qr-reader-container');
+      }
+
+      setIsCameraActive(true);
+
+      await html5QrCodeRef.current.start(
+        { facingMode: 'environment' }, // Preferred back camera on phones
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        (decodedText) => {
+          handleCheckIn(decodedText);
+        },
+        (errorMessage) => {
+          // parse error, ignore continuously
+        }
+      );
+    } catch (err: any) {
+      console.error('Camera start error:', err);
+      setCameraError('Gagal membuka kamera: ' + (err?.message || 'Pastikan Anda memberikan izin kamera pada browser HP.'));
+      setIsCameraActive(false);
+    }
+  };
+
+  const stopCamera = async () => {
+    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+      try {
+        await html5QrCodeRef.current.stop();
+        setIsCameraActive(false);
+      } catch (err) {
+        console.error('Error stopping camera:', err);
+      }
+    } else {
+      setIsCameraActive(false);
     }
   };
 
@@ -158,7 +178,7 @@ export default function AdminScanQRPage() {
           </div>
           <h1 className="text-2xl font-bold text-white">Scanner QR Absensi Panitia</h1>
           <p className="text-slate-400 text-xs mt-1">
-            Pilih event lalu scan QR Code tiket anggota atau masukkan NRP secara manual untuk check-in.
+            Scan langsung menggunakan kamera HP/Laptop Anda atau masukkan NRP anggota.
           </p>
 
           {/* Event Selector */}
@@ -182,16 +202,53 @@ export default function AdminScanQRPage() {
           </div>
         </div>
 
-        {/* Input / Scanner Interface */}
-        <div className="glass-card rounded-2xl p-6 space-y-4 border border-slate-700/50">
-          <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-            <span>⚡</span> Input / Scan QR Code
+        {/* Live Camera Scanner Box */}
+        <div className="glass-card rounded-2xl p-6 space-y-4 border border-indigo-500/20 text-center">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+              <span>📹</span> Kamera Scanner Langsung
+            </h3>
+            <button
+              type="button"
+              onClick={isCameraActive ? stopCamera : startCamera}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                isCameraActive
+                  ? 'bg-red-600 hover:bg-red-500 text-white'
+                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white glow-indigo'
+              }`}
+            >
+              {isCameraActive ? '🛑 Matikan Kamera' : '📷 Aktifkan Kamera HP/Webcam'}
+            </button>
+          </div>
+
+          {/* Camera Scanner Viewport Container */}
+          <div className={`relative overflow-hidden rounded-2xl border ${isCameraActive ? 'border-indigo-500/50 bg-black' : 'border-slate-700/50 bg-slate-900/60 p-8'}`}>
+            <div id="qr-reader-container" className="w-full mx-auto" />
+            {!isCameraActive && (
+              <div className="py-6 text-slate-400 text-xs">
+                <div className="text-4xl mb-2">📷</div>
+                <p>Klik tombol <strong>"Aktifkan Kamera HP/Webcam"</strong> di atas untuk memindai QR secara langsung melalui kamera.</p>
+              </div>
+            )}
+          </div>
+
+          {cameraError && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs">
+              {cameraError}
+            </div>
+          )}
+        </div>
+
+        {/* Manual Input Fallback */}
+        <div className="glass-card rounded-2xl p-6 space-y-3 border border-slate-700/50">
+          <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <span>⌨️</span> Input NRP Manual / Barcode Scanner Fisik
           </h3>
 
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (inputNrp.trim()) processQrScan(inputNrp);
+              if (inputNrp.trim()) handleCheckIn(inputNrp);
             }}
             className="flex gap-2"
           >
@@ -199,21 +256,17 @@ export default function AdminScanQRPage() {
               type="text"
               value={inputNrp}
               onChange={(e) => setInputNrp(e.target.value)}
-              placeholder="Tempelkan hasil scan QR atau ketik NRP anggota..."
+              placeholder="Masukkan NRP anggota (contoh: C14230001)..."
               className="input-glow flex-1 bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm"
             />
             <button
               type="submit"
               disabled={loading || !inputNrp.trim()}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm transition-all glow-indigo disabled:opacity-50 shrink-0"
+              className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all disabled:opacity-50 shrink-0"
             >
               {loading ? 'Check-in...' : 'Check-in'}
             </button>
           </form>
-
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            💡 <strong>Petunjuk:</strong> Gunakan barcode/QR scanner fisik USB/Bluetooth atau salin hasil scan dari kamera HP.
-          </p>
         </div>
 
         {/* Scan Result Toast Banner */}
@@ -235,7 +288,7 @@ export default function AdminScanQRPage() {
               <div>
                 <p className="text-green-300 font-semibold text-base">{lastScanResult.nama}</p>
                 <p className="text-slate-300 text-xs font-mono">{lastScanResult.nrp} • {lastScanResult.prodi}</p>
-                <span className="inline-block mt-3 px-3 py-1 rounded-full bg-green-500/30 text-green-200 border border-green-400/40 text-xs font-bold">
+                <span className="inline-block mt-3 px-3.5 py-1 rounded-full bg-green-500/30 text-green-200 border border-green-400/40 text-xs font-bold">
                   ✓ Status: Sudah Scan QR
                 </span>
               </div>
