@@ -59,12 +59,12 @@ export default function AdminLoginPage() {
       <div className="relative z-10 w-full max-w-md scale-in">
         {/* Logo / Title */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-2xl glass p-2 flex items-center justify-center mx-auto mb-4 border border-indigo-500/30 shadow-2xl glow-indigo">
+          <div className="w-20 h-20 rounded-2xl bg-white p-2.5 flex items-center justify-center mx-auto mb-4 border border-white/40 shadow-2xl shadow-indigo-500/30 glow-indigo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/favicon.ico"
               alt="Logo Absensi IT 26"
-              className="w-full h-full object-contain drop-shadow-md"
+              className="w-full h-full object-contain"
             />
           </div>
           <h1 className="text-2xl font-bold text-white">Portal Admin</h1>
