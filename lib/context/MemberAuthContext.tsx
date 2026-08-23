@@ -98,23 +98,20 @@ export function MemberAuthProvider({ children }: { children: React.ReactNode }) 
     }
 
     try {
-      const { error } = await supabase
-        .from('anggota')
-        .update({
-          password_hash: newPass,
-          must_change_password: false,
-        })
-        .eq('nrp', member.nrp);
+      // Gunakan API route server-side agar bypass RLS Supabase
+      const res = await fetch('/api/member/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nrp: member.nrp, newPassword: newPass }),
+      });
 
-      // Jika DB update gagal, kembalikan error — JANGAN lanjutkan
-      if (error) {
-        console.error('Gagal menyimpan password ke database:', error);
-        return {
-          success: false,
-          error: `Gagal menyimpan password baru ke database: ${error.message}. Pastikan kolom password_hash dan must_change_password sudah ada di tabel anggota.`,
-        };
+      const data = await res.json();
+
+      if (!data.success) {
+        return { success: false, error: data.message || 'Gagal menyimpan password baru.' };
       }
 
+      // Simpan sesi baru ke localStorage setelah DB sukses
       const updatedMember: Anggota = {
         ...member,
         must_change_password: false,
