@@ -1,5 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+// Admin client dengan service role key — bypass RLS sepenuhnya
+function createAdminClient() {
+  return createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     const cleanNrp = String(rawNrp).trim();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // 1. Verify Anggota exists
     const { data: anggota, error: errAnggota } = await supabase
@@ -35,27 +45,19 @@ export async function POST(request: Request) {
       .eq('nrp', cleanNrp)
       .maybeSingle();
 
-    // 3. Mark as QR Scanned
-    const payload: any = {
-      ...(existing ? { id: existing.id } : {}),
-      event_id:       event_id,
-      nrp:            cleanNrp,
-      is_qr_scanned:  true,
-      qr_scanned_at:  new Date().toISOString(),
-      is_form_filled: existing?.is_form_filled ?? false,
-      data_respons:   existing?.data_respons ?? {},
-    };
-
-    let { error: errUpsert } = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
-
-    // Fallback if is_qr_scanned column doesn't exist in Supabase DB schema cache
-    if (errUpsert && (errUpsert.message?.includes('is_qr_scanned') || errUpsert.message?.includes('schema cache') || errUpsert.code === 'PGRST204')) {
-      delete payload.is_qr_scanned;
-      delete payload.qr_scanned_at;
-      delete payload.is_form_filled;
-      const fallbackRes = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
-      errUpsert = fallbackRes.error;
-    }
+    // 3. Upsert dengan service role key (tidak terkena RLS)
+    const { error: errUpsert } = await supabase.from('absensi').upsert(
+      {
+        ...(existing ? { id: existing.id } : {}),
+        event_id:       event_id,
+        nrp:            cleanNrp,
+        is_qr_scanned:  true,
+        qr_scanned_at:  new Date().toISOString(),
+        is_form_filled: existing?.is_form_filled ?? false,
+        data_respons:   existing?.data_respons ?? {},
+      },
+      { onConflict: 'event_id, nrp' }
+    );
 
     if (errUpsert) {
       return NextResponse.json({
