@@ -88,19 +88,27 @@ export default function AdminScanQRPage() {
         .eq('nrp', scannedNrp)
         .maybeSingle();
 
-      // 3. Mark as QR Scanned
-      const { error: errUpsert } = await supabase.from('absensi').upsert(
-        {
-          ...(existing ? { id: existing.id } : {}),
-          event_id:       scannedEventId,
-          nrp:            scannedNrp,
-          is_qr_scanned:  true,
-          qr_scanned_at:  new Date().toISOString(),
-          is_form_filled: existing?.is_form_filled ?? false,
-          data_respons:   existing?.data_respons ?? {},
-        },
-        { onConflict: 'event_id, nrp' }
-      );
+      // 3. Mark as QR Scanned with automatic fallback
+      const payload: any = {
+        ...(existing ? { id: existing.id } : {}),
+        event_id:       scannedEventId,
+        nrp:            scannedNrp,
+        is_qr_scanned:  true,
+        qr_scanned_at:  new Date().toISOString(),
+        is_form_filled: existing?.is_form_filled ?? false,
+        data_respons:   existing?.data_respons ?? {},
+      };
+
+      let { error: errUpsert } = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
+
+      // Fallback if columns don't exist in Supabase DB yet
+      if (errUpsert && (errUpsert.message?.includes('is_qr_scanned') || errUpsert.message?.includes('schema cache') || errUpsert.code === 'PGRST204')) {
+        delete payload.is_qr_scanned;
+        delete payload.qr_scanned_at;
+        delete payload.is_form_filled;
+        const fallbackRes = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
+        errUpsert = fallbackRes.error;
+      }
 
       if (errUpsert) {
         setLastScanResult({

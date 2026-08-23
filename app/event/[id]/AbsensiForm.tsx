@@ -135,17 +135,23 @@ export default function AbsensiForm({ event }: Props) {
       .filter((f) => f.type !== 'info' && isFieldVisible(f))
       .forEach((f) => { dataRespons[f.label] = responses[f.label] || ''; });
 
-    // Upsert record (insert or update on conflict)
-    const { error } = await supabase.from('absensi').upsert(
-      {
-        ...(existingAbsensi ? { id: existingAbsensi.id } : {}),
-        event_id:       event.id,
-        nrp:            member.nrp,
-        data_respons:   dataRespons,
-        is_form_filled: true,
-      },
-      { onConflict: 'event_id, nrp' }
-    );
+    // Upsert record with automatic fallback if column is missing in DB
+    const payload: any = {
+      ...(existingAbsensi ? { id: existingAbsensi.id } : {}),
+      event_id:       event.id,
+      nrp:            member.nrp,
+      data_respons:   dataRespons,
+      is_form_filled: true,
+    };
+
+    let { error } = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
+
+    // Fallback if 'is_form_filled' column is not yet in Supabase table
+    if (error && (error.message?.includes('is_form_filled') || error.message?.includes('schema cache') || error.code === 'PGRST204')) {
+      delete payload.is_form_filled;
+      const fallbackRes = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
+      error = fallbackRes.error;
+    }
 
     if (error) {
       setSubmitState('error');
