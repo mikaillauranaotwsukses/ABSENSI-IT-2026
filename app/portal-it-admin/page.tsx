@@ -35,8 +35,13 @@ export default async function AdminDashboard() {
         <nav className="glass border-b border-indigo-500/10 px-6 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600/40 flex items-center justify-center text-lg">
-                🎓
+              <div className="w-9 h-9 rounded-xl glass p-1 flex items-center justify-center border border-indigo-500/30">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/favicon.ico"
+                  alt="Logo Absensi IT 26"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <span className="font-bold text-white">Portal Admin</span>

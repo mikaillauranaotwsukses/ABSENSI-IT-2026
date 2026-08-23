@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   description:
     'Sistem absensi digital untuk anggota organisasi Mahasiswa Teknologi Informasi angkatan 2026.',
   keywords: ['absensi', 'IT', 'teknologi informasi', 'mahasiswa'],
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

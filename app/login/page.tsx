@@ -45,8 +45,13 @@ export default function MemberLoginPage() {
       <div className="relative z-10 w-full max-w-md scale-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-3xl mx-auto mb-4 glow-indigo">
-            🎓
+          <div className="w-20 h-20 rounded-2xl glass p-2 flex items-center justify-center mx-auto mb-4 border border-indigo-500/30 shadow-2xl glow-indigo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/favicon.ico"
+              alt="Logo Absensi IT 26"
+              className="w-full h-full object-contain drop-shadow-md"
+            />
           </div>
           <h1 className="text-2xl font-bold text-white">Login Anggota IT 26</h1>
           <p className="text-slate-400 text-sm mt-1">Masukkan NRP dan Password Anda untuk mengakses absensi</p>

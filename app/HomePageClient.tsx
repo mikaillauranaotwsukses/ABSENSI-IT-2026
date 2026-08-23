@@ -81,8 +81,17 @@ export default function HomePageClient({ events, error }: Props) {
         </div>
 
         {/* Header */}
-        <div className="text-center mb-12 slide-up">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-xs text-indigo-300 mb-4">
+        <div className="text-center mb-12 slide-up flex flex-col items-center">
+          <div className="w-20 h-20 rounded-2xl glass p-2 flex items-center justify-center mb-4 border border-indigo-500/30 shadow-2xl glow-indigo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/favicon.ico"
+              alt="Logo Absensi IT 26"
+              className="w-full h-full object-contain drop-shadow-md"
+            />
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-xs text-indigo-300 mb-3">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
