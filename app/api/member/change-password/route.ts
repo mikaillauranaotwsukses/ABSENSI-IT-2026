@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const { nrp, newPassword } = await request.json();
 
     if (!nrp || !newPassword) {
-      return NextResponse.json({ success: false, message: 'NRP dan password baru wajib diisi.' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'NRP dan password baru wajib diisi.', debug: { nrp, newPassword } }, { status: 400 });
     }
 
     if (newPassword.length < 4) {
@@ -30,38 +30,53 @@ export async function POST(request: Request) {
 
     const supabase = createAdminClient();
 
-    // Pastikan anggota ada terlebih dahulu
+    // Step 1: Cek anggota ada
     const { data: anggota, error: errAnggota } = await supabase
       .from('anggota')
-      .select('nrp, nama')
+      .select('nrp, nama, password_hash, must_change_password')
       .eq('nrp', nrp.trim())
       .maybeSingle();
 
-    if (errAnggota || !anggota) {
-      return NextResponse.json({ success: false, message: 'NRP tidak ditemukan.' });
+    if (errAnggota) {
+      return NextResponse.json({ success: false, message: 'Error cek anggota: ' + errAnggota.message, debug_step: 'select_anggota' });
     }
 
-    // Update password dengan service role key (bypass RLS)
-    const { error: errUpdate } = await supabase
+    if (!anggota) {
+      return NextResponse.json({ success: false, message: `NRP "${nrp}" tidak ditemukan.`, debug_step: 'not_found' });
+    }
+
+    // Step 2: Update password
+    const { error: errUpdate, data: updateData } = await supabase
       .from('anggota')
       .update({
         password_hash: newPassword,
         must_change_password: false,
       })
-      .eq('nrp', nrp.trim());
+      .eq('nrp', nrp.trim())
+      .select();
 
     if (errUpdate) {
       return NextResponse.json({
         success: false,
-        message: 'Gagal menyimpan password: ' + errUpdate.message,
+        message: 'Error update password: ' + errUpdate.message,
+        debug_step: 'update_failed',
+        debug_error_code: errUpdate.code,
+        debug_error_details: errUpdate.details,
+        debug_hint: errUpdate.hint,
       });
     }
 
-    return NextResponse.json({ success: true, message: 'Password berhasil diperbarui.' });
+    return NextResponse.json({
+      success: true,
+      message: 'Password berhasil diperbarui.',
+      debug_rows_updated: updateData?.length ?? 0,
+      debug_nrp: nrp,
+    });
   } catch (err: any) {
     return NextResponse.json({
       success: false,
       message: err?.message || 'Terjadi kesalahan server.',
+      debug_step: 'catch',
     }, { status: 500 });
   }
 }
