@@ -241,8 +241,8 @@ export default function AdminScanQRPage() {
 
   // ────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen animated-bg text-white p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <main className="min-h-screen animated-bg text-white p-3.5 sm:p-6 md:p-8 overflow-x-hidden max-w-full">
+      <div className="max-w-2xl w-full mx-auto space-y-5">
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -253,22 +253,22 @@ export default function AdminScanQRPage() {
         </div>
 
         {/* Title */}
-        <div className="glass rounded-2xl p-6 text-center border border-indigo-500/30 shadow-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-3xl mx-auto mb-3 glow-indigo">
+        <div className="glass rounded-2xl p-5 sm:p-6 text-center border border-indigo-500/30 shadow-2xl">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-3 glow-indigo">
             📷
           </div>
-          <h1 className="text-2xl font-bold text-white">Scanner QR Absensi Panitia</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Scanner QR Absensi Panitia</h1>
           <p className="text-slate-400 text-xs mt-1">
             Scan QR anggota • Konfirmasi kehadiran • Catat otomatis
           </p>
 
           {/* Event Selector */}
-          <div className="mt-5 text-left">
+          <div className="mt-4 text-left">
             <label className="block text-xs font-medium text-slate-300 mb-1.5">Pilih Event Aktif:</label>
             <select
               value={selectedEvent}
               onChange={(e) => setSelectedEvent(e.target.value)}
-              className="w-full bg-slate-800/90 border border-slate-600/50 rounded-xl px-4 py-3 text-white text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full bg-slate-800/90 border border-slate-600/50 rounded-xl px-3.5 py-2.5 sm:py-3 text-white text-sm focus:border-indigo-500 focus:outline-none"
             >
               {events.length === 0
                 ? <option value="">Tidak ada event aktif</option>
@@ -279,15 +279,15 @@ export default function AdminScanQRPage() {
         </div>
 
         {/* Kamera Scanner */}
-        <div className="glass-card rounded-2xl p-6 space-y-4 border border-indigo-500/20">
-          <div className="flex items-center justify-between">
+        <div className="glass-card rounded-2xl p-4 sm:p-6 space-y-4 border border-indigo-500/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
               <span>📹</span> Kamera Scanner Langsung
             </h3>
             <button
               type="button"
               onClick={isCameraActive ? stopCamera : startCamera}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 isCameraActive
                   ? 'bg-red-600 hover:bg-red-500 text-white'
                   : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white glow-indigo'
@@ -297,13 +297,13 @@ export default function AdminScanQRPage() {
             </button>
           </div>
 
-          <div className={`relative overflow-hidden rounded-2xl border ${
+          <div className={`relative overflow-hidden rounded-2xl border max-w-full ${
             isCameraActive ? 'border-indigo-500/50 bg-black' : 'border-slate-700/50 bg-slate-900/60'
           }`}>
-            <div id="qr-reader-container" className="w-full mx-auto" />
+            <div id="qr-reader-container" className="w-full max-w-full mx-auto" />
             {!isCameraActive && (
-              <div className="py-10 text-center text-slate-400 text-xs px-4">
-                <div className="text-4xl mb-2">📷</div>
+              <div className="py-8 sm:py-10 text-center text-slate-400 text-xs px-4">
+                <div className="text-3xl sm:text-4xl mb-2">📷</div>
                 <p>Klik <strong>"Aktifkan Kamera"</strong> untuk memindai QR anggota secara langsung.</p>
               </div>
             )}
@@ -324,25 +324,25 @@ export default function AdminScanQRPage() {
         </div>
 
         {/* Input Manual */}
-        <div className="glass-card rounded-2xl p-6 space-y-3 border border-slate-700/50">
+        <div className="glass-card rounded-2xl p-4 sm:p-6 space-y-3 border border-slate-700/50">
           <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
             <span>⌨️</span> Input NRP Manual / Barcode Scanner Fisik
           </h3>
           <form
             onSubmit={(e) => { e.preventDefault(); if (inputNrp.trim()) handleScannedCode(inputNrp); }}
-            className="flex gap-2"
+            className="flex flex-col sm:flex-row gap-2 w-full"
           >
             <input
               type="text"
               value={inputNrp}
               onChange={(e) => setInputNrp(e.target.value)}
               placeholder="Masukkan NRP anggota (contoh: C14230001)..."
-              className="input-glow flex-1 bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm"
+              className="input-glow flex-1 min-w-0 w-full bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-2.5 sm:py-3 text-white placeholder-slate-500 text-sm"
             />
             <button
               type="submit"
               disabled={loading || !inputNrp.trim()}
-              className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all disabled:opacity-50 shrink-0"
+              className="w-full sm:w-auto px-5 py-2.5 sm:py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all disabled:opacity-50 shrink-0"
             >
               Check-in
             </button>
@@ -351,18 +351,18 @@ export default function AdminScanQRPage() {
 
         {/* Hasil Terakhir */}
         {lastResult && (
-          <div className={`p-6 rounded-2xl border slide-up text-center shadow-2xl ${
+          <div className={`p-5 sm:p-6 rounded-2xl border slide-up text-center shadow-2xl ${
             lastResult.success
               ? 'bg-green-500/15 border-green-500/40'
               : 'bg-red-500/15 border-red-500/40'
           }`}>
-            <div className="text-4xl mb-3">{lastResult.success ? '✅' : '❌'}</div>
-            <h3 className="text-lg font-bold text-white mb-1">
+            <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">{lastResult.success ? '✅' : '❌'}</div>
+            <h3 className="text-base sm:text-lg font-bold text-white mb-1">
               {lastResult.success ? 'CHECK-IN BERHASIL!' : 'CHECK-IN GAGAL!'}
             </h3>
             {lastResult.success ? (
               <div>
-                <p className="text-green-300 font-semibold text-base">{lastResult.nama}</p>
+                <p className="text-green-300 font-semibold text-sm sm:text-base">{lastResult.nama}</p>
                 <p className="text-slate-300 text-xs font-mono">{lastResult.nrp} • {lastResult.prodi}</p>
                 <span className="inline-block mt-3 px-3.5 py-1 rounded-full bg-green-500/30 text-green-200 border border-green-400/40 text-xs font-bold">
                   ✓ Status: Sudah Scan QR
