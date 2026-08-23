@@ -42,12 +42,22 @@ export default function AbsensiForm({ event }: Props) {
 
   // ── Branching / Condition Checker ────────────────────────────
   const isFieldVisible = (field: FormField): boolean => {
-    if (!field.condition || !field.condition.field_label) return true;
-    const parentVal = responses[field.condition.field_label] || '';
+    if (!field.condition || !field.condition.field_label?.trim()) return true;
+
+    const targetLabelNorm = field.condition.field_label.trim().toLowerCase();
+
+    // Find response key matching targetLabelNorm (case-insensitive & trimmed)
+    const matchingKey = Object.keys(responses).find(
+      (k) => k.trim().toLowerCase() === targetLabelNorm
+    );
+
+    const parentVal = (matchingKey ? String(responses[matchingKey]) : '').trim().toLowerCase();
+    const condVal   = (field.condition.value || '').trim().toLowerCase();
+
     if (field.condition.operator === 'equals') {
-      return parentVal === field.condition.value;
+      return parentVal === condVal;
     } else if (field.condition.operator === 'not_equals') {
-      return parentVal !== field.condition.value;
+      return parentVal !== condVal && parentVal !== '';
     }
     return true;
   };

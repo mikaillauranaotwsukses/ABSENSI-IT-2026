@@ -40,8 +40,33 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
     ]);
   };
 
-  const updateField = (idx: number, updates: Partial<FormField>) =>
-    setFields((prev) => prev.map((f, i) => (i === idx ? { ...f, ...updates } : f)));
+  const updateField = (idx: number, updates: Partial<FormField>) => {
+    setFields((prev) => {
+      const oldLabel = prev[idx]?.label;
+      const newLabel = updates.label;
+
+      return prev.map((f, i) => {
+        let updated = i === idx ? { ...f, ...updates } : f;
+
+        // Auto-update child condition field_label if parent label changes
+        if (
+          oldLabel &&
+          newLabel !== undefined &&
+          oldLabel !== newLabel &&
+          updated.condition?.field_label === oldLabel
+        ) {
+          updated = {
+            ...updated,
+            condition: {
+              ...updated.condition,
+              field_label: newLabel,
+            },
+          };
+        }
+        return updated;
+      });
+    });
+  };
 
   const updateOption = (fi: number, oi: number, value: string) =>
     setFields((prev) =>
