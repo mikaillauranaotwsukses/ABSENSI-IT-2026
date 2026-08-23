@@ -106,9 +106,13 @@ export function MemberAuthProvider({ children }: { children: React.ReactNode }) 
         })
         .eq('nrp', member.nrp);
 
+      // Jika DB update gagal, kembalikan error — JANGAN lanjutkan
       if (error) {
-        // Fallback if password_hash column doesn't exist in Supabase table yet
-        console.warn('Database update error for password_hash:', error);
+        console.error('Gagal menyimpan password ke database:', error);
+        return {
+          success: false,
+          error: `Gagal menyimpan password baru ke database: ${error.message}. Pastikan kolom password_hash dan must_change_password sudah ada di tabel anggota.`,
+        };
       }
 
       const updatedMember: Anggota = {
