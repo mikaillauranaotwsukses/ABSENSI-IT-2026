@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 import { Event, Anggota, Absensi, FormField } from '@/lib/types';
 
 interface Props {
@@ -12,11 +15,33 @@ interface Props {
 type Tab = 'semua' | 'hadir' | 'belum';
 type SortOrder = 'asc' | 'desc';
 
-export default function AbsensiReportClient({ event, allAnggota, absensiList }: Props) {
-  const [tab,       setTab]       = useState<Tab>('semua');
-  const [search,    setSearch]    = useState('');
-  const [sortKey,   setSortKey]   = useState<string>('nrp');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+interface DeleteTarget {
+  absensiId: string;
+  nama: string;
+  nrp: string;
+}
+
+export default function AbsensiReportClient({ event, allAnggota, absensiList: initialAbsensiList }: Props) {
+  const supabase = createClient();
+  const router   = useRouter();
+
+  const [tab,            setTab]            = useState<Tab>('semua');
+  const [search,         setSearch]         = useState('');
+  const [sortKey,        setSortKey]        = useState<string>('nrp');
+  const [sortOrder,      setSortOrder]      = useState<SortOrder>('asc');
+  const [absensiList,    setAbsensiList]    = useState<Absensi[]>(initialAbsensiList);
+  const [deleteTarget,   setDeleteTarget]   = useState<DeleteTarget | null>(null);
+  const [deleting,       setDeleting]       = useState(false);
+  const [mounted,        setMounted]        = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Update local list if server props change
+  useEffect(() => {
+    setAbsensiList(initialAbsensiList);
+  }, [initialAbsensiList]);
 
   const formFields: FormField[] = (event.form_schema ?? []).filter(
     (f) => f.type !== 'info'   // Info blocks have no data in responses
@@ -47,6 +72,26 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
       setSortKey(key);
       setSortOrder('asc');
     }
+  };
+
+  // Delete attendance handler
+  const confirmDeleteAbsensi = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+
+    const { error } = await supabase
+      .from('absensi')
+      .delete()
+      .eq('id', deleteTarget.absensiId);
+
+    if (error) {
+      alert('Gagal menghapus data absensi: ' + error.message);
+    } else {
+      setAbsensiList((prev) => prev.filter((a) => a.id !== deleteTarget.absensiId));
+      router.refresh();
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
   };
 
   // Filter by tab then by search then sort
@@ -276,6 +321,7 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
               >
                 Waktu {renderSortIcon('waktu')}
               </th>
+              <th className="text-center px-4 py-3.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-700/30">
@@ -344,6 +390,22 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
                     : <span className="text-slate-700">—</span>
                   }
                 </td>
+                <td className="px-4 py-3 text-center whitespace-nowrap">
+                  {row.hadir && row.absensi ? (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget({ absensiId: row.absensi!.id, nama: row.nama, nrp: row.nrp })}
+                      title="Hapus data absensi anggota ini"
+                      className="p-1.5 rounded-lg bg-red-600/10 hover:bg-red-600/25 border border-red-500/25 hover:border-red-500/50 text-red-400 hover:text-red-300 text-xs transition-all"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <span className="text-slate-600 text-xs">—</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -372,6 +434,51 @@ export default function AbsensiReportClient({ event, allAnggota, absensiList }: 
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal using React Portal */}
+      {deleteTarget && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => !deleting && setDeleteTarget(null)}
+          />
+          <div className="relative glass rounded-2xl p-6 w-full max-w-md scale-in z-10 shadow-2xl border border-red-500/20">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-600/20 flex items-center justify-center text-xl shrink-0">
+                🗑️
+              </div>
+              <div>
+                <h3 className="font-bold text-white">Hapus Data Absensi</h3>
+                <p className="text-slate-400 text-sm">{deleteTarget.nama} ({deleteTarget.nrp})</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 mb-6 text-sm text-slate-300 leading-relaxed">
+              Tindakan ini akan menghapus data kehadiran anggota ini dari laporan. Anggota tersebut kemudian dapat melakukan **absensi ulang**.
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl border border-slate-600/50 text-slate-300 hover:text-white text-sm font-medium transition-all disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteAbsensi}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {deleting ? 'Menghapus...' : 'Ya, Hapus Absen'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

@@ -2,37 +2,82 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Event, Anggota, FormField } from '@/lib/types';
+import { Event, Anggota, FormField, Absensi } from '@/lib/types';
 
 interface Props {
   event: Event;
 }
 
-type SubmitState = 'idle' | 'loading' | 'success' | 'error' | 'duplicate';
+type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
 export default function AbsensiForm({ event }: Props) {
   const supabase = createClient();
 
-  const [nrp,         setNrp]        = useState('');
-  const [anggota,     setAnggota]    = useState<Anggota | null>(null);
-  const [nrpStatus,   setNrpStatus]  = useState<'idle' | 'loading' | 'found' | 'not_found'>('idle');
-  const [responses,   setResponses]  = useState<Record<string, string>>({});
-  const [uploading,   setUploading]  = useState<Record<string, boolean>>({});
+  const [nrp,             setNrp]             = useState('');
+  const [anggota,         setAnggota]         = useState<Anggota | null>(null);
+  const [nrpStatus,       setNrpStatus]       = useState<'idle' | 'loading' | 'found' | 'not_found'>('idle');
+  const [existingAbsensi, setExistingAbsensi] = useState<Absensi | null>(null);
+  const [isEditing,       setIsEditing]       = useState(false);
+
+  const [responses,   setResponses]   = useState<Record<string, string>>({});
+  const [uploading,   setUploading]   = useState<Record<string, boolean>>({});
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
-  const [errorMsg,    setErrorMsg]   = useState('');
+  const [errorMsg,    setErrorMsg]    = useState('');
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  // ── NRP auto-fill ────────────────────────────────────────────
+  // ── NRP auto-fill + Existing Absensi lookup ─────────────────
   const lookupNrp = useCallback(
     async (value: string) => {
-      if (value.length < 5) { setAnggota(null); setNrpStatus('idle'); return; }
+      if (value.length < 5) {
+        setAnggota(null);
+        setExistingAbsensi(null);
+        setNrpStatus('idle');
+        setResponses({});
+        setIsEditing(false);
+        return;
+      }
       setNrpStatus('loading');
-      const { data } = await supabase
-        .from('anggota').select('*').eq('nrp', value).maybeSingle();
-      if (data) { setAnggota(data); setNrpStatus('found'); }
-      else       { setAnggota(null); setNrpStatus('not_found'); }
+
+      // 1. Lookup Anggota by NRP
+      const { data: dataAnggota } = await supabase
+        .from('anggota')
+        .select('*')
+        .eq('nrp', value)
+        .maybeSingle();
+
+      if (dataAnggota) {
+        setAnggota(dataAnggota);
+        setNrpStatus('found');
+
+        // 2. Lookup existing Absensi record for this event and NRP
+        const { data: dataAbsensi } = await supabase
+          .from('absensi')
+          .select('*')
+          .eq('event_id', event.id)
+          .eq('nrp', value)
+          .maybeSingle();
+
+        if (dataAbsensi) {
+          setExistingAbsensi(dataAbsensi);
+          // Pre-fill responses with existing data
+          if (dataAbsensi.data_respons && typeof dataAbsensi.data_respons === 'object') {
+            setResponses(dataAbsensi.data_respons as Record<string, string>);
+          }
+          setIsEditing(false);
+        } else {
+          setExistingAbsensi(null);
+          setResponses({});
+          setIsEditing(true);
+        }
+      } else {
+        setAnggota(null);
+        setExistingAbsensi(null);
+        setNrpStatus('not_found');
+        setResponses({});
+        setIsEditing(false);
+      }
     },
-    [supabase]
+    [event.id, supabase]
   );
 
   useEffect(() => {
@@ -103,7 +148,7 @@ export default function AbsensiForm({ event }: Props) {
     reader.readAsDataURL(file);
   };
 
-  // ── Submit ───────────────────────────────────────────────────
+  // ── Submit / Upsert (Replace Data) ───────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!anggota) return;
@@ -119,48 +164,43 @@ export default function AbsensiForm({ event }: Props) {
       .filter((f) => f.type !== 'info' && isFieldVisible(f))
       .forEach((f) => { dataRespons[f.label] = responses[f.label] || ''; });
 
-    const { error } = await supabase.from('absensi').insert({
-      event_id: event.id,
-      nrp:      anggota.nrp,
-      data_respons: dataRespons,
-    });
+    // Upsert record (insert or update on conflict)
+    const { error } = await supabase.from('absensi').upsert(
+      {
+        ...(existingAbsensi ? { id: existingAbsensi.id } : {}),
+        event_id: event.id,
+        nrp:      anggota.nrp,
+        data_respons: dataRespons,
+      },
+      { onConflict: 'event_id, nrp' }
+    );
 
     if (error) {
-      if (error.code === '23505') setSubmitState('duplicate');
-      else { setSubmitState('error'); setErrorMsg(error.message); }
+      setSubmitState('error');
+      setErrorMsg(error.message);
     } else {
       setSubmitState('success');
     }
   };
 
-  // ── States ───────────────────────────────────────────────────
+  // ── Success State ────────────────────────────────────────────
   if (submitState === 'success') {
     return (
       <div className="glass-card rounded-2xl p-10 text-center slide-up">
         <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center text-4xl mx-auto mb-5">✅</div>
-        <h3 className="text-2xl font-bold text-white mb-2">Absensi Berhasil!</h3>
+        <h3 className="text-2xl font-bold text-white mb-2">
+          {existingAbsensi ? 'Jawaban Absensi Berhasil Diperbarui!' : 'Absensi Berhasil!'}
+        </h3>
         <p className="text-slate-400 mb-1">
           Halo, <span className="text-indigo-300 font-semibold">{anggota?.nama}</span>!
         </p>
         <p className="text-slate-500 text-sm">
-          Kehadiranmu di <span className="text-slate-300">{event.nama_event}</span> sudah tercatat.
+          {existingAbsensi
+            ? 'Data respon absensimu berhasil diperbarui.'
+            : `Kehadiranmu di ${event.nama_event} sudah tercatat.`
+          }
         </p>
         <a href="/" className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors">
-          Kembali ke Beranda
-        </a>
-      </div>
-    );
-  }
-
-  if (submitState === 'duplicate') {
-    return (
-      <div className="glass-card rounded-2xl p-10 text-center slide-up">
-        <div className="text-5xl mb-5">⚠️</div>
-        <h3 className="text-xl font-bold text-amber-400 mb-2">Sudah Absen!</h3>
-        <p className="text-slate-400 text-sm">
-          NRP <span className="text-white font-mono">{nrp}</span> sudah tercatat hadir di event ini.
-        </p>
-        <a href="/" className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition-colors">
           Kembali ke Beranda
         </a>
       </div>
@@ -228,10 +268,57 @@ export default function AbsensiForm({ event }: Props) {
         )}
       </div>
 
-      {/* ── Dynamic fields (shown after NRP validated) ── */}
-      {nrpStatus === 'found' && anggota && (event.form_schema as FormField[]).length > 0 && (
+      {/* ── Warning Alert if user ALREADY submitted before ── */}
+      {nrpStatus === 'found' && anggota && existingAbsensi && !isEditing && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3 slide-up">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl shrink-0">⚠️</span>
+            <div>
+              <h4 className="text-amber-300 font-semibold text-sm">Sudah Pernah Mengisi Absensi</h4>
+              <p className="text-slate-300 text-xs mt-1 leading-relaxed">
+                Kamu sudah tercatat mengisi absensi untuk event ini pada{' '}
+                <span className="text-amber-200 font-medium">
+                  {new Date(existingAbsensi.created_at).toLocaleString('id-ID', {
+                    day: 'numeric', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })}
+                </span>.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="flex-1 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+              Perbarui / Edit Respon Saya
+            </button>
+            <a
+              href="/"
+              className="py-2.5 px-4 rounded-xl border border-slate-600/50 text-slate-400 hover:text-white text-xs font-medium transition-all text-center"
+            >
+              Kembali ke Beranda
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* ── Dynamic fields (shown after NRP validated and editing is enabled) ── */}
+      {nrpStatus === 'found' && anggota && isEditing && (event.form_schema as FormField[]).length > 0 && (
         <div className="space-y-5 fade-in">
           <div className="h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
+
+          {existingAbsensi && (
+            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-xs flex items-center gap-2">
+              <span>✏️</span>
+              <span>Kamu sedang memperbarui respon absensi sebelumnya. Silakan sesuaikan isianmu.</span>
+            </div>
+          )}
 
           {(event.form_schema as FormField[])
             .filter((field) => isFieldVisible(field))
@@ -279,7 +366,7 @@ export default function AbsensiForm({ event }: Props) {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                         </svg>
                         <div className="flex-1 min-w-0">
-                          <p className="text-green-300 text-sm font-medium">File berhasil diupload</p>
+                          <p className="text-green-300 text-sm font-medium">File tersimpan</p>
                           <a
                             href={responses[field.label]}
                             target="_blank"
@@ -428,7 +515,7 @@ export default function AbsensiForm({ event }: Props) {
       )}
 
       {/* Submit */}
-      {nrpStatus === 'found' && anggota && (
+      {nrpStatus === 'found' && anggota && isEditing && (
         <button
           type="submit"
           disabled={submitState === 'loading' || !allUploadsComplete}
@@ -443,7 +530,7 @@ export default function AbsensiForm({ event }: Props) {
               {!allUploadsComplete ? 'Menunggu upload...' : 'Menyimpan...'}
             </span>
           ) : (
-            'Konfirmasi Kehadiran'
+            existingAbsensi ? 'Perbarui Respon Saya' : 'Konfirmasi Kehadiran'
           )}
         </button>
       )}
