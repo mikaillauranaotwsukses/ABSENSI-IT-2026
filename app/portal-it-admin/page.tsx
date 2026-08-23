@@ -53,7 +53,7 @@ export default async function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Welcome */}
           <div className="mb-8 slide-up">
-            <h1 className="text-3xl font-bold text-white mb-1">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-white mb-1">Dashboard Administrator</h1>
             <p className="text-slate-400">Selamat datang kembali, admin!</p>
           </div>
 
@@ -81,8 +81,21 @@ export default async function AdminDashboard() {
             ))}
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid md:grid-cols-2 gap-4 mb-8 slide-up">
+          {/* Quick Actions (3 Cards) */}
+          <div className="grid md:grid-cols-3 gap-4 mb-8 slide-up">
+            <Link
+              href="/portal-it-admin/scan"
+              className="glass-card rounded-2xl p-5 hover:border-cyan-500/40 hover:glow-cyan transition-all duration-300 group flex items-center gap-4 border border-cyan-500/20"
+            >
+              <div className="w-12 h-12 rounded-xl bg-cyan-600/30 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                📷
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Scanner QR Panitia</h3>
+                <p className="text-slate-400 text-xs">Scan QR tiket anggota di lokasi acara</p>
+              </div>
+            </Link>
+
             <Link
               href="/portal-it-admin/events/new"
               className="glass-card rounded-2xl p-5 hover:border-indigo-500/40 hover:glow-indigo transition-all duration-300 group flex items-center gap-4"
@@ -92,9 +105,10 @@ export default async function AdminDashboard() {
               </div>
               <div>
                 <h3 className="font-semibold text-white">Buat Event Baru</h3>
-                <p className="text-slate-400 text-sm">Tambah event dan susun form absensi</p>
+                <p className="text-slate-400 text-xs">Tambah event dan susun form absensi</p>
               </div>
             </Link>
+
             <Link
               href="/portal-it-admin/events"
               className="glass-card rounded-2xl p-5 hover:border-purple-500/40 hover:glow-purple transition-all duration-300 group flex items-center gap-4"
@@ -104,7 +118,7 @@ export default async function AdminDashboard() {
               </div>
               <div>
                 <h3 className="font-semibold text-white">Kelola Event</h3>
-                <p className="text-slate-400 text-sm">Edit, tutup, atau lihat laporan absensi</p>
+                <p className="text-slate-400 text-xs">Edit, tutup, atau lihat laporan absensi</p>
               </div>
             </Link>
           </div>

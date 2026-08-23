@@ -29,6 +29,8 @@ export interface Anggota {
   nrp: string;
   nama: string;
   program_studi: string;
+  password_hash?: string;               // Hashed / plain password (default: nrp or absensi2026)
+  must_change_password?: boolean;       // Flag forcing user to change password on first login
 }
 
 export interface Event {
@@ -45,12 +47,17 @@ export interface Absensi {
   event_id: string;
   nrp: string;
   data_respons: Record<string, string | number>;
+  is_form_filled?: boolean;             // True if user submitted the dynamic form
+  is_qr_scanned?: boolean;              // True if committee scanned member's QR code
+  qr_scanned_at?: string;               // Timestamp when QR was scanned by admin
   created_at: string;
   anggota?: Anggota;
   event?: Event;
 }
 
 export interface AnggotaWithStatus extends Anggota {
-  hadir: boolean;
+  hadir: boolean;                       // True if either form is filled or QR is scanned
+  is_form_filled: boolean;
+  is_qr_scanned: boolean;
   absensi?: Absensi;
 }
