@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { FormField, Event } from '@/lib/types';
@@ -29,8 +29,44 @@ export default function EditEventForm({ event }: Props) {
         ]
   );
   const [activeTab,       setActiveTab]       = useState<BuilderTab>('form');
+  const [allEvents,       setAllEvents]       = useState<Event[]>([]);
+  const [selectedCopyId,  setSelectedCopyId]  = useState<string>('');
+  const [copyNotice,      setCopyNotice]      = useState<string>('');
   const [saving,          setSaving]          = useState(false);
   const [error,           setError]           = useState('');
+
+  // Load other events for copy dropdown
+  useEffect(() => {
+    async function loadOtherEvents() {
+      const { data } = await supabase.from('event').select('*').neq('id', event.id).order('created_at', { ascending: false });
+      if (data) setAllEvents(data as Event[]);
+    }
+    loadOtherEvents();
+  }, [event.id, supabase]);
+
+  // Import template from selected existing event
+  const applyCopyFromEvent = (mode: 'all' | 'form' | 'feedback') => {
+    const source = allEvents.find((e) => e.id === selectedCopyId);
+    if (!source) {
+      alert('Pilih event terlebih dahulu.');
+      return;
+    }
+
+    if (mode === 'all' || mode === 'form') {
+      if (source.form_schema && Array.isArray(source.form_schema)) {
+        setFields(JSON.parse(JSON.stringify(source.form_schema)));
+      }
+    }
+
+    if (mode === 'all' || mode === 'feedback') {
+      if (source.feedback_schema && Array.isArray(source.feedback_schema)) {
+        setFeedbackFields(JSON.parse(JSON.stringify(source.feedback_schema)));
+      }
+    }
+
+    setCopyNotice(`✓ Susunan ${mode === 'all' ? 'Form & Feedback' : mode === 'form' ? 'Form Absensi' : 'Feedback'} berhasil disalin dari "${source.nama_event}"!`);
+    setTimeout(() => setCopyNotice(''), 5000);
+  };
 
   const handleSave = async () => {
     if (!namaEvent.trim()) { setError('Nama event wajib diisi.'); return; }
@@ -64,6 +100,68 @@ export default function EditEventForm({ event }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* ── QUICK TEMPLATE IMPORTER / COPY BAR ── */}
+      {allEvents.length > 0 && (
+        <div className="glass-card rounded-2xl p-5 border border-indigo-500/30 shadow-xl slide-up space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-indigo-300 flex items-center gap-2">
+              <span>⚡</span> Salin Susunan Form / Feedback dari Event Lain
+            </h3>
+            <span className="text-[10px] text-slate-400">Timpa susunan dengan cepat</span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={selectedCopyId}
+              onChange={(e) => setSelectedCopyId(e.target.value)}
+              className="flex-1 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+            >
+              <option value="">— Pilih Event Sumber yang Ingin Disalin —</option>
+              {allEvents.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.nama_event} ({ev.form_schema?.length || 0} form, {ev.feedback_schema?.length || 0} feedback)
+                </option>
+              ))}
+            </select>
+
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                disabled={!selectedCopyId}
+                onClick={() => applyCopyFromEvent('all')}
+                className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold disabled:opacity-40 transition-all shadow"
+              >
+                📋 Salin Semua
+              </button>
+              <button
+                type="button"
+                disabled={!selectedCopyId}
+                onClick={() => applyCopyFromEvent('form')}
+                className="px-2.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium disabled:opacity-40 transition-all"
+                title="Hanya salin pertanyaan form absensi"
+              >
+                Hanya Form
+              </button>
+              <button
+                type="button"
+                disabled={!selectedCopyId}
+                onClick={() => applyCopyFromEvent('feedback')}
+                className="px-2.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium disabled:opacity-40 transition-all"
+                title="Hanya salin pertanyaan feedback"
+              >
+                Hanya Feedback
+              </button>
+            </div>
+          </div>
+
+          {copyNotice && (
+            <div className="p-3 rounded-xl bg-green-500/15 border border-green-500/30 text-green-300 text-xs font-medium fade-in">
+              {copyNotice}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Info event */}
       <div className="glass-card rounded-2xl p-6 space-y-5">
         <h2 className="font-semibold text-slate-200">📋 Informasi Event</h2>

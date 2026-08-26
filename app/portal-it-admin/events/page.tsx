@@ -93,16 +93,24 @@ export default async function EventsPage() {
                           <EventStatusToggle eventId={ev.id} initialStatus={ev.status} />
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex items-center justify-end gap-1.5 sm:gap-2">
                             <Link
                               href={`/portal-it-admin/absensi/${ev.id}`}
-                              className="px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-medium transition-colors"
+                              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 text-xs font-medium transition-colors"
+                              title="Lihat Laporan & Absensi"
                             >
                               Laporan
                             </Link>
                             <Link
+                              href={`/portal-it-admin/events/new?copy_from=${ev.id}`}
+                              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 text-xs font-medium transition-colors flex items-center gap-1"
+                              title="Duplikat susunan form & feedback event ini untuk acara baru"
+                            >
+                              <span>📋</span> Duplikat
+                            </Link>
+                            <Link
                               href={`/portal-it-admin/events/${ev.id}/edit`}
-                              className="px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+                              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
                             >
                               Edit
                             </Link>
