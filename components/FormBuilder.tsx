@@ -19,6 +19,8 @@ const FIELD_META: Record<FormFieldType, { icon: string; label: string; isInput: 
   radio:    { icon: '⭕', label: 'Pilihan Ganda',   isInput: true  },
   file:     { icon: '📎', label: 'Upload File',     isInput: true  },
   info:     { icon: '💡', label: 'Blok Info/Foto',  isInput: false },
+  rating:   { icon: '⭐', label: 'Rating Bintang', isInput: true  },
+  scale:    { icon: '📊', label: 'Skala 1-10',      isInput: true  },
 };
 
 export default function FormBuilder({ fields, setFields, isAdmin = false }: Props) {

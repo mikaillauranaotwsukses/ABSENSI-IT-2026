@@ -4,8 +4,10 @@ export type FormFieldType =
   | 'select'
   | 'radio'
   | 'textarea'
-  | 'file'   // Member uploads a file/image/video
-  | 'info';  // Admin-inserted info block (text + optional image)
+  | 'file'     // Member uploads a file/image/video
+  | 'info'     // Admin-inserted info block (text + optional image)
+  | 'rating'   // 1 to 5 Star Rating (ideal for feedback)
+  | 'scale';   // 1 to 10 Scale (ideal for feedback)
 
 export interface FormFieldCondition {
   field_label: string;                  // Target field to watch (e.g. "Status Kehadiran")
@@ -39,6 +41,7 @@ export interface Event {
   deskripsi: string;
   status: boolean;
   form_schema: FormField[];
+  feedback_schema?: FormField[];        // Dynamic custom feedback schema
   created_at: string;
 }
 
@@ -55,9 +58,22 @@ export interface Absensi {
   event?: Event;
 }
 
+export interface Feedback {
+  id: string;
+  event_id: string;
+  nrp: string;
+  data_respons: Record<string, string | number>;
+  rating_overall?: number;              // 1-5 overall score if provided
+  created_at: string;
+  anggota?: Anggota;
+  event?: Event;
+}
+
 export interface AnggotaWithStatus extends Anggota {
   hadir: boolean;                       // True if either form is filled or QR is scanned
   is_form_filled: boolean;
   is_qr_scanned: boolean;
+  has_feedback?: boolean;
   absensi?: Absensi;
+  feedback?: Feedback;
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useMemberAuth } from '@/lib/context/MemberAuthContext';
-import { Event, FormField, Absensi } from '@/lib/types';
+import { Event, FormField, Absensi, Feedback } from '@/lib/types';
 import MemberQRCard from '@/components/MemberQRCard';
 import Link from 'next/link';
 
@@ -11,22 +11,39 @@ interface Props {
   event: Event;
 }
 
-type TabMode = 'form' | 'qr';
+type TabMode = 'form' | 'qr' | 'feedback';
 type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 
 export default function AbsensiForm({ event }: Props) {
   const supabase = createClient();
   const { member, loading: authLoading } = useMemberAuth();
 
-  const [tabMode,         setTabMode]         = useState<TabMode>('form');
-  const [existingAbsensi, setExistingAbsensi] = useState<Absensi | null>(null);
-  const [isEditing,       setIsEditing]       = useState(false);
+  const [tabMode,          setTabMode]          = useState<TabMode>('form');
+  const [existingAbsensi,  setExistingAbsensi]  = useState<Absensi | null>(null);
+  const [existingFeedback, setExistingFeedback] = useState<Feedback | null>(null);
+  const [isEditing,        setIsEditing]        = useState(false);
+  const [isEditingFeedback,setIsEditingFeedback]= useState(false);
 
+  // Form Absensi state
   const [responses,   setResponses]   = useState<Record<string, string>>({});
   const [uploading,   setUploading]   = useState<Record<string, boolean>>({});
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [errorMsg,    setErrorMsg]    = useState('');
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Feedback state
+  const [feedbackResponses,   setFeedbackResponses]   = useState<Record<string, any>>({});
+  const [feedbackSubmitState, setFeedbackSubmitState] = useState<SubmitState>('idle');
+  const [feedbackErrorMsg,    setFeedbackErrorMsg]    = useState('');
+  const [overallRating,       setOverallRating]       = useState<number>(5);
+
+  // Dynamic feedback schema (fallback to standard if not configured)
+  const feedbackSchema: FormField[] = (event.feedback_schema && event.feedback_schema.length > 0)
+    ? event.feedback_schema
+    : [
+        { label: 'Rating Keseluruhan Acara', type: 'rating', required: true },
+        { label: 'Kritik, Saran & Masukan untuk Panitia', type: 'textarea', required: false },
+      ];
 
   // ── Lookup existing Absensi record for logged-in member ──
   const fetchExistingAbsensi = useCallback(async () => {
@@ -52,17 +69,46 @@ export default function AbsensiForm({ event }: Props) {
     }
   }, [event.id, member?.nrp, supabase]);
 
+  // ── Lookup existing Feedback record ──
+  const fetchExistingFeedback = useCallback(async () => {
+    if (!member?.nrp) return;
+
+    try {
+      const { data: dataFeedback } = await supabase
+        .from('feedback')
+        .select('*')
+        .eq('event_id', event.id)
+        .eq('nrp', member.nrp)
+        .maybeSingle();
+
+      if (dataFeedback) {
+        setExistingFeedback(dataFeedback as Feedback);
+        if (dataFeedback.data_respons && typeof dataFeedback.data_respons === 'object') {
+          setFeedbackResponses(dataFeedback.data_respons);
+        }
+        if (dataFeedback.rating_overall) {
+          setOverallRating(Number(dataFeedback.rating_overall));
+        }
+        setIsEditingFeedback(false);
+      } else {
+        setExistingFeedback(null);
+        setIsEditingFeedback(true);
+      }
+    } catch (e) {
+      console.warn('Feedback table query notice:', e);
+    }
+  }, [event.id, member?.nrp, supabase]);
+
   useEffect(() => {
     fetchExistingAbsensi();
-  }, [fetchExistingAbsensi]);
+    fetchExistingFeedback();
+  }, [fetchExistingAbsensi, fetchExistingFeedback]);
 
   // ── Branching / Condition Checker ────────────────────────────
   const isFieldVisible = (field: FormField): boolean => {
     if (!field.condition || !field.condition.field_label?.trim()) return true;
 
     const targetLabelNorm = field.condition.field_label.trim().toLowerCase();
-
-    // Find response key matching targetLabelNorm (case-insensitive & trimmed)
     const matchingKey = Object.keys(responses).find(
       (k) => k.trim().toLowerCase() === targetLabelNorm
     );
@@ -82,7 +128,6 @@ export default function AbsensiForm({ event }: Props) {
   const handleFileUpload = async (fieldLabel: string, file: File) => {
     setUploading((prev) => ({ ...prev, [fieldLabel]: true }));
 
-    // 1. Try Supabase Storage first
     try {
       const ext  = file.name.split('.').pop();
       const path = `${event.id}/${member?.nrp ?? 'unknown'}_${fieldLabel.replace(/\s+/g, '_')}_${Date.now()}.${ext}`;
@@ -103,7 +148,7 @@ export default function AbsensiForm({ event }: Props) {
       console.warn('Storage upload error, falling back to Base64:', e);
     }
 
-    // 2. Fallback to Base64 Data URL if bucket missing or upload fails
+    // Fallback to Base64 Data URL if bucket missing
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64Url = e.target?.result as string;
@@ -119,7 +164,7 @@ export default function AbsensiForm({ event }: Props) {
     reader.readAsDataURL(file);
   };
 
-  // ── Submit / Upsert (Replace Data) ───────────────────────────
+  // ── Submit / Upsert Absensi ───────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!member) return;
@@ -129,13 +174,11 @@ export default function AbsensiForm({ event }: Props) {
     setSubmitState('loading');
     setErrorMsg('');
 
-    // Filter out dynamic fields that are not visible or are info blocks
     const dataRespons: Record<string, string> = {};
     (event.form_schema as FormField[])
       .filter((f) => f.type !== 'info' && isFieldVisible(f))
       .forEach((f) => { dataRespons[f.label] = responses[f.label] || ''; });
 
-    // Upsert record with automatic fallback if column is missing in DB
     const payload: any = {
       ...(existingAbsensi ? { id: existingAbsensi.id } : {}),
       event_id:       event.id,
@@ -146,7 +189,6 @@ export default function AbsensiForm({ event }: Props) {
 
     let { error } = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
 
-    // Fallback if 'is_form_filled' column is not yet in Supabase table
     if (error && (error.message?.includes('is_form_filled') || error.message?.includes('schema cache') || error.code === 'PGRST204')) {
       delete payload.is_form_filled;
       const fallbackRes = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
@@ -159,6 +201,41 @@ export default function AbsensiForm({ event }: Props) {
     } else {
       setSubmitState('success');
       fetchExistingAbsensi();
+    }
+  };
+
+  // ── Submit Feedback ───────────────────────────────────────────
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!member) return;
+
+    setFeedbackSubmitState('loading');
+    setFeedbackErrorMsg('');
+
+    try {
+      const res = await fetch('/api/member/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_id:       event.id,
+          nrp:            member.nrp,
+          data_respons:   feedbackResponses,
+          rating_overall: overallRating,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        setFeedbackSubmitState('error');
+        setFeedbackErrorMsg(data.message || 'Gagal mengirim feedback.');
+      } else {
+        setFeedbackSubmitState('success');
+        fetchExistingFeedback();
+      }
+    } catch (err: any) {
+      setFeedbackSubmitState('error');
+      setFeedbackErrorMsg(err?.message || 'Terjadi kesalahan koneksi server.');
     }
   };
 
@@ -194,30 +271,32 @@ export default function AbsensiForm({ event }: Props) {
     );
   }
 
-  // ── Success State ────────────────────────────────────────────
-  if (submitState === 'success') {
+  // ── Success State for Absensi Form ───────────────────────────
+  if (submitState === 'success' && tabMode === 'form') {
     return (
-      <div className="glass-card rounded-2xl p-10 text-center slide-up">
-        <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center text-4xl mx-auto mb-5">✅</div>
-        <h3 className="text-2xl font-bold text-white mb-2">
+      <div className="glass-card rounded-2xl p-10 text-center slide-up space-y-4">
+        <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center text-4xl mx-auto">✅</div>
+        <h3 className="text-2xl font-bold text-white">
           {existingAbsensi ? 'Jawaban Absensi Berhasil Diperbarui!' : 'Absensi Berhasil!'}
         </h3>
-        <p className="text-slate-400 mb-1">
-          Halo, <span className="text-indigo-300 font-semibold">{member.nama}</span>!
+        <p className="text-slate-400 text-sm">
+          Halo, <span className="text-indigo-300 font-semibold">{member.nama}</span>! Keterangan absensimu telah tersimpan.
         </p>
-        <p className="text-slate-500 text-sm mb-6">
-          Keterangan absensimu untuk event <span className="text-slate-300 font-medium">{event.nama_event}</span> telah berhasil disimpan.
-        </p>
-
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-3">
           <button
             onClick={() => { setSubmitState('idle'); setTabMode('qr'); }}
             className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
           >
             📱 Tampilkan Tiket QR Saya
           </button>
+          <button
+            onClick={() => { setSubmitState('idle'); setTabMode('feedback'); }}
+            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-colors"
+          >
+            ⭐ Isi Feedback Acara
+          </button>
           <a href="/" className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors">
-            Kembali ke Beranda
+            Beranda
           </a>
         </div>
       </div>
@@ -244,29 +323,40 @@ export default function AbsensiForm({ event }: Props) {
         </div>
       </div>
 
-      {/* ── 2-Tab Selector Bar ── */}
-      <div className="flex p-1.5 bg-slate-800/80 rounded-2xl border border-slate-700/50 slide-up">
+      {/* ── 3-Tab Selector Bar ── */}
+      <div className="grid grid-cols-3 p-1.5 bg-slate-800/80 rounded-2xl border border-slate-700/50 slide-up gap-1">
         <button
           type="button"
           onClick={() => setTabMode('form')}
-          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
             tabMode === 'form'
               ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <span>📝</span> Form Keterangan
+          <span>📝</span> <span className="hidden sm:inline">Form</span> Keterangan
         </button>
         <button
           type="button"
           onClick={() => setTabMode('qr')}
-          className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
             tabMode === 'qr'
               ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <span>📱</span> Tiket QR Saya
+          <span>📱</span> Tiket QR <span className="hidden sm:inline">Saya</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setTabMode('feedback')}
+          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
+            tabMode === 'feedback'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <span>⭐</span> Feedback <span className="hidden sm:inline">Acara</span>
         </button>
       </div>
 
@@ -280,7 +370,7 @@ export default function AbsensiForm({ event }: Props) {
         <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 slide-up space-y-6">
           <h2 className="text-lg font-semibold text-slate-200">Form Keterangan Event</h2>
 
-          {/* ── Warning Alert if user ALREADY submitted before ── */}
+          {/* Warning Alert if user ALREADY submitted before */}
           {existingAbsensi?.is_form_filled && !isEditing && (
             <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3 slide-up">
               <div className="flex items-start gap-3">
@@ -321,7 +411,7 @@ export default function AbsensiForm({ event }: Props) {
             </div>
           )}
 
-          {/* ── Dynamic fields ── */}
+          {/* Dynamic fields */}
           {isEditing && (event.form_schema as FormField[]).length > 0 && (
             <div className="space-y-5 fade-in">
               {existingAbsensi?.is_form_filled && (
@@ -334,16 +424,12 @@ export default function AbsensiForm({ event }: Props) {
               {(event.form_schema as FormField[])
                 .filter((field) => isFieldVisible(field))
                 .map((field, idx) => {
-                  // ── INFO BLOCK ──────────────────────────────────
                   if (field.type === 'info') {
                     return (
                       <div key={idx} className="p-4 rounded-xl bg-amber-600/5 border border-amber-500/20 slide-up">
                         {field.label && (
                           <p className="text-amber-300 font-semibold text-sm mb-2 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                            </svg>
-                            {field.label}
+                            <span>💡</span> {field.label}
                           </p>
                         )}
                         {field.image_url && (
@@ -361,7 +447,6 @@ export default function AbsensiForm({ event }: Props) {
                     );
                   }
 
-                  // ── FILE UPLOAD ─────────────────────────────────
                   if (field.type === 'file') {
                     const uploaded   = !!responses[field.label];
                     const isUploading = uploading[field.label];
@@ -373,9 +458,7 @@ export default function AbsensiForm({ event }: Props) {
                         </label>
                         {uploaded ? (
                           <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/25">
-                            <svg className="w-5 h-5 text-green-400 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
+                            <span className="text-green-400 text-lg">✓</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-green-300 text-sm font-medium">File tersimpan</p>
                               <a
@@ -405,23 +488,12 @@ export default function AbsensiForm({ event }: Props) {
                               : 'border-slate-600/50 hover:border-indigo-500/50 hover:bg-indigo-600/5'
                           }`}>
                             {isUploading ? (
-                              <>
-                                <svg className="animate-spin h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                <span className="text-indigo-400 text-sm">Mengupload...</span>
-                              </>
+                              <span className="text-indigo-400 text-sm">Mengupload...</span>
                             ) : (
-                              <>
-                                <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                                </svg>
-                                <div className="text-center">
-                                  <span className="text-slate-300 text-sm font-medium">Klik untuk upload file</span>
-                                  <p className="text-slate-500 text-xs mt-0.5">Foto, video, atau PDF — maks. 20MB</p>
-                                </div>
-                              </>
+                              <div className="text-center">
+                                <span className="text-slate-300 text-sm font-medium">Klik untuk upload file</span>
+                                <p className="text-slate-500 text-xs mt-0.5">Foto, video, atau PDF — maks. 20MB</p>
+                              </div>
                             )}
                             <input
                               type="file"
@@ -440,7 +512,6 @@ export default function AbsensiForm({ event }: Props) {
                     );
                   }
 
-                  // ── TEXT / NUMBER / TEXTAREA / SELECT / RADIO ───
                   return (
                     <div key={idx} className="slide-up">
                       <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -518,14 +589,12 @@ export default function AbsensiForm({ event }: Props) {
             </div>
           )}
 
-          {/* Error */}
           {submitState === 'error' && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm fade-in">
               {errorMsg || 'Terjadi kesalahan. Silakan coba lagi.'}
             </div>
           )}
 
-          {/* Submit */}
           {isEditing && (
             <button
               type="submit"
@@ -533,19 +602,222 @@ export default function AbsensiForm({ event }: Props) {
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm transition-all glow-indigo disabled:opacity-60 disabled:cursor-not-allowed fade-in"
             >
               {submitState === 'loading' || !allUploadsComplete ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  {!allUploadsComplete ? 'Menunggu upload...' : 'Menyimpan...'}
-                </span>
+                <span>Menyimpan...</span>
               ) : (
                 existingAbsensi?.is_form_filled ? 'Perbarui Form Keterangan' : 'Kirim Form Keterangan'
               )}
             </button>
           )}
         </form>
+      )}
+
+      {/* ── TAB 3: FORM FEEDBACK & EVALUASI ACARA ── */}
+      {tabMode === 'feedback' && (
+        <div className="glass-card rounded-2xl p-6 slide-up space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                <span>⭐</span> Feedback & Evaluasi Acara
+              </h2>
+              <p className="text-slate-400 text-xs mt-1">
+                Berikan penilaian dan masukan Anda untuk peningkatan kualitas acara mendatang.
+              </p>
+            </div>
+          </div>
+
+          {/* Feedback Success View */}
+          {feedbackSubmitState === 'success' && (
+            <div className="p-6 rounded-2xl bg-green-500/15 border border-green-500/40 text-center slide-up space-y-2">
+              <div className="text-4xl">🎉</div>
+              <h3 className="text-lg font-bold text-white">Terima Kasih atas Feedback Anda!</h3>
+              <p className="text-green-300 text-xs">Masukan Anda telah berhasil dicatat untuk evaluasi panitia.</p>
+              <button
+                type="button"
+                onClick={() => { setFeedbackSubmitState('idle'); setIsEditingFeedback(true); }}
+                className="mt-3 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-xs font-semibold"
+              >
+                ✏️ Edit Respon Feedback
+              </button>
+            </div>
+          )}
+
+          {/* Existing Feedback Notice */}
+          {existingFeedback && !isEditingFeedback && feedbackSubmitState !== 'success' && (
+            <div className="p-5 rounded-2xl bg-purple-500/15 border border-purple-500/30 space-y-3 slide-up">
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40 font-semibold">
+                    ✓ Feedback Sudah Dikirim
+                  </span>
+                  <div className="flex items-center gap-1.5 mt-3">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <span key={star} className={`text-2xl ${star <= (existingFeedback.rating_overall || 5) ? 'text-amber-400' : 'text-slate-600'}`}>
+                        ★
+                      </span>
+                    ))}
+                    <span className="text-sm font-bold text-white ml-2">
+                      {existingFeedback.rating_overall || 5} / 5
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingFeedback(true)}
+                  className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition-all shadow"
+                >
+                  ✏️ Edit Feedback
+                </button>
+              </div>
+
+              {/* Show previous answers summary */}
+              {existingFeedback.data_respons && Object.keys(existingFeedback.data_respons).length > 0 && (
+                <div className="pt-3 border-t border-purple-500/20 space-y-2">
+                  {Object.entries(existingFeedback.data_respons).map(([label, ans], i) => (
+                    <div key={i} className="text-xs">
+                      <span className="text-slate-400">{label}:</span>{' '}
+                      <span className="text-white font-medium">{String(ans)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Feedback Form Inputs */}
+          {isEditingFeedback && feedbackSubmitState !== 'success' && (
+            <form onSubmit={handleFeedbackSubmit} className="space-y-5 fade-in">
+              {/* Overall Star Rating */}
+              <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/50 text-center space-y-2">
+                <label className="block text-sm font-semibold text-slate-200">
+                  Seberapa puas Anda dengan acara ini secara keseluruhan? <span className="text-red-400">*</span>
+                </label>
+                <div className="flex items-center justify-center gap-2 py-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setOverallRating(star)}
+                      className="text-3xl sm:text-4xl transition-transform hover:scale-125 focus:outline-none"
+                    >
+                      <span className={star <= overallRating ? 'text-amber-400 drop-shadow-md' : 'text-slate-600'}>
+                        ★
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-amber-300 font-semibold">
+                  {overallRating === 5 && '🌟 Sangat Puas / Luar Biasa!'}
+                  {overallRating === 4 && '👍 Puas / Bagus Sekali'}
+                  {overallRating === 3 && '👌 Cukup / Rata-rata'}
+                  {overallRating === 2 && '👎 Kurang Puas'}
+                  {overallRating === 1 && '⚠️ Sangat Kurang'}
+                </p>
+              </div>
+
+              {/* Dynamic feedback custom fields */}
+              {feedbackSchema.map((field, idx) => {
+                if (field.type === 'rating') {
+                  const currentVal = Number(feedbackResponses[field.label] || 5);
+                  return (
+                    <div key={idx} className="space-y-2">
+                      <label className="block text-sm font-medium text-slate-300">
+                        {field.label} {field.required && <span className="text-red-400">*</span>}
+                      </label>
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setFeedbackResponses((prev) => ({ ...prev, [field.label]: s }))}
+                            className={`text-2xl transition-transform hover:scale-110 ${s <= currentVal ? 'text-amber-400' : 'text-slate-600'}`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                        <span className="text-xs text-slate-400 ml-2">{currentVal} / 5</span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (field.type === 'scale') {
+                  const currentScale = Number(feedbackResponses[field.label] || 8);
+                  return (
+                    <div key={idx} className="space-y-2">
+                      <label className="block text-sm font-medium text-slate-300">
+                        {field.label} {field.required && <span className="text-red-400">*</span>}
+                      </label>
+                      <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => setFeedbackResponses((prev) => ({ ...prev, [field.label]: num }))}
+                            className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                              currentScale === num
+                                ? 'bg-indigo-600 text-white glow-indigo scale-105'
+                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            }`}
+                          >
+                            {num}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (field.type === 'textarea') {
+                  return (
+                    <div key={idx} className="space-y-2">
+                      <label className="block text-sm font-medium text-slate-300">
+                        {field.label} {field.required && <span className="text-red-400">*</span>}
+                      </label>
+                      <textarea
+                        value={feedbackResponses[field.label] || ''}
+                        onChange={(e) => setFeedbackResponses((prev) => ({ ...prev, [field.label]: e.target.value }))}
+                        required={field.required}
+                        rows={3}
+                        placeholder="Tuliskan masukan / kesan & pesan Anda..."
+                        className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all resize-none"
+                      />
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={idx} className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-300">
+                      {field.label} {field.required && <span className="text-red-400">*</span>}
+                    </label>
+                    <input
+                      type="text"
+                      value={feedbackResponses[field.label] || ''}
+                      onChange={(e) => setFeedbackResponses((prev) => ({ ...prev, [field.label]: e.target.value }))}
+                      required={field.required}
+                      placeholder="Jawaban Anda..."
+                      className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all"
+                    />
+                  </div>
+                );
+              })}
+
+              {feedbackErrorMsg && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm fade-in">
+                  {feedbackErrorMsg}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={feedbackSubmitState === 'loading'}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-sm transition-all glow-purple disabled:opacity-60"
+              >
+                {feedbackSubmitState === 'loading' ? 'Mengirim Feedback...' : 'Kirim Feedback Acara'}
+              </button>
+            </form>
+          )}
+        </div>
       )}
     </div>
   );
