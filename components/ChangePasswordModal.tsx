@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useMemberAuth } from '@/lib/context/MemberAuthContext';
 
 export default function ChangePasswordModal() {
-  const { member, showChangePasswordModal, setShowChangePasswordModal, changePassword } = useMemberAuth();
+  const { member, showChangePasswordModal, changePassword } = useMemberAuth();
 
   const [newPass,     setNewPass]     = useState('');
   const [confirmPass, setConfirmPass] = useState('');
@@ -38,21 +38,21 @@ export default function ChangePasswordModal() {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md" />
-      <div className="relative glass rounded-2xl p-6 w-full max-w-md scale-in z-10 border border-indigo-500/30 shadow-2xl">
-        <div className="text-center mb-5">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-2xl mx-auto mb-3 glow-indigo">
-            🔒
+      <div className="fixed inset-0 bg-black/85 backdrop-blur-md" />
+      <div className="relative tech-card p-6 sm:p-7 w-full max-w-md scale-in z-10 border border-blue-500/30 shadow-2xl space-y-4">
+        <div className="text-center space-y-2">
+          <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-2xl mx-auto glow-blue">
+            🔐
           </div>
-          <h3 className="text-xl font-bold text-white">Wajib Ganti Password</h3>
-          <p className="text-slate-400 text-xs mt-1">
-            Halo <span className="text-indigo-300 font-semibold">{member.nama}</span>, demi keamanan akun, silakan buat password baru Anda sebelum melanjutkan.
+          <h3 className="text-xl font-extrabold text-white">Buat Password Baru</h3>
+          <p className="text-slate-400 text-xs leading-relaxed">
+            Halo <span className="text-blue-300 font-bold">{member.nama}</span>, demi keamanan akun, silakan perbarui password awal Anda.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
               Password Baru <span className="text-red-400">*</span>
             </label>
             <input
@@ -60,13 +60,13 @@ export default function ChangePasswordModal() {
               value={newPass}
               onChange={(e) => setNewPass(e.target.value)}
               required
-              placeholder="Masukkan password baru..."
-              className="input-glow w-full bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-2.5 text-white text-sm"
+              placeholder="Minimal 4 karakter..."
+              className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
               Konfirmasi Password Baru <span className="text-red-400">*</span>
             </label>
             <input
@@ -75,7 +75,7 @@ export default function ChangePasswordModal() {
               onChange={(e) => setConfirmPass(e.target.value)}
               required
               placeholder="Ketik ulang password baru..."
-              className="input-glow w-full bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-2.5 text-white text-sm"
+              className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500"
             />
           </div>
 
@@ -90,17 +90,18 @@ export default function ChangePasswordModal() {
           </div>
 
           {error && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs">
-              {error}
+            <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+              <span>⚠️</span>
+              <span>{error}</span>
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm transition-all glow-indigo disabled:opacity-50"
+            className="w-full btn-primary h-12 text-sm font-bold uppercase tracking-wider rounded-xl mt-2 disabled:opacity-50"
           >
-            {loading ? 'Menyimpan Password...' : 'Simpan Password Baru'}
+            {loading ? 'Menyimpan Sandi...' : 'Simpan & Masuk ke Dashboard →'}
           </button>
         </form>
       </div>

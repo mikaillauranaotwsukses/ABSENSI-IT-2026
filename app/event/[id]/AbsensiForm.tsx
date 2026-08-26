@@ -271,12 +271,12 @@ export default function AbsensiForm({ event }: Props) {
   // ── If auth is loading ──
   if (authLoading) {
     return (
-      <div className="glass-card rounded-2xl p-12 text-center text-slate-400">
-        <svg className="animate-spin h-8 w-8 mx-auto mb-3 text-indigo-400" fill="none" viewBox="0 0 24 24">
+      <div className="tech-card p-12 text-center text-slate-400">
+        <svg className="animate-spin h-8 w-8 mx-auto mb-3 text-blue-400" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <p>Memuat sesi anggota...</p>
+        <p className="text-sm">Memverifikasi sesi anggota IT 2026...</p>
       </div>
     );
   }
@@ -284,17 +284,19 @@ export default function AbsensiForm({ event }: Props) {
   // ── If user is NOT logged in ──
   if (!member) {
     return (
-      <div className="glass-card rounded-2xl p-10 text-center slide-up">
-        <div className="w-16 h-16 rounded-2xl bg-amber-500/20 flex items-center justify-center text-3xl mx-auto mb-4">🔒</div>
-        <h3 className="text-xl font-bold text-white mb-2">Login Diperlukan</h3>
-        <p className="text-slate-400 text-sm mb-6 max-w-sm mx-auto">
-          Silakan login menggunakan NRP dan Password Anda terlebih dahulu untuk mengisi form atau melihat Tiket QR.
+      <div className="tech-card p-8 sm:p-10 text-center slide-up border border-blue-500/30 shadow-2xl space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-3xl mx-auto glow-blue">
+          🔒
+        </div>
+        <h3 className="text-xl font-extrabold text-white">Login Anggota Diperlukan</h3>
+        <p className="text-slate-400 text-xs sm:text-sm max-w-sm mx-auto leading-relaxed">
+          Silakan masuk dengan NRP & Password Anda untuk melengkapi form absensi atau melihat Tiket QR acara.
         </p>
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm transition-all glow-indigo"
+          className="btn-primary h-12 text-xs uppercase tracking-wider font-bold shadow-lg"
         >
-          🔑 Login Anggota Sekarang
+          🔑 Masuk Anggota Sekarang →
         </Link>
       </div>
     );
@@ -303,29 +305,34 @@ export default function AbsensiForm({ event }: Props) {
   // ── Success State for Absensi Form ───────────────────────────
   if (submitState === 'success' && tabMode === 'form') {
     return (
-      <div className="glass-card rounded-2xl p-10 text-center slide-up space-y-4">
-        <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center text-4xl mx-auto">✅</div>
-        <h3 className="text-2xl font-bold text-white">
-          {existingAbsensi ? 'Jawaban Absensi Berhasil Diperbarui!' : 'Absensi Berhasil!'}
-        </h3>
-        <p className="text-slate-400 text-sm">
-          Halo, <span className="text-indigo-300 font-semibold">{member.nama}</span>! Keterangan absensimu telah tersimpan.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-3">
+      <div className="tech-card p-8 sm:p-10 text-center slide-up space-y-5 border border-emerald-500/30">
+        <div className="w-20 h-20 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-4xl mx-auto">
+          ✅
+        </div>
+        <div>
+          <h3 className="text-2xl font-extrabold text-white">
+            {existingAbsensi ? 'Jawaban Absensi Berhasil Diperbarui!' : 'Absensi Berhasil Tersimpan!'}
+          </h3>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">
+            Halo <span className="text-blue-300 font-bold">{member.nama}</span>, data absensimu telah tercatat di sistem panitia.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
           <button
             onClick={() => { setSubmitState('idle'); setTabMode('qr'); }}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+            className="btn-secondary h-11 text-xs uppercase tracking-wider font-bold"
           >
-            📱 Tampilkan Tiket QR Saya
+            📱 Tampilkan Tiket QR
           </button>
           <button
             onClick={() => { setSubmitState('idle'); setTabMode('feedback'); }}
-            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-colors"
+            className="btn-primary h-11 text-xs uppercase tracking-wider font-bold"
           >
             ⭐ Isi Feedback Acara
           </button>
-          <a href="/" className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors">
-            Beranda
+          <a href="/" className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors inline-flex items-center justify-center">
+            Kembali ke Beranda
           </a>
         </div>
       </div>
@@ -337,30 +344,30 @@ export default function AbsensiForm({ event }: Props) {
   return (
     <div className="space-y-6">
       {/* ── Logged-in Member Auto-Greeting Card ── */}
-      <div className="glass-card rounded-2xl p-5 slide-up flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold text-lg shrink-0 glow-indigo">
+      <div className="tech-card p-4 sm:p-5 slide-up flex items-center gap-4 border border-blue-500/20">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 border border-blue-400/40 flex items-center justify-center text-white font-extrabold text-lg shrink-0 shadow-md glow-blue">
           {member.nama.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-white font-bold text-base truncate">{member.nama}</h3>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">
+            <h3 className="text-white font-extrabold text-sm sm:text-base truncate tracking-tight">{member.nama}</h3>
+            <span className="text-[10px] px-2 py-0.5 rounded-full badge-tech-amber font-mono font-bold">
               {member.nrp}
             </span>
           </div>
-          <p className="text-slate-400 text-xs truncate">{member.program_studi}</p>
+          <p className="text-slate-400 text-xs truncate mt-0.5">{member.program_studi}</p>
         </div>
       </div>
 
-      {/* ── 3-Tab Selector Bar ── */}
-      <div className="grid grid-cols-3 p-1.5 bg-slate-800/80 rounded-2xl border border-slate-700/50 slide-up gap-1">
+      {/* ── 3-Tab Selector Bar (IFEST 2026 Segmented Control) ── */}
+      <div className="grid grid-cols-3 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 slide-up gap-1.5">
         <button
           type="button"
           onClick={() => setTabMode('form')}
-          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
+          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             tabMode === 'form'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#214afe] text-white shadow-lg glow-blue'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
           <span>📝</span> <span className="hidden sm:inline">Form</span> Keterangan
@@ -368,10 +375,10 @@ export default function AbsensiForm({ event }: Props) {
         <button
           type="button"
           onClick={() => setTabMode('qr')}
-          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
+          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             tabMode === 'qr'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#ffc878] text-slate-950 shadow-lg glow-amber'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
           <span>📱</span> Tiket QR <span className="hidden sm:inline">Saya</span>
@@ -379,10 +386,10 @@ export default function AbsensiForm({ event }: Props) {
         <button
           type="button"
           onClick={() => setTabMode('feedback')}
-          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1.5 ${
+          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             tabMode === 'feedback'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#214afe] text-white shadow-lg glow-blue'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
           <span>⭐</span> Feedback <span className="hidden sm:inline">Acara</span>
@@ -396,19 +403,24 @@ export default function AbsensiForm({ event }: Props) {
 
       {/* ── TAB 1: FORM KETERANGAN ── */}
       {tabMode === 'form' && (
-        <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 slide-up space-y-6">
-          <h2 className="text-lg font-semibold text-slate-200">Form Keterangan Event</h2>
+        <form onSubmit={handleSubmit} className="tech-card p-6 sm:p-8 slide-up space-y-6 border border-blue-500/25">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+              <span>📝</span> Formulir Presensi & Keterangan
+            </h2>
+            <span className="text-[11px] font-mono text-slate-400">Step 1 of 3</span>
+          </div>
 
           {/* Warning Alert if user ALREADY submitted before */}
           {existingAbsensi?.is_form_filled && !isEditing && (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3 slide-up">
+            <div className="p-4 sm:p-5 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-3 slide-up">
               <div className="flex items-start gap-3">
                 <span className="text-2xl shrink-0">⚠️</span>
                 <div>
-                  <h4 className="text-amber-300 font-semibold text-sm">Sudah Pernah Mengisi Form</h4>
+                  <h4 className="text-[#ffc878] font-bold text-sm">Formulir Telah Diisi Sebelumnya</h4>
                   <p className="text-slate-300 text-xs mt-1 leading-relaxed">
-                    Kamu sudah mengisi keterangan untuk event ini pada{' '}
-                    <span className="text-amber-200 font-medium">
+                    Kamu sudah mengisi keterangan untuk acara ini pada{' '}
+                    <span className="text-amber-200 font-bold font-mono">
                       {new Date(existingAbsensi.created_at).toLocaleString('id-ID', {
                         day: 'numeric', month: 'short', year: 'numeric',
                         hour: '2-digit', minute: '2-digit',
@@ -422,19 +434,16 @@ export default function AbsensiForm({ event }: Props) {
                 <button
                   type="button"
                   onClick={() => setIsEditing(true)}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-1.5"
+                  className="btn-secondary h-10 text-xs font-bold uppercase tracking-wider"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                  </svg>
-                  Perbarui / Edit Respon Saya
+                  ✏️ Edit / Ubah Jawaban Saya
                 </button>
                 <button
                   type="button"
                   onClick={() => setTabMode('qr')}
-                  className="py-2.5 px-4 rounded-xl border border-slate-600/50 text-slate-300 hover:text-white text-xs font-medium transition-all text-center"
+                  className="btn-primary h-10 text-xs font-bold uppercase tracking-wider"
                 >
-                  Lihat Tiket QR
+                  📱 Buka Tiket QR Saya →
                 </button>
               </div>
             </div>
@@ -619,8 +628,9 @@ export default function AbsensiForm({ event }: Props) {
           )}
 
           {submitState === 'error' && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm fade-in">
-              {errorMsg || 'Terjadi kesalahan. Silakan coba lagi.'}
+            <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 fade-in">
+              <span>⚠️</span>
+              <span>{errorMsg || 'Terjadi kesalahan. Silakan coba lagi.'}</span>
             </div>
           )}
 
@@ -628,12 +638,12 @@ export default function AbsensiForm({ event }: Props) {
             <button
               type="submit"
               disabled={submitState === 'loading' || !allUploadsComplete}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm transition-all glow-indigo disabled:opacity-60 disabled:cursor-not-allowed fade-in"
+              className="w-full btn-primary h-12 text-sm uppercase tracking-wider font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitState === 'loading' || !allUploadsComplete ? (
-                <span>Menyimpan...</span>
+                <span>Menyimpan Keterangan...</span>
               ) : (
-                existingAbsensi?.is_form_filled ? 'Perbarui Form Keterangan' : 'Kirim Form Keterangan'
+                existingAbsensi?.is_form_filled ? 'Perbarui Form Keterangan →' : 'Kirim Form Keterangan →'
               )}
             </button>
           )}
@@ -642,28 +652,29 @@ export default function AbsensiForm({ event }: Props) {
 
       {/* ── TAB 3: FORM FEEDBACK & EVALUASI ACARA ── */}
       {tabMode === 'feedback' && (
-        <div className="glass-card rounded-2xl p-6 slide-up space-y-6">
-          <div className="flex items-center justify-between">
+        <div className="tech-card p-6 sm:p-8 slide-up space-y-6 border border-blue-500/25">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-              <h2 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
                 <span>⭐</span> Feedback & Evaluasi Acara
               </h2>
-              <p className="text-slate-400 text-xs mt-1">
+              <p className="text-slate-400 text-xs mt-0.5">
                 Berikan penilaian dan masukan Anda untuk peningkatan kualitas acara mendatang.
               </p>
             </div>
+            <span className="text-[11px] font-mono text-slate-400">Step 3 of 3</span>
           </div>
 
           {/* Feedback Success View */}
           {feedbackSubmitState === 'success' && (
-            <div className="p-6 rounded-2xl bg-green-500/15 border border-green-500/40 text-center slide-up space-y-2">
+            <div className="p-6 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-center slide-up space-y-3">
               <div className="text-4xl">🎉</div>
-              <h3 className="text-lg font-bold text-white">Terima Kasih atas Feedback Anda!</h3>
-              <p className="text-green-300 text-xs">Masukan Anda telah berhasil dicatat untuk evaluasi panitia.</p>
+              <h3 className="text-lg font-extrabold text-white">Terima Kasih atas Ulasan & Feedback Anda!</h3>
+              <p className="text-emerald-300 text-xs">Masukan Anda telah berhasil dicatat untuk evaluasi panitia.</p>
               <button
                 type="button"
                 onClick={() => { setFeedbackSubmitState('idle'); setIsEditingFeedback(true); }}
-                className="mt-3 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-xs font-semibold"
+                className="btn-secondary h-10 text-xs font-bold uppercase tracking-wider"
               >
                 ✏️ Edit Respon Feedback
               </button>
@@ -672,7 +683,7 @@ export default function AbsensiForm({ event }: Props) {
 
           {/* Existing Feedback Notice */}
           {existingFeedback && !isEditingFeedback && feedbackSubmitState !== 'success' && (
-            <div className="p-5 rounded-2xl bg-purple-500/15 border border-purple-500/30 space-y-3 slide-up">
+            <div className="p-5 rounded-2xl bg-blue-950/40 border border-blue-500/30 space-y-3 slide-up">
               <div className="flex items-start justify-between">
                 <div>
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40 font-semibold">
@@ -859,17 +870,18 @@ export default function AbsensiForm({ event }: Props) {
               })}
 
               {feedbackErrorMsg && (
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm fade-in">
-                  {feedbackErrorMsg}
+                <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 fade-in">
+                  <span>⚠️</span>
+                  <span>{feedbackErrorMsg}</span>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={feedbackSubmitState === 'loading'}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-sm transition-all glow-purple disabled:opacity-60"
+                className="w-full btn-primary h-12 text-sm font-bold uppercase tracking-wider rounded-xl shadow-lg disabled:opacity-50"
               >
-                {feedbackSubmitState === 'loading' ? 'Mengirim Feedback...' : 'Kirim Feedback Acara'}
+                {feedbackSubmitState === 'loading' ? 'Mengirim Feedback...' : 'Kirim Ulasan & Feedback Acara →'}
               </button>
             </form>
           )}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useMemberAuth } from '@/lib/context/MemberAuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function MemberLoginPage() {
   const { loginMember, member } = useMemberAuth();
@@ -37,15 +38,15 @@ export default function MemberLoginPage() {
   };
 
   return (
-    <main className="min-h-screen animated-bg flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Background blobs */}
-      <div className="blob w-96 h-96 bg-indigo-700 -top-24 -left-24" />
-      <div className="blob w-80 h-80 bg-purple-700 bottom-0 right-0 translate-x-1/4 translate-y-1/4" />
+    <main className="min-h-screen animated-bg flex items-center justify-center px-4 py-8 relative overflow-hidden">
+      {/* Background Tech Orbs */}
+      <div className="blob w-96 h-96 bg-blue-600/20 -top-24 -left-24 pointer-events-none" />
+      <div className="blob w-80 h-80 bg-amber-500/15 bottom-0 right-0 pointer-events-none" />
 
-      <div className="relative z-10 w-full max-w-md scale-in">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-white p-2.5 flex items-center justify-center mx-auto mb-4 border border-white/40 shadow-2xl shadow-indigo-500/30 glow-indigo">
+      <div className="relative z-10 w-full max-w-md scale-in space-y-6">
+        {/* Brand Header */}
+        <div className="text-center space-y-3">
+          <div className="w-20 h-20 rounded-2xl bg-white p-2.5 flex items-center justify-center mx-auto border-2 border-blue-500/30 shadow-2xl glow-blue transition-transform hover:scale-105">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/favicon.ico"
@@ -53,15 +54,25 @@ export default function MemberLoginPage() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-2xl font-bold text-white">Login Anggota IT 26</h1>
-          <p className="text-slate-400 text-sm mt-1">Masukkan NRP dan Password Anda untuk mengakses absensi</p>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full badge-tech-blue text-[11px] font-bold tracking-wider uppercase mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              Member Access Portal
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Portal Anggota <span className="gradient-text-ifest">IT 2026</span>
+            </h1>
+            <p className="text-slate-400 text-xs sm:text-sm max-w-xs mx-auto mt-1">
+              Masuk menggunakan NRP & Password untuk mengakses tiket QR dan formulir acara.
+            </p>
+          </div>
         </div>
 
-        {/* Form Card */}
-        <div className="glass rounded-2xl p-8 shadow-2xl">
-          <form onSubmit={handleLogin} className="space-y-5">
+        {/* Login Form Card */}
+        <div className="tech-card p-6 sm:p-8 shadow-2xl border border-blue-500/20">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
                 NRP Anggota <span className="text-red-400">*</span>
               </label>
               <input
@@ -70,15 +81,17 @@ export default function MemberLoginPage() {
                 value={nrp}
                 onChange={(e) => setNrp(e.target.value)}
                 required
-                placeholder="Masukkan NRP (contoh: C14230001)..."
-                className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all"
+                placeholder="Contoh: 5027261001"
+                className="input-glow w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Password <span className="text-red-400">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Password <span className="text-red-400">*</span>
+                </label>
+              </div>
               <div className="relative">
                 <input
                   id="member-password"
@@ -86,13 +99,14 @@ export default function MemberLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="Password Anda..."
-                  className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all pr-11"
+                  placeholder="Masukkan password Anda..."
+                  className="input-glow w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all pr-11 focus:border-blue-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
+                  title={showPass ? 'Sembunyikan' : 'Tampilkan'}
                 >
                   {showPass ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -106,35 +120,50 @@ export default function MemberLoginPage() {
                   )}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
-                💡 Password bawaan pertama kali adalah <span className="text-indigo-300 font-mono">NRP Anda</span> atau <span className="text-indigo-300 font-mono">absensi2026</span>.
-              </p>
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm fade-in">
-                {error}
+              <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 fade-in">
+                <span>⚠️</span>
+                <span>{error}</span>
               </div>
             )}
 
             <button
+              id="member-submit"
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm transition-all glow-indigo disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full btn-primary h-12 text-sm uppercase tracking-wider font-bold rounded-xl mt-2 disabled:opacity-50"
             >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Memverifikasi...
                 </span>
               ) : (
-                'Masuk ke Portal Absensi'
+                'Masuk ke Portal →'
               )}
             </button>
           </form>
+
+          {/* Quick instructions box */}
+          <div className="mt-6 pt-4 border-t border-slate-700/50 text-[11px] text-slate-400 space-y-1.5 bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+            <p className="font-semibold text-slate-300 flex items-center gap-1.5">
+              <span>💡</span> Informasi Login Pertama:
+            </p>
+            <p>• Masukkan NRP Anda yang terdaftar.</p>
+            <p>• Password awal: <strong>12345678</strong> (Anda akan diminta membuat sandi baru saat pertama kali masuk).</p>
+          </div>
+        </div>
+
+        {/* Admin Link */}
+        <div className="text-center">
+          <Link
+            href="/portal-it-admin/login"
+            className="text-xs text-slate-400 hover:text-blue-400 transition-colors inline-flex items-center gap-1 font-medium"
+          >
+            <span>🔐</span> Masuk sebagai Admin Panitia →
+          </Link>
         </div>
       </div>
     </main>
