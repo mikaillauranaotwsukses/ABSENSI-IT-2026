@@ -95,8 +95,13 @@ export default function HomePageClient({ events, error }: Props) {
               </div>
             ) : (
               <div className="flex items-center gap-3.5 w-full md:w-auto">
-                <div className="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-300 text-xl shrink-0 glow-blue">
-                  ⚡
+                <div className="w-12 h-12 rounded-2xl bg-white p-1.5 border-2 border-blue-500/40 flex items-center justify-center shrink-0 glow-blue shadow-md">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/favicon.ico"
+                    alt="Logo IT"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm">Portal Presensi Terpadu IT 2026</p>
@@ -170,10 +175,10 @@ export default function HomePageClient({ events, error }: Props) {
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
-            PORTAL ABSENSI <span className="gradient-text-ifest">IT 2026</span>
+            PORTAL KEHADIRAN <span className="gradient-text-ifest">IT 2026</span>
           </h1>
           <p className="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto leading-relaxed">
-            Pilih event aktif di bawah ini untuk melengkapi form absensi, menampilkan Tiket QR digital di lokasi, dan mengirimkan ulasan evaluasi acara.
+            Pilih event aktif di bawah ini untuk melengkapi form kehadiran, menampilkan Tiket QR digital di lokasi, dan mengirimkan ulasan evaluasi acara.
           </p>
         </div>
 
@@ -181,7 +186,7 @@ export default function HomePageClient({ events, error }: Props) {
         <div className="slide-up space-y-5">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-white font-extrabold text-base tracking-tight">
-              <span>⚡</span> Daftar Acara Aktif
+              <span>📅</span> Daftar Acara Aktif
               <span className="text-xs px-2.5 py-0.5 rounded-full badge-tech-amber font-mono font-bold">
                 {filteredEvents.length} Event
               </span>
@@ -286,7 +291,7 @@ export default function HomePageClient({ events, error }: Props) {
                       href={targetUrl}
                       className="w-full btn-primary h-12 text-xs uppercase tracking-wider font-bold shadow-md rounded-xl"
                     >
-                      <span>{member ? 'Buka Form, Tiket & Feedback' : 'Login untuk Mengisi Absensi'}</span>
+                      <span>{member ? 'Buka Form, Tiket & Feedback' : 'Login untuk Mengisi Presensi'}</span>
                       <span>→</span>
                     </Link>
                   </div>
@@ -298,8 +303,7 @@ export default function HomePageClient({ events, error }: Props) {
 
         {/* ── FOOTER ── */}
         <footer className="text-center text-xs text-slate-500 pt-8 border-t border-slate-800/80 space-y-1">
-          <p className="font-semibold text-slate-400">© 2026 Mahasiswa S1 Teknologi Informasi · Absensi IT 26</p>
-          <p className="text-[11px] text-slate-600">Built with High Performance & Tech-Forward Architecture</p>
+          <p className="font-semibold text-slate-400">© 2026 Mahasiswa S1 Teknologi Informasi · PRESENSI IT 26</p>
         </footer>
       </div>
     </main>

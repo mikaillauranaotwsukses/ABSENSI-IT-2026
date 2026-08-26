@@ -42,8 +42,13 @@ export default async function EventPage({ params }: Props) {
         {/* Event Banner Header */}
         <div className="tech-card p-6 sm:p-7 slide-up border border-blue-500/25 space-y-4">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-3xl shrink-0 glow-blue">
-              ⚡
+            <div className="w-14 h-14 rounded-2xl bg-white p-2 border-2 border-blue-500/40 flex items-center justify-center shrink-0 glow-blue shadow-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/favicon.ico"
+                alt="Logo IT 26"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
