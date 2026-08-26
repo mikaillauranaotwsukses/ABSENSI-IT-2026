@@ -376,6 +376,98 @@ export default function AbsensiReportClient({
     }
   };
 
+  // ── GENERATE FEEDBACK PDF EXPORT ───────────────────────────
+  const generateFeedbackPdfReport = async () => {
+    setExportingPdf(true);
+    try {
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      // Title & Header
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(30, 41, 59);
+      doc.text('LAPORAN EVALUASI & FEEDBACK ACARA', 14, 15);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(124, 58, 237); // Purple
+      doc.text(event.nama_event.toUpperCase(), 14, 22);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(100, 116, 139);
+      const exportDate = new Date().toLocaleString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+      doc.text(`Waktu Cetak: ${exportDate} WIB | Total Responden: ${feedbackList.length} Anggota | Rata-rata Skor: ${avgRating} / 5.0`, 14, 28);
+
+      // Feedback Table Rows
+      const tableRows: any[] = [];
+      feedbackList.forEach((fb, idx) => {
+        const anggotaInfo = allAnggota.find((a) => a.nrp === fb.nrp);
+        const name = anggotaInfo?.nama || fb.nrp;
+        const prodi = anggotaInfo?.program_studi || '-';
+        const overall = `${fb.rating_overall || '-'} / 5 ★`;
+        const overallNote = fb.data_respons?.['Ulasan Keseluruhan Acara'] ? String(fb.data_respons['Ulasan Keseluruhan Acara']) : '-';
+
+        const lines: string[] = [];
+        feedbackSchema.forEach((f) => {
+          const val = fb.data_respons?.[f.label];
+          const note = fb.data_respons?.[`${f.label}__catatan`];
+          if (val !== undefined || note !== undefined) {
+            if (f.type === 'rating') {
+              lines.push(`• ${f.label}:\n  Skor: [★ ${val}/5] | Catatan: "${note || 'Tidak ada catatan'}"`);
+            } else if (f.type === 'scale') {
+              lines.push(`• ${f.label}:\n  Skor: [Skala ${val}/10] | Catatan: "${note || 'Tidak ada catatan'}"`);
+            } else {
+              lines.push(`• ${f.label}:\n  "${val || '-'}"`);
+            }
+          }
+        });
+
+        tableRows.push([
+          idx + 1,
+          `${name}\n(${fb.nrp})\n${prodi}`,
+          `Skor: ${overall}\n\nUlasan:\n"${overallNote}"`,
+          lines.length > 0 ? lines.join('\n\n') : '-',
+        ]);
+      });
+
+      autoTable(doc, {
+        startY: 34,
+        head: [['No', 'Anggota & Prodi', 'Skor Keseluruhan & Ulasan', 'Rincian Penilaian & Catatan Sub-Unit']],
+        body: tableRows,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 3, valign: 'top' },
+        headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 45 },
+          2: { cellWidth: 50 },
+          3: { cellWidth: 77 },
+        },
+        didDrawPage: (data) => {
+          doc.setFontSize(8);
+          doc.setTextColor(148, 163, 184);
+          doc.text(
+            `Halaman ${data.pageNumber} — Sistem Evaluasi Acara IT '26`,
+            doc.internal.pageSize.width / 2,
+            doc.internal.pageSize.height - 8,
+            { align: 'center' }
+          );
+        },
+      });
+
+      const filename = `Laporan_Feedback_${event.nama_event.replace(/\s+/g, '_')}.pdf`;
+      doc.save(filename);
+    } catch (err: any) {
+      alert('Gagal membuat PDF Feedback: ' + err?.message);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   // ── GENERATE CSV EXPORT ─────────────────────────────────────
   const exportCsv = () => {
     const headers = [
@@ -979,84 +1071,139 @@ export default function AbsensiReportClient({
               </div>
             </div>
 
-            {/* Rating distribution breakdown */}
-            <div className="space-y-1.5 w-full md:w-64 text-xs">
-              {[5, 4, 3, 2, 1].map((star) => {
-                const count = feedbackList.filter((f) => Number(f.rating_overall) === star).length;
-                const pct = countFeedback > 0 ? (count / countFeedback) * 100 : 0;
-                return (
-                  <div key={star} className="flex items-center gap-2">
-                    <span className="w-4 text-amber-400 font-bold">{star}★</span>
-                    <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
-                      <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+            {/* Rating distribution breakdown & Action */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+              <div className="space-y-1.5 w-full sm:w-56 text-xs">
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = feedbackList.filter((f) => Number(f.rating_overall) === star).length;
+                  const pct = countFeedback > 0 ? (count / countFeedback) * 100 : 0;
+                  return (
+                    <div key={star} className="flex items-center gap-2">
+                      <span className="w-4 text-amber-400 font-bold">{star}★</span>
+                      <div className="flex-1 bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+                        <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="w-8 text-right text-slate-400 font-mono text-[10px]">{count}</span>
                     </div>
-                    <span className="w-8 text-right text-slate-400 font-mono text-[10px]">{count}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={generateFeedbackPdfReport}
+                disabled={exportingPdf || feedbackList.length === 0}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
+              >
+                <span>📄</span>
+                <span>{exportingPdf ? 'Exporting PDF...' : 'Download PDF Feedback'}</span>
+              </button>
             </div>
           </div>
 
-          {/* Feedback Responses List / Table */}
+          {/* Feedback Responses List */}
           <div className="glass-card rounded-2xl p-6 border border-slate-700/50 space-y-4">
-            <h4 className="font-bold text-white text-base flex items-center gap-2">
-              <span>💬</span> Ulasan & Masukan Peserta ({feedbackList.length})
-            </h4>
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h4 className="font-bold text-white text-base flex items-center gap-2">
+                <span>💬</span> Ulasan & Masukan Peserta ({feedbackList.length})
+              </h4>
+              <span className="text-xs text-slate-400">Rating & Catatan Tersusun Bersebelahan</span>
+            </div>
 
             {feedbackList.length === 0 ? (
               <div className="py-12 text-center text-slate-500 text-sm">
                 Belum ada anggota yang mengirimkan feedback untuk event ini.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {feedbackList.map((fb, idx) => {
                   const anggotaInfo = allAnggota.find((a) => a.nrp === fb.nrp);
+                  const overallNote = fb.data_respons?.['Ulasan Keseluruhan Acara'];
+
                   return (
-                    <div key={fb.id || idx} className="p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50 space-y-2">
-                      <div className="flex items-start justify-between">
+                    <div key={fb.id || idx} className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700/60 space-y-3.5">
+                      {/* Header Row: Member info + Overall Rating Badge */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700/40 pb-3">
                         <div>
                           <p className="text-white font-bold text-sm">{anggotaInfo?.nama || fb.nrp}</p>
                           <p className="text-slate-400 text-[11px] font-mono">{fb.nrp} • {anggotaInfo?.program_studi}</p>
                         </div>
-                        <div className="flex items-center gap-1 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
-                          <span className="text-amber-400 text-sm font-bold">
-                            ★ {fb.rating_overall ? `${fb.rating_overall} / 5` : 'Rating Tersimpan'}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-slate-400">Kepuasan Keseluruhan:</span>
+                          <div className="flex items-center gap-1 bg-amber-500/15 px-3 py-1 rounded-full border border-amber-500/30 text-amber-300 font-bold text-xs">
+                            ★ {fb.rating_overall ? `${fb.rating_overall} / 5` : '-'}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Custom feedback question answers */}
-                      {fb.data_respons && Object.keys(fb.data_respons).length > 0 && (
-                        <div className="pt-3 border-t border-slate-700/40 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {Object.entries(fb.data_respons).map(([q, ans], i) => {
-                            const isNumericRating = typeof ans === 'number' || (!isNaN(Number(ans)) && q.toLowerCase().includes('rating'));
-                            const isScale = q.toLowerCase().includes('skala');
-
-                            return (
-                              <div key={i} className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-700/40 text-xs">
-                                <span className="text-slate-400 font-semibold block mb-0.5">{q}:</span>
-                                {isNumericRating ? (
-                                  <span className="text-amber-300 font-bold flex items-center gap-1">
-                                    ★ {String(ans)} / 5 Bintang
-                                  </span>
-                                ) : isScale ? (
-                                  <span className="text-indigo-300 font-mono font-bold">
-                                    Skala {String(ans)} / 10
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-200 whitespace-pre-line break-words">{String(ans)}</span>
-                                )}
-                              </div>
-                            );
-                          })}
+                      {/* Overall Note Callout if provided */}
+                      {overallNote && (
+                        <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs">
+                          <span className="text-indigo-300 font-semibold block mb-0.5">💬 Kesan & Ulasan Keseluruhan:</span>
+                          <p className="text-white italic">"{String(overallNote)}"</p>
                         </div>
                       )}
 
-                      <p className="text-[10px] text-slate-500 text-right">
-                        {new Date(fb.created_at).toLocaleString('id-ID', {
+                      {/* Paired Sub-unit Questions & Ratings Grid (Bersebelahan) */}
+                      <div className="space-y-2.5">
+                        {feedbackSchema.map((field, i) => {
+                          const val = fb.data_respons?.[field.label];
+                          const note = fb.data_respons?.[`${field.label}__catatan`];
+
+                          if (field.type === 'rating' || field.type === 'scale') {
+                            return (
+                              <div
+                                key={i}
+                                className="p-3 rounded-xl bg-slate-900/70 border border-slate-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                              >
+                                {/* Left Side: Question Label & Rating/Scale Score Badge */}
+                                <div className="sm:w-1/3 min-w-[200px]">
+                                  <span className="text-slate-300 font-semibold text-xs block mb-1.5">{field.label}</span>
+                                  {field.type === 'rating' ? (
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs">
+                                      <span>★ {val !== undefined ? `${val} / 5` : '-'}</span>
+                                      <span className="text-[10px] text-amber-400/70 font-normal">Bintang</span>
+                                    </div>
+                                  ) : (
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-mono font-bold text-xs">
+                                      <span>📊 Skala {val !== undefined ? `${val} / 10` : '-'}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Right Side: Sub-unit Text Feedback (Bersebelahan) */}
+                                <div className="flex-1 bg-slate-800/70 p-2.5 rounded-lg border border-slate-700/50 text-xs">
+                                  <span className="text-[10px] text-slate-400 font-medium block mb-0.5">Catatan / Alasan Masukan:</span>
+                                  {note ? (
+                                    <p className="text-white italic">"{String(note)}"</p>
+                                  ) : (
+                                    <p className="text-slate-500 italic text-[11px]">— Tidak ada catatan tambahan</p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          if (field.type === 'textarea' || field.type === 'text') {
+                            return (
+                              <div key={i} className="p-3 rounded-xl bg-slate-900/70 border border-slate-700/50 text-xs space-y-1">
+                                <span className="text-slate-400 font-semibold block">{field.label}:</span>
+                                <p className="text-slate-200 whitespace-pre-line bg-slate-800/60 p-2 rounded-lg border border-slate-700/40">
+                                  {val ? String(val) : <span className="text-slate-500 italic">— Kosong</span>}
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          return null;
+                        })}
+                      </div>
+
+                      <div className="pt-2 text-[10px] text-slate-500 text-right">
+                        Dikirim: {new Date(fb.created_at).toLocaleString('id-ID', {
                           day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
                         })}
-                      </p>
+                      </div>
                     </div>
                   );
                 })}

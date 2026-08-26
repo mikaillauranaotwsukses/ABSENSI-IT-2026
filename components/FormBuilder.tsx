@@ -294,6 +294,16 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                       </p>
                     )}
 
+                    {/* Rating & Scale hint */}
+                    {(field.type === 'rating' || field.type === 'scale') && (
+                      <p className="text-[11px] text-amber-400/80 bg-amber-500/10 px-2.5 py-1.5 rounded-lg border border-amber-500/20 flex items-center gap-1.5">
+                        <span>💡</span>
+                        <span>
+                          {field.type === 'rating' ? 'Rating Bintang (1-5)' : 'Skala Nilai (1-10)'} otomatis menyertakan sub-unit kolom teks masukan/alasan di bawahnya bagi peserta.
+                        </span>
+                      </p>
+                    )}
+
                     {/* Required toggle */}
                     <label
                       className="flex items-center gap-2 cursor-pointer w-fit"
