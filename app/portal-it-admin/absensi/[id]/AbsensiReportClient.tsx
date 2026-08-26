@@ -1018,20 +1018,37 @@ export default function AbsensiReportClient({
                           <p className="text-white font-bold text-sm">{anggotaInfo?.nama || fb.nrp}</p>
                           <p className="text-slate-400 text-[11px] font-mono">{fb.nrp} • {anggotaInfo?.program_studi}</p>
                         </div>
-                        <div className="flex items-center gap-1 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
-                          <span className="text-amber-400 text-sm font-bold">★ {fb.rating_overall || 5}</span>
+                        <div className="flex items-center gap-1 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+                          <span className="text-amber-400 text-sm font-bold">
+                            ★ {fb.rating_overall ? `${fb.rating_overall} / 5` : 'Rating Tersimpan'}
+                          </span>
                         </div>
                       </div>
 
                       {/* Custom feedback question answers */}
                       {fb.data_respons && Object.keys(fb.data_respons).length > 0 && (
-                        <div className="pt-2 border-t border-slate-700/30 space-y-1.5">
-                          {Object.entries(fb.data_respons).map(([q, ans], i) => (
-                            <div key={i} className="text-xs">
-                              <span className="text-slate-400 font-medium">{q}:</span>{' '}
-                              <span className="text-slate-200">{String(ans)}</span>
-                            </div>
-                          ))}
+                        <div className="pt-3 border-t border-slate-700/40 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {Object.entries(fb.data_respons).map(([q, ans], i) => {
+                            const isNumericRating = typeof ans === 'number' || (!isNaN(Number(ans)) && q.toLowerCase().includes('rating'));
+                            const isScale = q.toLowerCase().includes('skala');
+
+                            return (
+                              <div key={i} className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-700/40 text-xs">
+                                <span className="text-slate-400 font-semibold block mb-0.5">{q}:</span>
+                                {isNumericRating ? (
+                                  <span className="text-amber-300 font-bold flex items-center gap-1">
+                                    ★ {String(ans)} / 5 Bintang
+                                  </span>
+                                ) : isScale ? (
+                                  <span className="text-indigo-300 font-mono font-bold">
+                                    Skala {String(ans)} / 10
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-200 whitespace-pre-line break-words">{String(ans)}</span>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
 

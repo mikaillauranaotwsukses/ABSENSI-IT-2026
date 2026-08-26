@@ -35,7 +35,7 @@ export default function AbsensiForm({ event }: Props) {
   const [feedbackResponses,   setFeedbackResponses]   = useState<Record<string, any>>({});
   const [feedbackSubmitState, setFeedbackSubmitState] = useState<SubmitState>('idle');
   const [feedbackErrorMsg,    setFeedbackErrorMsg]    = useState('');
-  const [overallRating,       setOverallRating]       = useState<number>(5);
+  const [overallRating,       setOverallRating]       = useState<number>(0); // 0 = Kosong (wajib diklik)
 
   // Dynamic feedback schema (fallback to standard if not configured)
   const feedbackSchema: FormField[] = (event.feedback_schema && event.feedback_schema.length > 0)
@@ -211,6 +211,35 @@ export default function AbsensiForm({ event }: Props) {
 
     setFeedbackSubmitState('loading');
     setFeedbackErrorMsg('');
+
+    // Validasi rating keseluruhan harus dipilih (tidak boleh 0)
+    if (!overallRating || overallRating < 1) {
+      setFeedbackSubmitState('error');
+      setFeedbackErrorMsg('Silakan klik bintang untuk memberikan rating kepuasan acara terlebih dahulu.');
+      return;
+    }
+
+    // Validasi field feedback dinamis yang required
+    for (const field of feedbackSchema) {
+      if (field.required) {
+        const val = feedbackResponses[field.label];
+        if (field.type === 'rating' && (!val || Number(val) < 1)) {
+          setFeedbackSubmitState('error');
+          setFeedbackErrorMsg(`Silakan klik bintang rating untuk "${field.label}".`);
+          return;
+        }
+        if (field.type === 'scale' && (!val || Number(val) < 1)) {
+          setFeedbackSubmitState('error');
+          setFeedbackErrorMsg(`Silakan pilih skala untuk "${field.label}".`);
+          return;
+        }
+        if (!val || String(val).trim() === '') {
+          setFeedbackSubmitState('error');
+          setFeedbackErrorMsg(`Pertanyaan "${field.label}" wajib diisi.`);
+          return;
+        }
+      }
+    }
 
     try {
       const res = await fetch('/api/member/feedback', {
@@ -687,76 +716,103 @@ export default function AbsensiForm({ event }: Props) {
           {isEditingFeedback && feedbackSubmitState !== 'success' && (
             <form onSubmit={handleFeedbackSubmit} className="space-y-5 fade-in">
               {/* Overall Star Rating */}
-              <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/50 text-center space-y-2">
+              <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/60 text-center space-y-2.5">
                 <label className="block text-sm font-semibold text-slate-200">
                   Seberapa puas Anda dengan acara ini secara keseluruhan? <span className="text-red-400">*</span>
                 </label>
-                <div className="flex items-center justify-center gap-2 py-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setOverallRating(star)}
-                      className="text-3xl sm:text-4xl transition-transform hover:scale-125 focus:outline-none"
-                    >
-                      <span className={star <= overallRating ? 'text-amber-400 drop-shadow-md' : 'text-slate-600'}>
-                        ★
-                      </span>
-                    </button>
-                  ))}
+                <div className="flex items-center justify-center gap-3 py-2">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const isSelected = overallRating > 0 && star <= overallRating;
+                    return (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setOverallRating(star)}
+                        className="p-1 text-3xl sm:text-4xl transition-all hover:scale-125 focus:outline-none"
+                        title={`${star} Bintang`}
+                      >
+                        <span className={isSelected ? 'text-amber-400 drop-shadow-md' : 'text-slate-500 hover:text-amber-300'}>
+                          {isSelected ? '★' : '☆'}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-                <p className="text-xs text-amber-300 font-semibold">
-                  {overallRating === 5 && '🌟 Sangat Puas / Luar Biasa!'}
-                  {overallRating === 4 && '👍 Puas / Bagus Sekali'}
-                  {overallRating === 3 && '👌 Cukup / Rata-rata'}
-                  {overallRating === 2 && '👎 Kurang Puas'}
-                  {overallRating === 1 && '⚠️ Sangat Kurang'}
-                </p>
+                <div className="text-xs">
+                  {overallRating === 0 ? (
+                    <span className="text-indigo-300/80 italic font-medium">
+                      👆 Klik salah satu bintang di atas untuk memberi rating (1 - 5)
+                    </span>
+                  ) : overallRating === 5 ? (
+                    <span className="text-amber-300 font-bold">🌟 Sangat Puas / Luar Biasa! (5/5)</span>
+                  ) : overallRating === 4 ? (
+                    <span className="text-amber-300 font-bold">👍 Puas / Bagus Sekali (4/5)</span>
+                  ) : overallRating === 3 ? (
+                    <span className="text-amber-300 font-bold">👌 Cukup / Rata-rata (3/5)</span>
+                  ) : overallRating === 2 ? (
+                    <span className="text-amber-300 font-bold">👎 Kurang Puas (2/5)</span>
+                  ) : (
+                    <span className="text-amber-300 font-bold">⚠️ Sangat Kurang (1/5)</span>
+                  )}
+                </div>
               </div>
 
               {/* Dynamic feedback custom fields */}
               {feedbackSchema.map((field, idx) => {
                 if (field.type === 'rating') {
-                  const currentVal = Number(feedbackResponses[field.label] || 5);
+                  const currentVal = feedbackResponses[field.label] !== undefined ? Number(feedbackResponses[field.label]) : 0;
                   return (
-                    <div key={idx} className="space-y-2">
+                    <div key={idx} className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2">
                       <label className="block text-sm font-medium text-slate-300">
                         {field.label} {field.required && <span className="text-red-400">*</span>}
                       </label>
                       <div className="flex items-center gap-2">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <button
-                            key={s}
-                            type="button"
-                            onClick={() => setFeedbackResponses((prev) => ({ ...prev, [field.label]: s }))}
-                            className={`text-2xl transition-transform hover:scale-110 ${s <= currentVal ? 'text-amber-400' : 'text-slate-600'}`}
-                          >
-                            ★
-                          </button>
-                        ))}
-                        <span className="text-xs text-slate-400 ml-2">{currentVal} / 5</span>
+                        {[1, 2, 3, 4, 5].map((s) => {
+                          const isSel = currentVal > 0 && s <= currentVal;
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setFeedbackResponses((prev) => ({ ...prev, [field.label]: s }))}
+                              className="text-2xl sm:text-3xl transition-transform hover:scale-110 focus:outline-none"
+                              title={`${s} Bintang`}
+                            >
+                              <span className={isSel ? 'text-amber-400 drop-shadow-sm' : 'text-slate-500 hover:text-amber-300'}>
+                                {isSel ? '★' : '☆'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                        <span className="text-xs text-slate-400 ml-2">
+                          {currentVal > 0 ? `${currentVal} / 5 Bintang` : <span className="text-slate-500 italic">Belum dipilih</span>}
+                        </span>
                       </div>
                     </div>
                   );
                 }
 
                 if (field.type === 'scale') {
-                  const currentScale = Number(feedbackResponses[field.label] || 8);
+                  const currentScale = feedbackResponses[field.label] !== undefined ? Number(feedbackResponses[field.label]) : null;
                   return (
-                    <div key={idx} className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-300">
-                        {field.label} {field.required && <span className="text-red-400">*</span>}
-                      </label>
-                      <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+                    <div key={idx} className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-slate-300">
+                          {field.label} {field.required && <span className="text-red-400">*</span>}
+                        </label>
+                        <span className="text-xs text-indigo-300 font-mono">
+                          {currentScale !== null ? `Skala: ${currentScale}/10` : <span className="text-slate-500 italic">Belum dipilih</span>}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 pt-1">
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                           <button
                             key={num}
                             type="button"
                             onClick={() => setFeedbackResponses((prev) => ({ ...prev, [field.label]: num }))}
-                            className={`py-2 rounded-lg text-xs font-bold transition-all ${
+                            className={`py-2 rounded-xl text-xs font-bold transition-all ${
                               currentScale === num
-                                ? 'bg-indigo-600 text-white glow-indigo scale-105'
-                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                ? 'bg-indigo-600 text-white glow-indigo scale-105 shadow-md'
+                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700'
                             }`}
                           >
                             {num}
