@@ -25,7 +25,7 @@ export default async function EditEventPage({ params }: Props) {
 
   return (
     <main className="min-h-screen animated-bg text-white">
-      <div className="blob w-96 h-96 bg-indigo-700 fixed -top-24 -left-24 pointer-events-none" />
+      <div className="fixed w-96 h-96 rounded-full bg-indigo-700/20 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8 slide-up">
           <Link href="/portal-it-admin/events" className="text-slate-400 hover:text-white transition-colors">

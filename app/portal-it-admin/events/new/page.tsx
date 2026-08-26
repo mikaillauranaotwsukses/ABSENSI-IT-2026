@@ -228,8 +228,8 @@ function NewEventContent() {
 
   return (
     <main className="min-h-screen animated-bg text-white">
-      <div className="blob w-96 h-96 bg-indigo-700 fixed -top-24 -left-24 pointer-events-none" />
-      <div className="blob w-72 h-72 bg-purple-700 fixed bottom-0 right-0 translate-x-1/4 translate-y-1/4 pointer-events-none" />
+      <div className="fixed w-96 h-96 rounded-full bg-indigo-700/20 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
+      <div className="fixed w-72 h-72 rounded-full bg-purple-700/20 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6 slide-up">

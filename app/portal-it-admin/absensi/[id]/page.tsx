@@ -48,7 +48,7 @@ export default async function AbsensiReportPage({ params }: Props) {
 
   return (
     <main className="min-h-screen animated-bg text-white">
-      <div className="blob w-96 h-96 bg-indigo-700 fixed -top-24 -left-24 pointer-events-none" />
+      <div className="fixed w-96 h-96 rounded-full bg-indigo-700/20 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
         {/* Header Navigation */}

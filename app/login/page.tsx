@@ -40,8 +40,8 @@ export default function MemberLoginPage() {
   return (
     <main className="min-h-screen animated-bg flex items-center justify-center px-4 py-8 relative overflow-hidden">
       {/* Background Tech Orbs */}
-      <div className="blob w-96 h-96 bg-blue-600/20 -top-24 -left-24 pointer-events-none" />
-      <div className="blob w-80 h-80 bg-amber-500/15 bottom-0 right-0 pointer-events-none" />
+      <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
+      <div className="fixed w-80 h-80 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
       <div className="relative z-10 w-full max-w-md scale-in space-y-6">
         {/* Brand Header */}

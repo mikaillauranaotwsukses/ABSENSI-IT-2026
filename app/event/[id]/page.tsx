@@ -24,8 +24,8 @@ export default async function EventPage({ params }: Props) {
   return (
     <main className="min-h-screen animated-bg text-white relative overflow-hidden">
       {/* Background Decorative Tech Blobs */}
-      <div className="blob w-96 h-96 bg-blue-600/15 top-0 left-0 -translate-x-1/4 pointer-events-none" />
-      <div className="blob w-80 h-80 bg-amber-500/10 bottom-0 right-0 pointer-events-none" />
+      <div className="fixed w-96 h-96 rounded-full bg-blue-600/12 top-0 left-0 -translate-x-1/4 -translate-y-1/4 blur-3xl pointer-events-none z-0" />
+      <div className="fixed w-80 h-80 rounded-full bg-amber-500/8 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 sm:py-12 space-y-6">
         {/* Back link */}
