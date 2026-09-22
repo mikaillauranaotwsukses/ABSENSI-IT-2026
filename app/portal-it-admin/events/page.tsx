@@ -71,7 +71,19 @@ export default async function EventsPage() {
                       <tr key={ev.id} className="hover:bg-slate-800/30 transition-colors">
                         <td className="px-6 py-4">
                           <div>
-                            <p className="text-white font-medium">{ev.nama_event}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-white font-medium">{ev.nama_event}</p>
+                              {ev.is_qr_enabled === false && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700" title="Fitur Tiket QR dinonaktifkan">
+                                  QR Off
+                                </span>
+                              )}
+                              {ev.is_feedback_enabled === false && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700" title="Fitur Feedback dinonaktifkan">
+                                  Feedback Off
+                                </span>
+                              )}
+                            </div>
                             {ev.deskripsi && (
                               <p className="text-slate-500 text-xs mt-0.5 line-clamp-1">{ev.deskripsi}</p>
                             )}

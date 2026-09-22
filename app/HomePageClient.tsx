@@ -286,21 +286,25 @@ export default function HomePageClient({ events, error }: Props) {
                           </div>
 
                           <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
-                            memberAbs?.is_qr_scanned
+                            event.is_qr_enabled === false
+                              ? 'bg-slate-900/40 border-slate-800/80 text-slate-600'
+                              : memberAbs?.is_qr_scanned
                               ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
                               : 'bg-slate-900/60 border-slate-800 text-slate-500'
                           }`}>
                             <DeviceMobile size={14} weight={memberAbs?.is_qr_scanned ? 'fill' : 'regular'} />
-                            {memberAbs?.is_qr_scanned ? 'QR Discan' : 'QR Belum'}
+                            {event.is_qr_enabled === false ? 'QR Off' : memberAbs?.is_qr_scanned ? 'QR Discan' : 'QR Belum'}
                           </div>
 
                           <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
-                            memberFb
+                            event.is_feedback_enabled === false
+                              ? 'bg-slate-900/40 border-slate-800/80 text-slate-600'
+                              : memberFb
                               ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
                               : 'bg-slate-900/60 border-slate-800 text-slate-500'
                           }`}>
                             <Star size={14} weight={memberFb ? 'fill' : 'regular'} />
-                            {memberFb ? 'Feedback OK' : 'Feedback Belum'}
+                            {event.is_feedback_enabled === false ? 'Feedback Off' : memberFb ? 'Feedback OK' : 'Feedback Belum'}
                           </div>
                         </div>
                       )}

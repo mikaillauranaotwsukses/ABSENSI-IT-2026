@@ -40,6 +40,8 @@ export interface Event {
   nama_event: string;
   deskripsi: string;
   status: boolean;
+  is_qr_enabled?: boolean;              // Whether QR ticket check-in is enabled (default: true)
+  is_feedback_enabled?: boolean;        // Whether feedback tab/form is enabled (default: true)
   form_schema: FormField[];
   feedback_schema?: FormField[];        // Dynamic custom feedback schema
   created_at: string;

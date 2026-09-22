@@ -34,6 +34,7 @@ export default function AbsensiReportClient({
 }: Props) {
   const supabase = createClient();
   const router   = useRouter();
+  const isQrEnabled = event.is_qr_enabled !== false;
 
   const [mainTab, setMainTab] = useState<MainViewTab>('kehadiran');
 
@@ -89,10 +90,10 @@ export default function AbsensiReportClient({
       const abs = absensiMap[a.nrp] ?? null;
       const fb  = feedbackMap[a.nrp] ?? null;
       const isFormFilled = !!(abs?.is_form_filled || (abs?.data_respons && Object.keys(abs.data_respons).length > 0));
-      const isQrScanned  = !!abs?.is_qr_scanned;
-      const isHadirLengkap = isFormFilled && isQrScanned;
-      const isHadirSebagian = (isFormFilled || isQrScanned) && !isHadirLengkap;
-      const isMangkir = !isFormFilled && !isQrScanned;
+      const isQrScanned  = isQrEnabled ? !!abs?.is_qr_scanned : false;
+      const isHadirLengkap = isQrEnabled ? (isFormFilled && isQrScanned) : isFormFilled;
+      const isHadirSebagian = isQrEnabled ? ((isFormFilled || isQrScanned) && !isHadirLengkap) : false;
+      const isMangkir = isQrEnabled ? (!isFormFilled && !isQrScanned) : !isFormFilled;
 
       return {
         ...a,
@@ -107,7 +108,7 @@ export default function AbsensiReportClient({
         feedback:       fb,
       };
     }),
-    [allAnggota, absensiMap, feedbackMap]
+    [allAnggota, absensiMap, feedbackMap, isQrEnabled]
   );
 
   // KPI Counts
@@ -194,8 +195,10 @@ export default function AbsensiReportClient({
     if (filterForm === 'no')  list = list.filter((a) => !a.is_form_filled);
 
     // QR status binary filter
-    if (filterQr === 'yes') list = list.filter((a) => a.is_qr_scanned);
-    if (filterQr === 'no')  list = list.filter((a) => !a.is_qr_scanned);
+    if (isQrEnabled) {
+      if (filterQr === 'yes') list = list.filter((a) => a.is_qr_scanned);
+      if (filterQr === 'no')  list = list.filter((a) => !a.is_qr_scanned);
+    }
 
     // Prodi filter
     if (selectedProdi !== 'all') {
@@ -307,7 +310,7 @@ export default function AbsensiReportClient({
         'Nama Lengkap',
         'Program Studi',
         'Status Form',
-        'Status QR',
+        isQrEnabled ? 'Status QR' : 'Status QR (Nonaktif)',
         'Waktu Absen',
         ...formFields.slice(0, 3).map((f) => f.label),
       ];
@@ -318,7 +321,7 @@ export default function AbsensiReportClient({
         a.nama,
         a.program_studi,
         a.is_form_filled ? 'Sudah Form' : 'Belum',
-        a.is_qr_scanned ? 'Sudah Scan' : 'Belum',
+        isQrEnabled ? (a.is_qr_scanned ? 'Sudah Scan' : 'Belum') : 'Nonaktif',
         a.absensi?.qr_scanned_at
           ? new Date(a.absensi.qr_scanned_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
           : (a.absensi?.created_at
@@ -476,7 +479,7 @@ export default function AbsensiReportClient({
       'Nama',
       'Program Studi',
       'Status Form',
-      'Status Scan QR',
+      isQrEnabled ? 'Status Scan QR' : 'Status QR (Nonaktif)',
       'Hadir Total',
       'Waktu Form',
       'Waktu Scan QR',
@@ -489,7 +492,7 @@ export default function AbsensiReportClient({
       `"${a.nama}"`,
       `"${a.program_studi}"`,
       a.is_form_filled ? 'Sudah' : 'Belum',
-      a.is_qr_scanned ? 'Sudah' : 'Belum',
+      isQrEnabled ? (a.is_qr_scanned ? 'Sudah' : 'Belum') : 'Nonaktif',
       a.hadir ? 'Hadir' : 'Tidak Hadir',
       a.absensi?.created_at ? `"${new Date(a.absensi.created_at).toISOString()}"` : '""',
       a.absensi?.qr_scanned_at ? `"${new Date(a.absensi.qr_scanned_at).toISOString()}"` : '""',
@@ -509,7 +512,7 @@ export default function AbsensiReportClient({
   const isFilterActive =
     combinedStatus !== 'all' ||
     filterForm !== 'all' ||
-    filterQr !== 'all' ||
+    (isQrEnabled && filterQr !== 'all') ||
     selectedProdi !== 'all' ||
     selectedRespField !== 'all' ||
     search.trim() !== '';
@@ -555,22 +558,33 @@ export default function AbsensiReportClient({
         </button>
 
         {/* 3. Sudah Scan QR */}
-        <button
-          type="button"
-          onClick={() => { resetFilters(); setFilterQr('yes'); }}
-          className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
-            filterQr === 'yes' && combinedStatus === 'all'
-              ? 'bg-cyan-600/25 border-cyan-500 shadow-lg'
-              : 'glass-card border-slate-700/50 hover:border-slate-500'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-cyan-400 mb-1">
-            <span>📱 Sudah QR</span>
-            <span className="text-[10px]">{Math.round((countQrScanned / totalAnggota) * 100)}%</span>
+        {isQrEnabled ? (
+          <button
+            type="button"
+            onClick={() => { resetFilters(); setFilterQr('yes'); }}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              filterQr === 'yes' && combinedStatus === 'all'
+                ? 'bg-cyan-600/25 border-cyan-500 shadow-lg'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-cyan-400 mb-1">
+              <span>📱 Sudah QR</span>
+              <span className="text-[10px]">{Math.round((countQrScanned / totalAnggota) * 100)}%</span>
+            </div>
+            <p className="text-2xl font-extrabold text-cyan-300">{countQrScanned}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Check-in Lokasi</p>
+          </button>
+        ) : (
+          <div className="p-4 rounded-2xl border text-left glass-card border-slate-800 opacity-50 cursor-not-allowed">
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+              <span>📱 QR Check-in</span>
+              <span className="text-[10px] uppercase font-mono">Off</span>
+            </div>
+            <p className="text-2xl font-extrabold text-slate-500">-</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">Fitur Nonaktif</p>
           </div>
-          <p className="text-2xl font-extrabold text-cyan-300">{countQrScanned}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Check-in Lokasi</p>
-        </button>
+        )}
 
         {/* 4. Hadir Lengkap */}
         <button
@@ -587,25 +601,28 @@ export default function AbsensiReportClient({
             <span className="text-[10px]">{Math.round((countLengkap / totalAnggota) * 100)}%</span>
           </div>
           <p className="text-2xl font-extrabold text-green-300">{countLengkap}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Form + Scan QR</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">{isQrEnabled ? 'Form + Scan QR' : 'Isi Form Presensi'}</p>
         </button>
 
         {/* 5. Hadir Sebagian */}
         <button
           type="button"
-          onClick={() => { resetFilters(); setCombinedStatus('sebagian'); }}
-          className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
-            combinedStatus === 'sebagian'
-              ? 'bg-amber-600/25 border-amber-500 shadow-lg'
-              : 'glass-card border-slate-700/50 hover:border-slate-500'
+          onClick={() => { if (isQrEnabled) { resetFilters(); setCombinedStatus('sebagian'); } }}
+          disabled={!isQrEnabled}
+          className={`p-4 rounded-2xl border text-left transition-all ${
+            !isQrEnabled
+              ? 'glass-card border-slate-800 opacity-40 cursor-not-allowed'
+              : combinedStatus === 'sebagian'
+              ? 'bg-amber-600/25 border-amber-500 shadow-lg hover:scale-102'
+              : 'glass-card border-slate-700/50 hover:border-slate-500 hover:scale-102'
           }`}
         >
           <div className="flex items-center justify-between text-xs text-amber-400 mb-1">
             <span>⚠️ Sebagian</span>
-            <span className="text-[10px]">{Math.round((countSebagian / totalAnggota) * 100)}%</span>
+            <span className="text-[10px]">{isQrEnabled ? `${Math.round((countSebagian / totalAnggota) * 100)}%` : '0%'}</span>
           </div>
-          <p className="text-2xl font-extrabold text-amber-300">{countSebagian}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Hanya 1 Status</p>
+          <p className="text-2xl font-extrabold text-amber-300">{isQrEnabled ? countSebagian : 0}</p>
+          <p className="text-[10px] text-slate-400 mt-0.5">{isQrEnabled ? 'Hanya 1 Status' : 'Tidak Berlaku (QR Off)'}</p>
         </button>
 
         {/* 6. Belum Hadir / Mangkir */}
@@ -744,15 +761,24 @@ export default function AbsensiReportClient({
               {/* Status QR */}
               <div>
                 <label className="block text-[10px] text-slate-400 mb-1">Status Scan QR Lokasi:</label>
-                <select
-                  value={filterQr}
-                  onChange={(e) => setFilterQr(e.target.value as StatusBinaryFilter)}
-                  className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
-                >
-                  <option value="all">Semua Status QR</option>
-                  <option value="yes">✓ Sudah Scan QR ({countQrScanned})</option>
-                  <option value="no">❌ Belum Scan QR ({totalAnggota - countQrScanned})</option>
-                </select>
+                {isQrEnabled ? (
+                  <select
+                    value={filterQr}
+                    onChange={(e) => setFilterQr(e.target.value as StatusBinaryFilter)}
+                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="all">Semua Status QR</option>
+                    <option value="yes">✓ Sudah Scan QR ({countQrScanned})</option>
+                    <option value="no">❌ Belum Scan QR ({totalAnggota - countQrScanned})</option>
+                  </select>
+                ) : (
+                  <select
+                    disabled
+                    className="w-full bg-slate-900/60 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-500 cursor-not-allowed"
+                  >
+                    <option>QR Dinonaktifkan (Off)</option>
+                  </select>
+                )}
               </div>
 
               {/* Program Studi */}
@@ -842,10 +868,10 @@ export default function AbsensiReportClient({
                       Status Form {sortKey === 'form_status' && (sortOrder === 'asc' ? '↑' : '↓')}
                     </th>
                     <th
-                      className="py-3 px-3 text-center cursor-pointer hover:text-white transition-colors"
-                      onClick={() => handleSort('qr_status')}
+                      className={`py-3 px-3 text-center ${isQrEnabled ? 'cursor-pointer hover:text-white transition-colors' : 'text-slate-600'}`}
+                      onClick={() => { if (isQrEnabled) handleSort('qr_status'); }}
                     >
-                      Status QR {sortKey === 'qr_status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      Status QR {isQrEnabled ? (sortKey === 'qr_status' && (sortOrder === 'asc' ? '↑' : '↓')) : <span className="text-[10px] font-normal block text-slate-500">(Nonaktif)</span>}
                     </th>
                     <th
                       className="py-3 px-3 cursor-pointer hover:text-white transition-colors hidden lg:table-cell"
@@ -901,7 +927,11 @@ export default function AbsensiReportClient({
 
                         {/* Status Scan QR */}
                         <td className="py-3 px-3 text-center">
-                          {row.is_qr_scanned ? (
+                          {!isQrEnabled ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/60 text-slate-500 text-[10px]">
+                              Nonaktif
+                            </span>
+                          ) : row.is_qr_scanned ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[10px] font-bold">
                               ✓ Scan QR
                             </span>
@@ -1000,27 +1030,50 @@ export default function AbsensiReportClient({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* 1. Belum Scan QR di Lokasi */}
-            <div className="glass-card rounded-2xl p-5 border border-cyan-500/20 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
-                <h4 className="font-bold text-cyan-300 text-sm flex items-center gap-1.5">
-                  <span>📱</span> Belum Scan QR Lokasi ({totalAnggota - countQrScanned})
-                </h4>
-              </div>
-              <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
-                {merged.filter((a) => !a.is_qr_scanned).map((a, i) => (
-                  <div key={a.nrp} className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 flex items-center justify-between text-xs">
-                    <div>
-                      <p className="text-white font-semibold">{i + 1}. {a.nama}</p>
-                      <p className="text-slate-400 font-mono text-[10px]">{a.nrp} • {a.program_studi}</p>
+            {/* 1. Belum Scan QR / Belum Isi Form */}
+            {isQrEnabled ? (
+              <div className="glass-card rounded-2xl p-5 border border-cyan-500/20 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
+                  <h4 className="font-bold text-cyan-300 text-sm flex items-center gap-1.5">
+                    <span>📱</span> Belum Scan QR Lokasi ({totalAnggota - countQrScanned})
+                  </h4>
+                </div>
+                <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+                  {merged.filter((a) => !a.is_qr_scanned).map((a, i) => (
+                    <div key={a.nrp} className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="text-white font-semibold">{i + 1}. {a.nama}</p>
+                        <p className="text-slate-400 font-mono text-[10px]">{a.nrp} • {a.program_studi}</p>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${a.is_form_filled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+                        {a.is_form_filled ? 'Form OK' : 'Form Belum'}
+                      </span>
                     </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${a.is_form_filled ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
-                      {a.is_form_filled ? 'Form OK' : 'Form Belum'}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="glass-card rounded-2xl p-5 border border-emerald-500/20 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
+                  <h4 className="font-bold text-emerald-300 text-sm flex items-center gap-1.5">
+                    <span>📝</span> Belum Isi Form Presensi ({totalAnggota - countFormFilled})
+                  </h4>
+                </div>
+                <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+                  {merged.filter((a) => !a.is_form_filled).map((a, i) => (
+                    <div key={a.nrp} className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/50 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="text-white font-semibold">{i + 1}. {a.nama}</p>
+                        <p className="text-slate-400 font-mono text-[10px]">{a.nrp} • {a.program_studi}</p>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-300">
+                        Belum Isi
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 2. Mangkir / Belum Ada Aktivitas Sama Sekali */}
             <div className="glass-card rounded-2xl p-5 border border-red-500/20 space-y-3">

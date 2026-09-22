@@ -23,12 +23,24 @@ type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 export default function AbsensiForm({ event }: Props) {
   const supabase = createClient();
   const { member, loading: authLoading } = useMemberAuth();
+  const isQrEnabled       = event.is_qr_enabled !== false;
+  const isFeedbackEnabled = event.is_feedback_enabled !== false;
 
   const [tabMode,          setTabMode]          = useState<TabMode>('form');
   const [existingAbsensi,  setExistingAbsensi]  = useState<Absensi | null>(null);
   const [existingFeedback, setExistingFeedback] = useState<Feedback | null>(null);
   const [isEditing,        setIsEditing]        = useState(false);
   const [isEditingFeedback,setIsEditingFeedback]= useState(false);
+
+  // Fallback if current active tab is disabled
+  useEffect(() => {
+    if (!isQrEnabled && tabMode === 'qr') {
+      setTabMode('form');
+    }
+    if (!isFeedbackEnabled && tabMode === 'feedback') {
+      setTabMode('form');
+    }
+  }, [isQrEnabled, isFeedbackEnabled, tabMode]);
 
   // Form Absensi state
   const [responses,   setResponses]   = useState<Record<string, string>>({});
@@ -318,18 +330,22 @@ export default function AbsensiForm({ event }: Props) {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
-          <button
-            onClick={() => { setSubmitState('idle'); setTabMode('qr'); }}
-            className="btn-secondary h-11 text-xs uppercase tracking-wider font-bold"
-          >
-            <DeviceMobile size={15} weight="bold" /> Tampilkan Tiket QR
-          </button>
-          <button
-            onClick={() => { setSubmitState('idle'); setTabMode('feedback'); }}
-            className="btn-primary h-11 text-xs uppercase tracking-wider font-bold"
-          >
-            <Star size={15} weight="fill" /> Isi Feedback Acara
-          </button>
+          {isQrEnabled && (
+            <button
+              onClick={() => { setSubmitState('idle'); setTabMode('qr'); }}
+              className="btn-secondary h-11 text-xs uppercase tracking-wider font-bold"
+            >
+              <DeviceMobile size={15} weight="bold" /> Tampilkan Tiket QR
+            </button>
+          )}
+          {isFeedbackEnabled && (
+            <button
+              onClick={() => { setSubmitState('idle'); setTabMode('feedback'); }}
+              className="btn-primary h-11 text-xs uppercase tracking-wider font-bold"
+            >
+              <Star size={15} weight="fill" /> Isi Feedback Acara
+            </button>
+          )}
           <a href="/" className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors inline-flex items-center justify-center">
             Kembali ke Beranda
           </a>
@@ -358,48 +374,54 @@ export default function AbsensiForm({ event }: Props) {
         </div>
       </div>
 
-      {/* ── 3-Tab Selector Bar (IFEST 2026 Segmented Control) ── */}
-      <div className="grid grid-cols-3 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 slide-up gap-1.5">
-        <button
-          type="button"
-          onClick={() => setTabMode('form')}
-          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
-            tabMode === 'form'
-              ? 'bg-[#214afe] text-white shadow-lg'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <NotePencil size={15} weight="bold" />
-          <span className="hidden sm:inline">Form</span> Keterangan
-        </button>
-        <button
-          type="button"
-          onClick={() => setTabMode('qr')}
-          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
-            tabMode === 'qr'
-              ? 'bg-[#ffc878] text-slate-950 shadow-lg'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <DeviceMobile size={15} weight="bold" />
-          Tiket QR <span className="hidden sm:inline">Saya</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setTabMode('feedback')}
-          className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
-            tabMode === 'feedback'
-              ? 'bg-[#214afe] text-white shadow-lg'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Star size={15} weight={tabMode === 'feedback' ? 'fill' : 'regular'} />
-          Feedback <span className="hidden sm:inline">Acara</span>
-        </button>
-      </div>
+      {/* ── Tab Selector Bar (IFEST 2026 Segmented Control) ── */}
+      {(isQrEnabled || isFeedbackEnabled) && (
+        <div className={`grid ${isQrEnabled && isFeedbackEnabled ? 'grid-cols-3' : 'grid-cols-2'} p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 slide-up gap-1.5`}>
+          <button
+            type="button"
+            onClick={() => setTabMode('form')}
+            className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+              tabMode === 'form'
+                ? 'bg-[#214afe] text-white shadow-lg'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <NotePencil size={15} weight="bold" />
+            <span className="hidden sm:inline">Form</span> Keterangan
+          </button>
+          {isQrEnabled && (
+            <button
+              type="button"
+              onClick={() => setTabMode('qr')}
+              className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+                tabMode === 'qr'
+                  ? 'bg-[#ffc878] text-slate-950 shadow-lg'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <DeviceMobile size={15} weight="bold" />
+              Tiket QR <span className="hidden sm:inline">Saya</span>
+            </button>
+          )}
+          {isFeedbackEnabled && (
+            <button
+              type="button"
+              onClick={() => setTabMode('feedback')}
+              className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+                tabMode === 'feedback'
+                  ? 'bg-[#214afe] text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Star size={15} weight={tabMode === 'feedback' ? 'fill' : 'regular'} />
+              Feedback <span className="hidden sm:inline">Acara</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── TAB 2: QR CODE TICKET ── */}
-      {tabMode === 'qr' && (
+      {isQrEnabled && tabMode === 'qr' && (
         <MemberQRCard event={event} member={member} absensi={existingAbsensi} />
       )}
 
@@ -440,13 +462,15 @@ export default function AbsensiForm({ event }: Props) {
                 >
                   <PencilSimple size={13} weight="bold" /> Edit / Ubah Jawaban Saya
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setTabMode('qr')}
-                  className="btn-primary h-10 text-xs font-bold uppercase tracking-wider"
-                >
-                  <DeviceMobile size={13} weight="bold" /> Buka Tiket QR Saya
-                </button>
+                {isQrEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => setTabMode('qr')}
+                    className="btn-primary h-10 text-xs font-bold uppercase tracking-wider"
+                  >
+                    <DeviceMobile size={13} weight="bold" /> Buka Tiket QR Saya
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -657,7 +681,7 @@ export default function AbsensiForm({ event }: Props) {
       )}
 
       {/* ── TAB 3: FORM FEEDBACK & EVALUASI ACARA ── */}
-      {tabMode === 'feedback' && (
+      {isFeedbackEnabled && tabMode === 'feedback' && (
         <div className="tech-card p-6 sm:p-8 slide-up space-y-6 border border-blue-500/25">
           <div className="border-b border-slate-800 pb-3">
             <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">

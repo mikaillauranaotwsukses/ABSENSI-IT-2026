@@ -12,6 +12,7 @@ import {
   NotePencil,
   Star,
   ArrowRight,
+  DeviceMobile,
 } from '@phosphor-icons/react';
 import DeleteEventButton from '../../DeleteEventButton';
 import Link from 'next/link';
@@ -24,11 +25,13 @@ export default function EditEventForm({ event }: Props) {
   const supabase = createClient();
   const router   = useRouter();
 
-  const [namaEvent,       setNamaEvent]       = useState(event.nama_event);
-  const [deskripsi,       setDeskripsi]       = useState(event.deskripsi || '');
-  const [status,          setStatus]          = useState(event.status);
-  const [fields,          setFields]          = useState<FormField[]>(event.form_schema || []);
-  const [feedbackFields,  setFeedbackFields]  = useState<FormField[]>(
+  const [namaEvent,          setNamaEvent]          = useState(event.nama_event);
+  const [deskripsi,          setDeskripsi]          = useState(event.deskripsi || '');
+  const [status,             setStatus]             = useState(event.status);
+  const [isQrEnabled,        setIsQrEnabled]        = useState(event.is_qr_enabled !== false);
+  const [isFeedbackEnabled,  setIsFeedbackEnabled]  = useState(event.is_feedback_enabled !== false);
+  const [fields,             setFields]             = useState<FormField[]>(event.form_schema || []);
+  const [feedbackFields,     setFeedbackFields]     = useState<FormField[]>(
     event.feedback_schema && event.feedback_schema.length > 0
       ? event.feedback_schema
       : [
@@ -36,12 +39,12 @@ export default function EditEventForm({ event }: Props) {
           { label: 'Kritik, Saran & Masukan untuk Panitia', type: 'textarea', required: false },
         ]
   );
-  const [activeTab,       setActiveTab]       = useState<BuilderTab>('form');
-  const [allEvents,       setAllEvents]       = useState<Event[]>([]);
-  const [selectedCopyId,  setSelectedCopyId]  = useState<string>('');
-  const [copyNotice,      setCopyNotice]      = useState<string>('');
-  const [saving,          setSaving]          = useState(false);
-  const [error,           setError]           = useState('');
+  const [activeTab,          setActiveTab]          = useState<BuilderTab>('form');
+  const [allEvents,          setAllEvents]          = useState<Event[]>([]);
+  const [selectedCopyId,     setSelectedCopyId]     = useState<string>('');
+  const [copyNotice,         setCopyNotice]         = useState<string>('');
+  const [saving,             setSaving]             = useState(false);
+  const [error,              setError]              = useState('');
 
   // Load other events for copy dropdown
   useEffect(() => {
@@ -72,6 +75,13 @@ export default function EditEventForm({ event }: Props) {
       }
     }
 
+    if (source.is_qr_enabled !== undefined) {
+      setIsQrEnabled(source.is_qr_enabled !== false);
+    }
+    if (source.is_feedback_enabled !== undefined) {
+      setIsFeedbackEnabled(source.is_feedback_enabled !== false);
+    }
+
     setCopyNotice(`✓ Susunan ${mode === 'all' ? 'Form & Feedback' : mode === 'form' ? 'Form Absensi' : 'Feedback'} berhasil disalin dari "${source.nama_event}"!`);
     setTimeout(() => setCopyNotice(''), 5000);
   };
@@ -81,17 +91,21 @@ export default function EditEventForm({ event }: Props) {
     setSaving(true); setError('');
 
     const payload: any = {
-      nama_event:      namaEvent.trim(),
-      deskripsi:       deskripsi.trim(),
+      nama_event:          namaEvent.trim(),
+      deskripsi:           deskripsi.trim(),
       status,
-      form_schema:     fields,
-      feedback_schema: feedbackFields,
+      is_qr_enabled:       isQrEnabled,
+      is_feedback_enabled: isFeedbackEnabled,
+      form_schema:         fields,
+      feedback_schema:     feedbackFields,
     };
 
     let { error: err } = await supabase.from('event').update(payload).eq('id', event.id);
 
-    // Fallback if feedback_schema column does not exist in DB yet
-    if (err && (err.message?.includes('feedback_schema') || err.message?.includes('schema cache'))) {
+    // Fallback if column does not exist in DB yet
+    if (err && (err.message?.includes('is_qr_enabled') || err.message?.includes('is_feedback_enabled') || err.message?.includes('feedback_schema') || err.message?.includes('schema cache'))) {
+      delete payload.is_qr_enabled;
+      delete payload.is_feedback_enabled;
       delete payload.feedback_schema;
       const fallbackRes = await supabase.from('event').update(payload).eq('id', event.id);
       err = fallbackRes.error;
@@ -198,18 +212,79 @@ export default function EditEventForm({ event }: Props) {
           />
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-xl bg-slate-800/40">
-          <div>
-            <p className="text-sm font-medium text-slate-200">Status Event</p>
-            <p className="text-slate-500 text-xs mt-0.5">{status ? 'Buka' : 'Tutup'}</p>
+        {/* Toggle Status & Fitur Event */}
+        <div className="space-y-3 pt-2 border-t border-slate-700/60">
+          <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Pengaturan Akses &amp; Fitur Event</p>
+
+          {/* Status Event */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50">
+            <div>
+              <p className="text-sm font-medium text-slate-200">Status Akses Event</p>
+              <p className="text-slate-400 text-xs mt-0.5">
+                {status ? 'Buka — Anggota dapat mengakses dan mengisi absensi' : 'Tutup — Event dikunci, anggota tidak bisa mengisi form'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStatus(!status)}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 shrink-0 ${status ? 'bg-green-500' : 'bg-slate-600'}`}
+              title={status ? 'Klik untuk tutup' : 'Klik untuk buka'}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${status ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setStatus(!status)}
-            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 ${status ? 'bg-green-500' : 'bg-slate-600'}`}
-          >
-            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${status ? 'translate-x-6' : 'translate-x-1'}`} />
-          </button>
+
+          {/* Toggle QR Code */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50">
+            <div className="pr-4">
+              <div className="flex items-center gap-2">
+                <DeviceMobile size={16} weight="bold" className={isQrEnabled ? 'text-cyan-400' : 'text-slate-500'} />
+                <p className="text-sm font-medium text-slate-200">Tab &amp; Tiket QR Code</p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isQrEnabled ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>
+                  {isQrEnabled ? 'Aktif' : 'Nonaktif'}
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs mt-1">
+                {isQrEnabled
+                  ? 'Aktif — Tab Tiket QR muncul untuk peserta dan QR dicatat di laporan.'
+                  : 'Nonaktif — Tab Tiket QR disembunyikan dari peserta dan dinonaktifkan di tabel laporan.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsQrEnabled(!isQrEnabled)}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 shrink-0 ${isQrEnabled ? 'bg-cyan-500' : 'bg-slate-600'}`}
+              title={isQrEnabled ? 'Klik untuk nonaktifkan QR' : 'Klik untuk aktifkan QR'}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${isQrEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          {/* Toggle Feedback Acara */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50">
+            <div className="pr-4">
+              <div className="flex items-center gap-2">
+                <Star size={16} weight={isFeedbackEnabled ? 'fill' : 'regular'} className={isFeedbackEnabled ? 'text-amber-400' : 'text-slate-500'} />
+                <p className="text-sm font-medium text-slate-200">Tab Feedback &amp; Evaluasi Peserta</p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFeedbackEnabled ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>
+                  {isFeedbackEnabled ? 'Aktif' : 'Nonaktif'}
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs mt-1">
+                {isFeedbackEnabled
+                  ? 'Aktif — Peserta dapat mengisi penilaian bintang & saran evaluasi.'
+                  : 'Nonaktif — Tab Feedback disembunyikan dari peserta.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsFeedbackEnabled(!isFeedbackEnabled)}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 shrink-0 ${isFeedbackEnabled ? 'bg-amber-500' : 'bg-slate-600'}`}
+              title={isFeedbackEnabled ? 'Klik untuk nonaktifkan feedback' : 'Klik untuk aktifkan feedback'}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${isFeedbackEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
         </div>
       </div>
 

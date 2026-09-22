@@ -149,6 +149,11 @@ export default function AdminScanQRPage() {
   // ── Parse QR code & lookup anggota → tampilkan modal ──────
   const handleScannedCode = useCallback(async (rawCode: string) => {
     if (!selectedEvent) { alert('Pilih event terlebih dahulu.'); return; }
+    const currentEv = events.find((e) => e.id === selectedEvent);
+    if (currentEv?.is_qr_enabled === false) {
+      alert('Fitur Tiket QR dinonaktifkan untuk event ini di pengaturan admin.');
+      return;
+    }
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
 
@@ -219,6 +224,11 @@ export default function AdminScanQRPage() {
 
   // ── Kamera ────────────────────────────────────────────────
   const startCamera = async () => {
+    const currentEv = events.find((e) => e.id === selectedEvent);
+    if (currentEv?.is_qr_enabled === false) {
+      alert('Fitur Tiket QR dinonaktifkan untuk event ini di pengaturan admin.');
+      return;
+    }
     setCameraError('');
     setLastResult(null);
     try {
@@ -278,9 +288,20 @@ export default function AdminScanQRPage() {
             >
               {events.length === 0
                 ? <option value="">Tidak ada event aktif</option>
-                : events.map((e) => <option key={e.id} value={e.id}>{e.nama_event}</option>)
+                : events.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.nama_event} {e.is_qr_enabled === false ? '(QR Nonaktif)' : ''}
+                    </option>
+                  ))
               }
             </select>
+
+            {events.find((e) => e.id === selectedEvent)?.is_qr_enabled === false && (
+              <div className="mt-3 p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2 slide-up">
+                <Warning size={18} weight="bold" className="shrink-0 text-amber-400" />
+                <span>Fitur Tiket QR dinonaktifkan untuk event ini. Pemindaian tidak aktif.</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -292,8 +313,9 @@ export default function AdminScanQRPage() {
             </h3>
             <button
               type="button"
+              disabled={!isCameraActive && events.find((e) => e.id === selectedEvent)?.is_qr_enabled === false}
               onClick={isCameraActive ? stopCamera : startCamera}
-              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                 isCameraActive
                   ? 'bg-red-600 hover:bg-red-500 text-white'
                   : 'btn-primary'
