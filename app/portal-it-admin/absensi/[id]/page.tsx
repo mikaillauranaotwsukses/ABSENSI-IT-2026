@@ -61,7 +61,7 @@ export default async function AbsensiReportPage({ params }: Props) {
               </svg>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-white">Laporan & Evaluasi Event</h1>
+              <h1 className="text-2xl font-bold text-white">Rekap Respon &amp; Data Masuk</h1>
               <p className="text-blue-300 text-sm font-semibold">{event.nama_event}</p>
             </div>
           </div>

@@ -21,10 +21,109 @@ export const dynamic = 'force-dynamic';
 type BuilderTab = 'form' | 'feedback';
 
 // ── PRESET TEMPLATES ──────────────────────────────────────────
-const PRESET_TEMPLATES: Record<string, { name: string; icon: string; form: FormField[]; feedback: FormField[] }> = {
+const PRESET_TEMPLATES: Record<string, {
+  name: string;
+  icon: string;
+  is_qr_enabled: boolean;
+  is_feedback_enabled: boolean;
+  form: FormField[];
+  feedback: FormField[];
+}> = {
+  pendataan_lomba: {
+    name: 'Pendataan Lomba & Prestasi',
+    icon: '🏆',
+    is_qr_enabled: false,
+    is_feedback_enabled: false,
+    form: [
+      {
+        label: 'Nama Tim / Nama Peserta',
+        type: 'text',
+        required: true,
+      },
+      {
+        label: 'Nama Kompetisi / Lomba',
+        type: 'text',
+        required: true,
+      },
+      {
+        label: 'Penyelenggara / Universitas',
+        type: 'text',
+        required: true,
+      },
+      {
+        label: 'Kategori / Cabang Lomba',
+        type: 'select',
+        options: [
+          'UI/UX Design',
+          'Competitive Programming',
+          'Web / Mobile App Development',
+          'Hackathon & AI Solution',
+          'Data Science & Analytics',
+          'Capture The Flag (CTF) / Cyber Security',
+          'Karya Tulis Ilmiah / Business Plan',
+          'Lainnya',
+        ],
+        required: true,
+      },
+      {
+        label: 'Daftar Anggota Tim (NRP & Nama)',
+        type: 'textarea',
+        required: true,
+      },
+      {
+        label: 'Link Dokumen / Bukti Registrasi Lomba',
+        type: 'text',
+        required: false,
+      },
+      {
+        label: 'Kontak Ketua Tim (Nomor WhatsApp Aktif)',
+        type: 'text',
+        required: true,
+      },
+    ],
+    feedback: [],
+  },
+  kuesioner_merch: {
+    name: 'Pendataan Merch & Jaket Angkatan',
+    icon: '👕',
+    is_qr_enabled: false,
+    is_feedback_enabled: false,
+    form: [
+      {
+        label: 'Ukuran Jaket / Kaos',
+        type: 'select',
+        options: ['S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL'],
+        required: true,
+      },
+      {
+        label: 'Nama Punggung / Custom Bordir (Maks. 12 Karakter)',
+        type: 'text',
+        required: true,
+      },
+      {
+        label: 'Pilihan Varian / Warna',
+        type: 'radio',
+        options: ['Navy Blue IT 26 (Official)', 'Solid Black Edition', 'Misty Grey'],
+        required: true,
+      },
+      {
+        label: 'Bukti Pembayaran / Transfer DP',
+        type: 'file',
+        required: true,
+      },
+      {
+        label: 'Catatan Tambahan',
+        type: 'textarea',
+        required: false,
+      },
+    ],
+    feedback: [],
+  },
   gathering: {
-    name: 'Gathering / Acara Bonding',
-    icon: '🎉',
+    name: 'Acara Bonding / Makrab (Tiket QR)',
+    icon: '🎟️',
+    is_qr_enabled: true,
+    is_feedback_enabled: true,
     form: [
       {
         label: 'Status Kehadiran',
@@ -59,15 +158,47 @@ const PRESET_TEMPLATES: Record<string, { name: string; icon: string; form: FormF
       },
     ],
     feedback: [
-      { label: 'Rating Keseruan Games & Ice Breaking', type: 'rating', required: true },
+      { label: 'Rating Keseruan Acara & Ice Breaking', type: 'rating', required: true },
       { label: 'Rating Kenyamanan Lokasi & Konsumsi', type: 'rating', required: true },
       { label: 'Skala Kepuasan Kinerja Panitia', type: 'scale', required: true },
       { label: 'Kritik & Masukan untuk Panitia', type: 'textarea', required: false },
     ],
   },
+  aspirasi: {
+    name: 'Kotak Aspirasi & Survey Angkatan',
+    icon: '🗳️',
+    is_qr_enabled: false,
+    is_feedback_enabled: false,
+    form: [
+      {
+        label: 'Topik Aspirasi / Masukan',
+        type: 'select',
+        options: ['Akademik & Perkuliahan', 'Fasilitas & Ruang Belajar', 'Kegiatan & Program Kerja Angkatan', 'Transparansi Kas Angkatan', 'Lainnya'],
+        required: true,
+      },
+      {
+        label: 'Tingkat Kepuasan Terhadap Perkuliahan Semester Ini',
+        type: 'scale',
+        required: true,
+      },
+      {
+        label: 'Aspirasi, Saran, atau Keluhan Kamu',
+        type: 'textarea',
+        required: true,
+      },
+      {
+        label: 'Lampiran / Bukti Pendukung (Jika Ada)',
+        type: 'file',
+        required: false,
+      },
+    ],
+    feedback: [],
+  },
   rapat: {
-    name: 'Rapat Rutin / Evaluasi Divisi',
+    name: 'Rapat Divisi & Evaluasi Kerja',
     icon: '💼',
+    is_qr_enabled: false,
+    is_feedback_enabled: true,
     form: [
       {
         label: 'Divisi / Seksi',
@@ -96,6 +227,8 @@ const PRESET_TEMPLATES: Record<string, { name: string; icon: string; form: FormF
   seminar: {
     name: 'Seminar / Workshop Teknologi',
     icon: '🎓',
+    is_qr_enabled: true,
+    is_feedback_enabled: true,
     form: [
       {
         label: 'Peminatan / Minat Bidang IT',
@@ -127,8 +260,8 @@ function NewEventContent() {
   const [namaEvent,          setNamaEvent]          = useState('');
   const [deskripsi,          setDeskripsi]          = useState('');
   const [status,             setStatus]             = useState(true);
-  const [isQrEnabled,        setIsQrEnabled]        = useState(true);
-  const [isFeedbackEnabled,  setIsFeedbackEnabled]  = useState(true);
+  const [isQrEnabled,        setIsQrEnabled]        = useState(false); // Default false: pure form portal
+  const [isFeedbackEnabled,  setIsFeedbackEnabled]  = useState(false); // Default false: pure form portal
   const [fields,             setFields]             = useState<FormField[]>([]);
   const [feedbackFields,     setFeedbackFields]     = useState<FormField[]>([
     { label: 'Rating Keseluruhan Acara', type: 'rating', required: true },
@@ -157,36 +290,36 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
     setTimeout(() => setCopiedSql(false), 3000);
   };
 
-  // 1. Fetch all past events for copy dropdown
+  // ── Load available events for copying ──
   useEffect(() => {
-    async function loadPastEvents() {
+    async function loadEvents() {
       const { data } = await supabase.from('event').select('*').order('created_at', { ascending: false });
       if (data) setAllEvents(data as Event[]);
     }
-    loadPastEvents();
+    loadEvents();
   }, [supabase]);
 
-  // 2. Auto-duplicate if copy_from param is present in URL
+  // ── Pre-fill if copy_from param is present in URL ──
   useEffect(() => {
     if (!copyFromId) return;
 
     async function loadSourceEvent() {
-      const { data } = await supabase.from('event').select('*').eq('id', copyFromId).maybeSingle();
-      if (data) {
-        setNamaEvent(`[Salinan] ${data.nama_event}`);
-        setDeskripsi(cleanEventDeskripsi(data.deskripsi));
-        if (data.form_schema && Array.isArray(data.form_schema)) {
-          setFields(data.form_schema);
-        }
-        if (data.feedback_schema && Array.isArray(data.feedback_schema)) {
-          setFeedbackFields(data.feedback_schema);
-        }
-        const sourceConfig = parseEventConfig(data);
-        setIsQrEnabled(sourceConfig.is_qr_enabled);
-        setIsFeedbackEnabled(sourceConfig.is_feedback_enabled);
-        setSelectedCopyId(data.id);
-        setCopyNotice(`✓ Berhasil menyalin susunan form & feedback dari "${data.nama_event}"!`);
+      const { data } = await supabase.from('event').select('*').eq('id', copyFromId).single();
+      if (!data) return;
+
+      if (data.form_schema && Array.isArray(data.form_schema)) {
+        setFields(JSON.parse(JSON.stringify(data.form_schema)));
       }
+      if (data.feedback_schema && Array.isArray(data.feedback_schema)) {
+        setFeedbackFields(JSON.parse(JSON.stringify(data.feedback_schema)));
+      }
+      const sourceConfig = parseEventConfig(data);
+      setIsQrEnabled(sourceConfig.is_qr_enabled);
+      setIsFeedbackEnabled(sourceConfig.is_feedback_enabled);
+      setNamaEvent(`Salinan - ${data.nama_event}`);
+      setDeskripsi(cleanEventDeskripsi(data.deskripsi));
+      setCopyNotice(`✓ Berhasil memuat struktur form & feedback dari "${data.nama_event}"!`);
+      setTimeout(() => setCopyNotice(''), 6000);
     }
     loadSourceEvent();
   }, [copyFromId, supabase]);
@@ -195,7 +328,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
   const applyCopyFromEvent = (mode: 'all' | 'form' | 'feedback') => {
     const source = allEvents.find((e) => e.id === selectedCopyId);
     if (!source) {
-      alert('Pilih event terlebih dahulu.');
+      alert('Pilih formulir / event terlebih dahulu.');
       return;
     }
 
@@ -215,7 +348,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
     setIsQrEnabled(sourceConfig.is_qr_enabled);
     setIsFeedbackEnabled(sourceConfig.is_feedback_enabled);
 
-    setCopyNotice(`✓ Susunan ${mode === 'all' ? 'Form & Feedback' : mode === 'form' ? 'Form Absensi' : 'Feedback'} berhasil disalin dari "${source.nama_event}"!`);
+    setCopyNotice(`✓ Susunan ${mode === 'all' ? 'Form & Feedback' : mode === 'form' ? 'Pertanyaan Form' : 'Feedback'} berhasil disalin dari "${source.nama_event}"!`);
     setTimeout(() => setCopyNotice(''), 5000);
   };
 
@@ -226,6 +359,8 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
 
     setFields(JSON.parse(JSON.stringify(preset.form)));
     setFeedbackFields(JSON.parse(JSON.stringify(preset.feedback)));
+    if (preset.is_qr_enabled !== undefined) setIsQrEnabled(preset.is_qr_enabled);
+    if (preset.is_feedback_enabled !== undefined) setIsFeedbackEnabled(preset.is_feedback_enabled);
     setCopyNotice(`✓ Template Preset "${preset.name}" berhasil diterapkan!`);
     setTimeout(() => setCopyNotice(''), 5000);
   };
@@ -274,8 +409,8 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
             <ArrowLeft size={20} weight="bold" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white">Buat Event Baru</h1>
-            <p className="text-slate-400 text-sm">Isi detail event, susun form absensi, atau salin template dari event sebelumnya</p>
+            <h1 className="text-2xl font-bold text-white">Buat Formulir / Kegiatan Baru</h1>
+            <p className="text-slate-400 text-sm">Pilih template pendataan, survey angkatan, registrasi lomba, atau acara dengan tiket QR</p>
           </div>
         </div>
 
@@ -285,12 +420,12 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
             <h3 className="text-sm font-bold text-blue-300 flex items-center gap-2">
               <Lightning size={14} weight="fill" className="text-[#ffc878]" /> Fitur Cepat: Salin / Gunakan Template Form
             </h3>
-            <span className="text-[10px] text-slate-400">Efisien & Tanpa Ketik Ulang</span>
+            <span className="text-[10px] text-slate-400">Efisien &amp; Siap Pakai</span>
           </div>
 
           {/* Preset Buttons */}
           <div>
-            <label className="block text-[11px] text-slate-400 mb-1.5 font-medium">Gunakan Template Preset Instan:</label>
+            <label className="block text-[11px] text-slate-400 mb-1.5 font-medium">Pilih Preset Template Serbaguna:</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {Object.entries(PRESET_TEMPLATES).map(([key, item]) => (
                 <button
@@ -309,17 +444,17 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
           {/* Copy from past events dropdown */}
           {allEvents.length > 0 && (
             <div className="pt-3 border-t border-slate-700/40 space-y-2">
-              <label className="block text-[11px] text-slate-400 font-medium">Atau Salin Form & Feedback dari Event Sebelumnya:</label>
+              <label className="block text-[11px] text-slate-400 font-medium">Atau Salin Struktur dari Formulir Sebelumnya:</label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={selectedCopyId}
                   onChange={(e) => setSelectedCopyId(e.target.value)}
                   className="flex-1 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                 >
-                  <option value="">— Pilih Event Sumber yang Ingin Disalin —</option>
+                  <option value="">— Pilih Formulir Sumber yang Ingin Disalin —</option>
                   {allEvents.map((ev) => (
                     <option key={ev.id} value={ev.id}>
-                      {ev.nama_event} ({ev.form_schema?.length || 0} form, {ev.feedback_schema?.length || 0} feedback)
+                      {ev.nama_event} ({ev.form_schema?.length || 0} field form, {ev.feedback_schema?.length || 0} feedback)
                     </option>
                   ))}
                 </select>
@@ -338,7 +473,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
                     disabled={!selectedCopyId}
                     onClick={() => applyCopyFromEvent('form')}
                     className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium disabled:opacity-40 transition-all border border-slate-700"
-                    title="Hanya salin pertanyaan form absensi"
+                    title="Hanya salin pertanyaan formulir"
                   >
                     Hanya Form
                   </button>
@@ -367,30 +502,30 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
           {/* Info event */}
           <div className="tech-card rounded-2xl p-6 slide-up space-y-5 border border-slate-700/60">
             <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-              <ListBullets size={16} weight="bold" className="text-slate-400" /> Informasi Event
+              <ListBullets size={16} weight="bold" className="text-slate-400" /> Informasi Formulir / Kegiatan
             </h2>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Nama Event <span className="text-red-400">*</span>
+                Nama Formulir / Kegiatan <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
                 value={namaEvent}
                 onChange={(e) => setNamaEvent(e.target.value)}
-                placeholder="cth: Rapat Perdana IT 26"
+                placeholder="cth: Pendataan Lomba DinamIT 2026 atau Makrab Angkatan"
                 className="input-glow w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all focus:border-blue-500"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Broadcast / Deskripsi
+                Petunjuk / Broadcast Informasi
               </label>
               <textarea
                 value={deskripsi}
                 onChange={(e) => setDeskripsi(e.target.value)}
-                placeholder="Informasi penting yang tampil di halaman absensi..."
+                placeholder="Informasi dan instruksi yang tampil kepada mahasiswa sebelum mengisi formulir..."
                 rows={4}
                 className="input-glow w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all resize-none focus:border-blue-500"
               />
@@ -398,14 +533,14 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
 
             {/* Toggle Status & Fitur Event */}
             <div className="space-y-3 pt-2 border-t border-slate-700/60">
-              <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Pengaturan Akses &amp; Fitur Event</p>
+              <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Aksesibilitas &amp; Tipe Formulir</p>
 
               {/* Status Event */}
               <div className="flex items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50">
                 <div>
-                  <p className="text-sm font-medium text-slate-200">Status Akses Event</p>
+                  <p className="text-sm font-medium text-slate-200">Status Akses Formulir</p>
                   <p className="text-slate-400 text-xs mt-0.5">
-                    {status ? 'Buka — Anggota dapat mengakses dan mengisi absensi' : 'Tutup — Event dikunci, anggota tidak bisa mengisi form'}
+                    {status ? 'Buka — Mahasiswa dapat mengakses dan mengirim jawaban formulir' : 'Tutup — Formulir dikunci, mahasiswa tidak bisa mengirim respon'}
                   </p>
                 </div>
                 <button
@@ -423,15 +558,15 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
                 <div className="pr-4">
                   <div className="flex items-center gap-2">
                     <DeviceMobile size={16} weight="bold" className={isQrEnabled ? 'text-cyan-400' : 'text-slate-500'} />
-                    <p className="text-sm font-medium text-slate-200">Tab &amp; Tiket QR Code</p>
+                    <p className="text-sm font-medium text-slate-200">Tiket QR Acara Lapangan</p>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isQrEnabled ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>
-                      {isQrEnabled ? 'Aktif' : 'Nonaktif'}
+                      {isQrEnabled ? 'Aktif (Acara Lapangan)' : 'Nonaktif (Form Murni)'}
                     </span>
                   </div>
                   <p className="text-slate-400 text-xs mt-1">
                     {isQrEnabled
-                      ? 'Aktif — Tab Tiket QR muncul untuk peserta dan QR dicatat di laporan.'
-                      : 'Nonaktif — Tab Tiket QR disembunyikan dari peserta dan dinonaktifkan di tabel laporan.'}
+                      ? 'Aktif — Tab Tiket QR muncul untuk peserta (gunakan untuk acara fisik/lapangan yang butuh scan tiket).'
+                      : 'Nonaktif — Form murni tanpa tiket QR (cocok untuk pendataan lomba, kuesioner, aspirasi, pendaftaran tim).'}
                   </p>
                 </div>
                 <button
@@ -449,7 +584,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
                 <div className="pr-4">
                   <div className="flex items-center gap-2">
                     <Star size={16} weight={isFeedbackEnabled ? 'fill' : 'regular'} className={isFeedbackEnabled ? 'text-amber-400' : 'text-slate-500'} />
-                    <p className="text-sm font-medium text-slate-200">Tab Feedback &amp; Evaluasi Peserta</p>
+                    <p className="text-sm font-medium text-slate-200">Kuesioner Feedback / Evaluasi</p>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFeedbackEnabled ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>
                       {isFeedbackEnabled ? 'Aktif' : 'Nonaktif'}
                     </span>
@@ -457,7 +592,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
                   <p className="text-slate-400 text-xs mt-1">
                     {isFeedbackEnabled
                       ? 'Aktif — Peserta dapat mengisi penilaian bintang & saran evaluasi.'
-                      : 'Nonaktif — Tab Feedback disembunyikan dari peserta.'}
+                      : 'Nonaktif — Tab Feedback dinonaktifkan (cukup formulir utama).'}
                   </p>
                 </div>
                 <button
@@ -483,7 +618,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <NotePencil size={15} weight="bold" /> Form Absensi / Pendaftaran
+              <NotePencil size={15} weight="bold" /> Pertanyaan Formulir
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
                 {fields.length} field
               </span>
@@ -497,24 +632,24 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Star size={15} weight={activeTab === 'feedback' ? 'fill' : 'regular'} /> Form Feedback / Evaluasi
+              <Star size={15} weight={activeTab === 'feedback' ? 'fill' : 'regular'} /> Kuesioner Feedback
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
                 {feedbackFields.length} field
               </span>
             </button>
           </div>
 
-          {/* Tab 1: Form Absensi Builder */}
+          {/* Tab 1: Form Builder */}
           {activeTab === 'form' && (
             <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-                  <NotePencil size={16} weight="bold" className="text-blue-300" /> Form Builder — Absensi &amp; Registrasi
+                  <NotePencil size={16} weight="bold" className="text-blue-300" /> Form Builder — Susun Pertanyaan
                 </h2>
                 <span className="text-xs text-slate-400">{fields.length} pertanyaan</span>
               </div>
               <p className="text-slate-400 text-xs leading-relaxed">
-                Pertanyaan yang harus diisi anggota pada saat melakukan absensi awal.
+                Susun pertanyaan atau input yang harus dijawab oleh mahasiswa.
               </p>
               <FormBuilder fields={fields} setFields={setFields} isAdmin />
             </div>
@@ -525,12 +660,12 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
             <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-                  <Star size={16} weight="fill" className="text-[#ffc878]" /> Form Builder — Feedback &amp; Evaluasi Acara
+                  <Star size={16} weight="fill" className="text-[#ffc878]" /> Form Builder — Feedback &amp; Evaluasi
                 </h2>
                 <span className="text-xs text-slate-400">{feedbackFields.length} pertanyaan</span>
               </div>
               <p className="text-slate-400 text-xs leading-relaxed">
-                Kuesioner evaluasi yang akan diisi oleh peserta pada tab ke-3 di halaman event.
+                Kuesioner evaluasi yang akan diisi oleh peserta jika fitur feedback diaktifkan.
               </p>
               <FormBuilder fields={feedbackFields} setFields={setFeedbackFields} isAdmin />
             </div>
@@ -538,25 +673,21 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
 
           {migrationNeeded && (
             <div className="p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-amber-200 text-sm space-y-3 slide-up">
-              <div className="flex items-start gap-3">
-                <Warning size={22} weight="bold" className="text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-bold text-amber-300 text-base">Langkah Terakhir: Jalankan Script SQL di Supabase</h4>
-                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                    Fitur toggle QR dan Feedback membutuhkan kolom <code className="text-amber-300 font-mono">is_qr_enabled</code> &amp; <code className="text-amber-300 font-mono">is_feedback_enabled</code> di database.
-                    Buka <strong>Supabase Dashboard → SQL Editor → New Query</strong>, tempel script di bawah, lalu klik <strong>Run</strong>:
-                  </p>
-                </div>
+              <div className="flex items-center gap-2 font-bold text-amber-300">
+                <Warning size={20} weight="bold" />
+                Database Migration Diperlukan
               </div>
-
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Jalankan script SQL migrasi berikut di <strong>Supabase Dashboard &rarr; SQL Editor</strong> untuk mendukung penyimpanan toggle:
+              </p>
               <div className="relative">
-                <pre className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-700/70 font-mono text-xs text-blue-300 overflow-x-auto whitespace-pre leading-relaxed">
+                <pre className="p-3.5 rounded-xl bg-slate-950 border border-amber-500/30 font-mono text-xs text-amber-200 overflow-x-auto whitespace-pre">
                   {SQL_MIGRATION}
                 </pre>
                 <button
                   type="button"
                   onClick={copySqlToClipboard}
-                  className="absolute top-2 right-2 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow"
+                  className="absolute top-2.5 right-2.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-colors inline-flex items-center gap-1.5 shadow"
                 >
                   {copiedSql ? <Check size={14} weight="bold" /> : <Copy size={14} weight="bold" />}
                   <span>{copiedSql ? 'Tersalin!' : 'Salin SQL'}</span>
@@ -584,7 +715,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
             >
               {saving
                 ? 'Menyimpan...'
-                : <><span>Simpan Event</span><ArrowRight size={15} weight="bold" /></>
+                : <><span>Simpan &amp; Publikasikan</span><ArrowRight size={15} weight="bold" /></>
               }
             </button>
           </div>

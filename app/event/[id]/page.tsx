@@ -85,7 +85,7 @@ export default async function EventPage({ params }: Props) {
             <div className="p-4 rounded-2xl bg-slate-900/90 border border-blue-500/20">
               <div className="flex items-center gap-2 text-blue-300 text-[11px] font-bold uppercase tracking-wider mb-1.5">
                 <Megaphone size={14} weight="bold" />
-                Informasi &amp; Petunjuk Acara:
+                Informasi &amp; Petunjuk:
               </div>
               <p className="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
                 {cleanEventDeskripsi(event.deskripsi)}
@@ -94,7 +94,7 @@ export default async function EventPage({ params }: Props) {
           )}
         </div>
 
-        {/* Absensi Form 3-Tab Component */}
+        {/* Form Component */}
         {event.status ? (
           <AbsensiForm event={event} />
         ) : (
@@ -103,10 +103,10 @@ export default async function EventPage({ params }: Props) {
               <LockSimple size={32} weight="bold" className="text-red-400" />
             </div>
             <h3 className="text-xl font-bold text-white mb-2">
-              Absensi Ditutup
+              Formulir Telah Ditutup
             </h3>
             <p className="text-slate-400 text-xs sm:text-sm max-w-md mx-auto">
-              Sesi pengisian absensi untuk event ini telah dinonaktifkan oleh panitia.
+              Sesi pengisian untuk formulir / kegiatan ini telah dinonaktifkan oleh administrator.
             </p>
           </div>
         )}

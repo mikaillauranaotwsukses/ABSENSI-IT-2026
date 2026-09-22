@@ -8,10 +8,10 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' });
 
 export const metadata: Metadata = {
-  title: 'Absensi IT 26 — Mahasiswa Teknologi Informasi',
+  title: 'Portal IT 26 — Hub Formulir & Kegiatan Mahasiswa Teknologi Informasi',
   description:
-    'Sistem absensi digital untuk anggota organisasi Mahasiswa Teknologi Informasi angkatan 2026.',
-  keywords: ['absensi', 'IT', 'teknologi informasi', 'mahasiswa'],
+    'Platform terpadu untuk pendataan, registrasi lomba, survey, dan kegiatan mahasiswa S1 Teknologi Informasi Angkatan 2026.',
+  keywords: ['portal IT 26', 'teknologi informasi', 'formulir angkatan', 'pendataan lomba', 'kegiatan mahasiswa'],
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',

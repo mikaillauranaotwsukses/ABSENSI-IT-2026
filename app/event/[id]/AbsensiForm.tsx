@@ -300,7 +300,7 @@ export default function AbsensiForm({ event }: Props) {
         </div>
         <h3 className="text-xl font-extrabold text-white">Login Anggota Diperlukan</h3>
         <p className="text-slate-400 text-xs sm:text-sm max-w-sm mx-auto leading-relaxed">
-          Silakan masuk dengan NRP &amp; Password Anda untuk melengkapi form absensi atau melihat Tiket QR acara.
+          Silakan masuk dengan NRP &amp; Password Anda untuk mengisi formulir atau mengakses kegiatan ini.
         </p>
         <Link
           href="/login"
@@ -322,10 +322,10 @@ export default function AbsensiForm({ event }: Props) {
         </div>
         <div>
           <h3 className="text-2xl font-extrabold text-white">
-            {existingAbsensi ? 'Jawaban Absensi Berhasil Diperbarui!' : 'Absensi Berhasil Tersimpan!'}
+            {existingAbsensi ? 'Jawaban Formulir Berhasil Diperbarui!' : 'Respon Formulir Berhasil Dikirim!'}
           </h3>
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            Halo <span className="text-blue-300 font-bold">{member.nama}</span>, data absensimu telah tercatat di sistem panitia.
+            Halo <span className="text-blue-300 font-bold">{member.nama}</span>, data dan jawabanmu telah berhasil tercatat di sistem angkatan.
           </p>
         </div>
 
@@ -346,9 +346,9 @@ export default function AbsensiForm({ event }: Props) {
               <Star size={15} weight="fill" /> Isi Feedback Acara
             </button>
           )}
-          <a href="/" className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors inline-flex items-center justify-center">
-            Kembali ke Beranda
-          </a>
+          <Link href="/" className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors inline-flex items-center justify-center">
+            Kembali ke Portal Beranda
+          </Link>
         </div>
       </div>
     );
@@ -387,7 +387,7 @@ export default function AbsensiForm({ event }: Props) {
             }`}
           >
             <NotePencil size={15} weight="bold" />
-            <span className="hidden sm:inline">Form</span> Keterangan
+            <span>Formulir</span>
           </button>
           {isQrEnabled && (
             <button
@@ -425,13 +425,13 @@ export default function AbsensiForm({ event }: Props) {
         <MemberQRCard event={event} member={member} absensi={existingAbsensi} />
       )}
 
-      {/* ── TAB 1: FORM KETERANGAN ── */}
+      {/* ── TAB 1: FORMULIR ── */}
       {tabMode === 'form' && (
         <form onSubmit={handleSubmit} className="tech-card p-6 sm:p-8 slide-up space-y-6 border border-blue-500/25">
           <div className="border-b border-slate-800 pb-3">
             <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
               <NotePencil size={18} weight="bold" className="text-blue-300" />
-              Formulir Presensi &amp; Keterangan
+              {isQrEnabled ? 'Formulir & Konfirmasi Kehadiran' : 'Formulir Pengisian Data'}
             </h2>
           </div>
 
@@ -443,7 +443,7 @@ export default function AbsensiForm({ event }: Props) {
                 <div>
                   <h4 className="text-[#ffc878] font-bold text-sm">Formulir Telah Diisi Sebelumnya</h4>
                   <p className="text-slate-300 text-xs mt-1 leading-relaxed">
-                    Kamu sudah mengisi keterangan untuk acara ini pada{' '}
+                    Kamu sudah mengirimkan respon untuk formulir ini pada{' '}
                     <span className="text-amber-200 font-bold font-mono">
                       {new Date(existingAbsensi.created_at).toLocaleString('id-ID', {
                         day: 'numeric', month: 'short', year: 'numeric',
@@ -481,7 +481,7 @@ export default function AbsensiForm({ event }: Props) {
               {existingAbsensi?.is_form_filled && (
                 <div className="p-3 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-300 text-xs flex items-center gap-2">
                   <PencilSimple size={13} weight="bold" className="shrink-0" />
-                  <span>Kamu sedang memperbarui respon absensi sebelumnya. Silakan sesuaikan isianmu.</span>
+                  <span>Kamu sedang memperbarui respon formulir sebelumnya. Silakan sesuaikan jawabanmu.</span>
                 </div>
               )}
 
@@ -671,9 +671,9 @@ export default function AbsensiForm({ event }: Props) {
               className="w-full btn-primary h-12 text-sm uppercase tracking-wider font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitState === 'loading' || !allUploadsComplete ? (
-                <span>Menyimpan Keterangan...</span>
+                <span>Menyimpan Formulir...</span>
               ) : (
-                existingAbsensi?.is_form_filled ? 'Perbarui Form Keterangan →' : 'Kirim Form Keterangan →'
+                existingAbsensi?.is_form_filled ? 'Perbarui Jawaban Formulir →' : 'Kirim Formulir Sekarang →'
               )}
             </button>
           )}

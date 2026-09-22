@@ -40,7 +40,7 @@ export default async function AdminDashboard() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/favicon.ico"
-                  alt="Logo Absensi IT 26"
+                  alt="Logo IT 26"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -60,15 +60,15 @@ export default async function AdminDashboard() {
           {/* Welcome */}
           <div className="mb-8 slide-up">
             <h1 className="text-3xl font-extrabold text-white mb-1 tracking-tight">Dashboard Administrator</h1>
-            <p className="text-slate-400 text-sm">Selamat datang kembali di panel operasional presensi IT 2026.</p>
+            <p className="text-slate-400 text-sm">Pusat manajemen formulir, pendataan angkatan, dan kegiatan mahasiswa IT 2026.</p>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 slide-up">
             {[
-              { label: 'Total Anggota',  value: totalAnggota ?? 0,  Icon: Users,         badgeClass: 'badge-tech-blue'  },
-              { label: 'Total Event',    value: totalEvent ?? 0,    Icon: CalendarBlank, badgeClass: 'badge-tech-amber' },
-              { label: 'Total Absensi', value: totalAbsensi ?? 0,  Icon: CheckCircle,   badgeClass: 'badge-open'       },
+              { label: 'Total Anggota IT 26',       value: totalAnggota ?? 0,  Icon: Users,         badgeClass: 'badge-tech-blue'  },
+              { label: 'Total Form & Kegiatan',     value: totalEvent ?? 0,    Icon: CalendarBlank, badgeClass: 'badge-tech-amber' },
+              { label: 'Total Respon Terkumpul',    value: totalAbsensi ?? 0,  Icon: CheckCircle,   badgeClass: 'badge-open'       },
             ].map((stat) => (
               <div key={stat.label} className="tech-card p-5 border border-blue-500/20">
                 <div className="flex items-center justify-between mb-3">
@@ -86,19 +86,6 @@ export default async function AdminDashboard() {
           {/* Quick Actions (3 Cards) */}
           <div className="grid md:grid-cols-3 gap-4 mb-8 slide-up">
             <Link
-              href="/portal-it-admin/scan"
-              className="tech-card tech-card-hover p-5 border border-cyan-500/30 transition-all group flex items-center gap-4"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-cyan-600/20 border border-cyan-500/40 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <QrCode size={24} weight="bold" className="text-cyan-300" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-sm">Scanner QR Panitia</h3>
-                <p className="text-slate-400 text-xs mt-0.5">Scan QR tiket anggota di lokasi acara</p>
-              </div>
-            </Link>
-
-            <Link
               href="/portal-it-admin/events/new"
               className="tech-card tech-card-hover p-5 border border-blue-500/30 transition-all group flex items-center gap-4"
             >
@@ -106,8 +93,8 @@ export default async function AdminDashboard() {
                 <Plus size={24} weight="bold" className="text-blue-300" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-sm">Buat Event Baru</h3>
-                <p className="text-slate-400 text-xs mt-0.5">Tambah event dan susun form absensi</p>
+                <h3 className="font-bold text-white text-sm">Buat Form / Kegiatan Baru</h3>
+                <p className="text-slate-400 text-xs mt-0.5">Susun form pendataan, survey, lomba, atau acara</p>
               </div>
             </Link>
 
@@ -119,8 +106,21 @@ export default async function AdminDashboard() {
                 <ListBullets size={24} weight="bold" className="text-[#ffc878]" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-sm">Kelola Event</h3>
-                <p className="text-slate-400 text-xs mt-0.5">Lihat semua event dan daftar absensi</p>
+                <h3 className="font-bold text-white text-sm">Kelola Form &amp; Respon</h3>
+                <p className="text-slate-400 text-xs mt-0.5">Lihat semua form dan rekap respon masuk</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/portal-it-admin/scan"
+              className="tech-card tech-card-hover p-5 border border-cyan-500/30 transition-all group flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-cyan-600/20 border border-cyan-500/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <QrCode size={24} weight="bold" className="text-cyan-300" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-sm">Scanner Tiket Acara</h3>
+                <p className="text-slate-400 text-xs mt-0.5">Scan QR tiket untuk kegiatan yang ber-tiket</p>
               </div>
             </Link>
           </div>
@@ -128,7 +128,7 @@ export default async function AdminDashboard() {
           {/* Recent Events */}
           <div className="tech-card p-6 border border-blue-500/20 slide-up">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-extrabold text-white">Event Terbaru</h2>
+              <h2 className="text-base font-extrabold text-white">Formulir &amp; Kegiatan Terbaru</h2>
               <Link href="/portal-it-admin/events" className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 text-xs font-bold transition-colors">
                 Lihat Semua <ArrowRight size={12} weight="bold" />
               </Link>
@@ -147,16 +147,16 @@ export default async function AdminDashboard() {
                       </span>
                       <Link
                         href={`/portal-it-admin/absensi/${ev.id}`}
-                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                        className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium px-2.5 py-1 rounded-lg bg-blue-600/10 border border-blue-500/20"
                       >
-                        Laporan
+                        Rekap Data
                       </Link>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-slate-500 text-sm text-center py-4">Belum ada event.</p>
+              <p className="text-slate-500 text-sm text-center py-4">Belum ada formulir atau kegiatan.</p>
             )}
           </div>
         </div>

@@ -275,7 +275,7 @@ export default function AbsensiReportClient({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.setTextColor(30, 41, 59); // Slate-800
-      doc.text(`LAPORAN KEHADIRAN & ABSENSI ACARA`, 14, 15);
+      doc.text(isQrEnabled ? 'LAPORAN KEHADIRAN & PRESENSI ACARA' : 'REKAPITULASI DATA & RESPON FORMULIR', 14, 15);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
@@ -289,7 +289,7 @@ export default function AbsensiReportClient({
         day: 'numeric', month: 'long', year: 'numeric',
         hour: '2-digit', minute: '2-digit',
       });
-      doc.text(`Waktu Cetak: ${exportDate} WIB | Total Data: ${dataToExport.length} Anggota`, 14, 28);
+      doc.text(`Waktu Cetak: ${exportDate} WIB | Total Data: ${dataToExport.length} Mahasiswa | Portal IT 2026`, 14, 28);
 
       // KPI Summary Box in PDF
       doc.setFillColor(241, 245, 249); // Slate-100
@@ -299,7 +299,9 @@ export default function AbsensiReportClient({
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(51, 65, 85);
       doc.text(
-        `Total Anggota: ${totalAnggota}  |  Sudah Form: ${countFormFilled}  |  Sudah Scan QR: ${countQrScanned}  |  Hadir Lengkap: ${countLengkap}  |  Belum Hadir: ${countMangkir}`,
+        isQrEnabled
+          ? `Total Anggota: ${totalAnggota}  |  Sudah Form: ${countFormFilled}  |  Sudah Scan QR: ${countQrScanned}  |  Hadir Lengkap: ${countLengkap}  |  Belum Hadir: ${countMangkir}`
+          : `Total Anggota: ${totalAnggota}  |  Sudah Mengisi: ${countFormFilled} (${Math.round((countFormFilled / totalAnggota) * 100)}%)  |  Belum Mengisi: ${countMangkir} (${Math.round((countMangkir / totalAnggota) * 100)}%)`,
         18,
         41
       );
@@ -310,10 +312,10 @@ export default function AbsensiReportClient({
         'NRP',
         'Nama Lengkap',
         'Program Studi',
-        'Status Form',
-        isQrEnabled ? 'Status QR' : 'Status QR (Nonaktif)',
-        'Waktu Absen',
-        ...formFields.slice(0, 3).map((f) => f.label),
+        isQrEnabled ? 'Status Form' : 'Status Respon',
+        ...(isQrEnabled ? ['Status QR'] : []),
+        'Waktu',
+        ...formFields.slice(0, isQrEnabled ? 3 : 4).map((f) => f.label),
       ];
 
       const tableRows = dataToExport.map((a, i) => [
@@ -321,14 +323,14 @@ export default function AbsensiReportClient({
         a.nrp,
         a.nama,
         a.program_studi,
-        a.is_form_filled ? 'Sudah Form' : 'Belum',
-        isQrEnabled ? (a.is_qr_scanned ? 'Sudah Scan' : 'Belum') : 'Nonaktif',
-        a.absensi?.qr_scanned_at
-          ? new Date(a.absensi.qr_scanned_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-          : (a.absensi?.created_at
-              ? new Date(a.absensi.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        a.is_form_filled ? (isQrEnabled ? 'Sudah Form' : 'Sudah') : 'Belum',
+        ...(isQrEnabled ? [a.is_qr_scanned ? 'Sudah Scan' : 'Belum'] : []),
+        a.absensi?.created_at
+          ? new Date(a.absensi.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+          : (a.absensi?.qr_scanned_at
+              ? new Date(a.absensi.qr_scanned_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
               : '-'),
-        ...formFields.slice(0, 3).map((f) => String(a.absensi?.data_respons?.[f.label] ?? '-')),
+        ...formFields.slice(0, isQrEnabled ? 3 : 4).map((f) => String(a.absensi?.data_respons?.[f.label] ?? '-')),
       ]);
 
       autoTable(doc, {
@@ -363,7 +365,7 @@ export default function AbsensiReportClient({
           doc.setFontSize(8);
           doc.setTextColor(148, 163, 184);
           doc.text(
-            `Halaman ${data.pageNumber} — Sistem Absensi Digital IT '26`,
+            `Halaman ${data.pageNumber} — Portal Terpadu Mahasiswa S1 IT '26`,
             doc.internal.pageSize.width / 2,
             doc.internal.pageSize.height - 8,
             { align: 'center' }
@@ -371,7 +373,7 @@ export default function AbsensiReportClient({
         },
       });
 
-      const filename = `Laporan_Absensi_${event.nama_event.replace(/\s+/g, '_')}_${exportAll ? 'Semua' : 'Filtered'}.pdf`;
+      const filename = `Rekap_${event.nama_event.replace(/\s+/g, '_')}_${exportAll ? 'Semua' : 'Filtered'}.pdf`;
       doc.save(filename);
     } catch (err: any) {
       alert('Gagal membuat file PDF: ' + err?.message);
@@ -520,46 +522,46 @@ export default function AbsensiReportClient({
 
   return (
     <div className="space-y-6">
-      {/* ── 6 INTERACTIVE KPI METRIC CARDS ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 slide-up">
-        {/* 1. Total Anggota */}
-        <button
-          type="button"
-          onClick={resetFilters}
-          className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
-            !isFilterActive
-              ? 'bg-blue-600/25 border-blue-500 shadow-lg glow-blue'
-              : 'glass-card border-slate-700/50 hover:border-slate-500'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-            <span>👥 Semua</span>
-            <span className="text-[10px]">100%</span>
-          </div>
-          <p className="text-2xl font-extrabold text-white">{totalAnggota}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Total Terdaftar</p>
-        </button>
+      {/* ── INTERACTIVE KPI METRIC CARDS ── */}
+      {isQrEnabled ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 slide-up">
+          {/* 1. Total Anggota */}
+          <button
+            type="button"
+            onClick={resetFilters}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              !isFilterActive
+                ? 'bg-blue-600/25 border-blue-500 shadow-lg glow-blue'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span>👥 Semua</span>
+              <span className="text-[10px]">100%</span>
+            </div>
+            <p className="text-2xl font-extrabold text-white">{totalAnggota}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Total Terdaftar</p>
+          </button>
 
-        {/* 2. Sudah Form */}
-        <button
-          type="button"
-          onClick={() => { resetFilters(); setFilterForm('yes'); }}
-          className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
-            filterForm === 'yes' && combinedStatus === 'all'
-              ? 'bg-emerald-600/25 border-emerald-500 shadow-lg'
-              : 'glass-card border-slate-700/50 hover:border-slate-500'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-emerald-400 mb-1">
-            <span>📝 Sudah Form</span>
-            <span className="text-[10px]">{Math.round((countFormFilled / totalAnggota) * 100)}%</span>
-          </div>
-          <p className="text-2xl font-extrabold text-emerald-300">{countFormFilled}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Isi Form Absen</p>
-        </button>
+          {/* 2. Sudah Form */}
+          <button
+            type="button"
+            onClick={() => { resetFilters(); setFilterForm('yes'); }}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              filterForm === 'yes' && combinedStatus === 'all'
+                ? 'bg-emerald-600/25 border-emerald-500 shadow-lg'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-emerald-400 mb-1">
+              <span>📝 Sudah Form</span>
+              <span className="text-[10px]">{Math.round((countFormFilled / totalAnggota) * 100)}%</span>
+            </div>
+            <p className="text-2xl font-extrabold text-emerald-300">{countFormFilled}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Isi Form Absen</p>
+          </button>
 
-        {/* 3. Sudah Scan QR */}
-        {isQrEnabled ? (
+          {/* 3. Sudah Scan QR */}
           <button
             type="button"
             onClick={() => { resetFilters(); setFilterQr('yes'); }}
@@ -576,74 +578,128 @@ export default function AbsensiReportClient({
             <p className="text-2xl font-extrabold text-cyan-300">{countQrScanned}</p>
             <p className="text-[10px] text-slate-400 mt-0.5">Check-in Lokasi</p>
           </button>
-        ) : (
-          <div className="p-4 rounded-2xl border text-left glass-card border-slate-800 opacity-50 cursor-not-allowed">
-            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-              <span>📱 QR Check-in</span>
-              <span className="text-[10px] uppercase font-mono">Off</span>
+
+          {/* 4. Hadir Lengkap */}
+          <button
+            type="button"
+            onClick={() => { resetFilters(); setCombinedStatus('lengkap'); }}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              combinedStatus === 'lengkap'
+                ? 'bg-green-600/25 border-green-500 shadow-lg'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-green-400 mb-1">
+              <span>🌟 Lengkap</span>
+              <span className="text-[10px]">{Math.round((countLengkap / totalAnggota) * 100)}%</span>
             </div>
-            <p className="text-2xl font-extrabold text-slate-500">-</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Fitur Nonaktif</p>
-          </div>
-        )}
+            <p className="text-2xl font-extrabold text-green-300">{countLengkap}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Form + Scan QR</p>
+          </button>
 
-        {/* 4. Hadir Lengkap */}
-        <button
-          type="button"
-          onClick={() => { resetFilters(); setCombinedStatus('lengkap'); }}
-          className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
-            combinedStatus === 'lengkap'
-              ? 'bg-green-600/25 border-green-500 shadow-lg'
-              : 'glass-card border-slate-700/50 hover:border-slate-500'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-green-400 mb-1">
-            <span>🌟 Lengkap</span>
-            <span className="text-[10px]">{Math.round((countLengkap / totalAnggota) * 100)}%</span>
-          </div>
-          <p className="text-2xl font-extrabold text-green-300">{countLengkap}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">{isQrEnabled ? 'Form + Scan QR' : 'Isi Form Presensi'}</p>
-        </button>
+          {/* 5. Hadir Sebagian */}
+          <button
+            type="button"
+            onClick={() => { resetFilters(); setCombinedStatus('sebagian'); }}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              combinedStatus === 'sebagian'
+                ? 'bg-amber-600/25 border-amber-500 shadow-lg'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-amber-400 mb-1">
+              <span>⚠️ Sebagian</span>
+              <span className="text-[10px]">{Math.round((countSebagian / totalAnggota) * 100)}%</span>
+            </div>
+            <p className="text-2xl font-extrabold text-amber-300">{countSebagian}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Hanya 1 Status</p>
+          </button>
 
-        {/* 5. Hadir Sebagian */}
-        <button
-          type="button"
-          onClick={() => { if (isQrEnabled) { resetFilters(); setCombinedStatus('sebagian'); } }}
-          disabled={!isQrEnabled}
-          className={`p-4 rounded-2xl border text-left transition-all ${
-            !isQrEnabled
-              ? 'glass-card border-slate-800 opacity-40 cursor-not-allowed'
-              : combinedStatus === 'sebagian'
-              ? 'bg-amber-600/25 border-amber-500 shadow-lg hover:scale-102'
-              : 'glass-card border-slate-700/50 hover:border-slate-500 hover:scale-102'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-amber-400 mb-1">
-            <span>⚠️ Sebagian</span>
-            <span className="text-[10px]">{isQrEnabled ? `${Math.round((countSebagian / totalAnggota) * 100)}%` : '0%'}</span>
-          </div>
-          <p className="text-2xl font-extrabold text-amber-300">{isQrEnabled ? countSebagian : 0}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">{isQrEnabled ? 'Hanya 1 Status' : 'Tidak Berlaku (QR Off)'}</p>
-        </button>
+          {/* 6. Belum Hadir */}
+          <button
+            type="button"
+            onClick={() => { resetFilters(); setCombinedStatus('mangkir'); }}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              combinedStatus === 'mangkir'
+                ? 'bg-red-600/25 border-red-500 shadow-lg'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-red-400 mb-1">
+              <span>❌ Mangkir</span>
+              <span className="text-[10px]">{Math.round((countMangkir / totalAnggota) * 100)}%</span>
+            </div>
+            <p className="text-2xl font-extrabold text-red-300">{countMangkir}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Belum Ada Aksi</p>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 slide-up">
+          {/* 1. Total Mahasiswa */}
+          <button
+            type="button"
+            onClick={resetFilters}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              !isFilterActive
+                ? 'bg-blue-600/25 border-blue-500 shadow-lg glow-blue'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span>👥 Target Mahasiswa</span>
+              <span className="text-[10px]">100%</span>
+            </div>
+            <p className="text-2xl font-extrabold text-white">{totalAnggota}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Angkatan IT 2026</p>
+          </button>
 
-        {/* 6. Belum Hadir / Mangkir */}
-        <button
-          type="button"
-          onClick={() => { resetFilters(); setCombinedStatus('mangkir'); }}
-          className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
-            combinedStatus === 'mangkir'
-              ? 'bg-red-600/25 border-red-500 shadow-lg'
-              : 'glass-card border-slate-700/50 hover:border-slate-500'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-red-400 mb-1">
-            <span>❌ Mangkir</span>
-            <span className="text-[10px]">{Math.round((countMangkir / totalAnggota) * 100)}%</span>
+          {/* 2. Sudah Mengisi Form */}
+          <button
+            type="button"
+            onClick={() => { resetFilters(); setFilterForm('yes'); }}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              filterForm === 'yes' && combinedStatus === 'all'
+                ? 'bg-emerald-600/25 border-emerald-500 shadow-lg'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-emerald-400 mb-1">
+              <span>📝 Sudah Mengisi</span>
+              <span className="text-[10px] font-bold">{Math.round((countFormFilled / totalAnggota) * 100)}%</span>
+            </div>
+            <p className="text-2xl font-extrabold text-emerald-300">{countFormFilled}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Respon Terkirim</p>
+          </button>
+
+          {/* 3. Belum Mengisi */}
+          <button
+            type="button"
+            onClick={() => { resetFilters(); setFilterForm('no'); }}
+            className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
+              filterForm === 'no' && combinedStatus === 'all'
+                ? 'bg-red-600/25 border-red-500 shadow-lg'
+                : 'glass-card border-slate-700/50 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs text-red-400 mb-1">
+              <span>⏳ Belum Mengisi</span>
+              <span className="text-[10px] font-bold">{Math.round(((totalAnggota - countFormFilled) / totalAnggota) * 100)}%</span>
+            </div>
+            <p className="text-2xl font-extrabold text-red-300">{totalAnggota - countFormFilled}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Perlu Follow Up</p>
+          </button>
+
+          {/* 4. Rekap Feedback (if enabled) or Response Rate */}
+          <div className="p-4 rounded-2xl border text-left glass-card border-slate-700/50">
+            <div className="flex items-center justify-between text-xs text-amber-400 mb-1">
+              <span>⭐ Ulasan Masuk</span>
+              <span className="text-[10px] font-mono">{Number(avgRating) > 0 ? `${avgRating} ★` : '-'}</span>
+            </div>
+            <p className="text-2xl font-extrabold text-amber-300">{countFeedback}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Feedback Peserta</p>
           </div>
-          <p className="text-2xl font-extrabold text-red-300">{countMangkir}</p>
-          <p className="text-[10px] text-slate-400 mt-0.5">Belum Ada Aksi</p>
-        </button>
-      </div>
+        </div>
+      )}
 
       {/* ── TOP MAIN NAVIGATION TABS ── */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-700/70 slide-up">
@@ -657,7 +713,7 @@ export default function AbsensiReportClient({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <span>📊</span> Data Kehadiran ({processedList.length})
+            <span>📊</span> {isQrEnabled ? 'Data Kehadiran' : 'Data Respon Masuk'} ({processedList.length})
           </button>
           <button
             type="button"
@@ -668,7 +724,7 @@ export default function AbsensiReportClient({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <span>🎯</span> Mode Sweeping ({countMangkir + countSebagian})
+            <span>🎯</span> {isQrEnabled ? `Mode Sweeping (${countMangkir + countSebagian})` : `Follow Up Belum Mengisi (${totalAnggota - countFormFilled})`}
           </button>
           <button
             type="button"
@@ -866,14 +922,16 @@ export default function AbsensiReportClient({
                       className="py-3 px-3 text-center cursor-pointer hover:text-white transition-colors"
                       onClick={() => handleSort('form_status')}
                     >
-                      Status Form {sortKey === 'form_status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      {isQrEnabled ? 'Status Form' : 'Status Respon'} {sortKey === 'form_status' && (sortOrder === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th
-                      className={`py-3 px-3 text-center ${isQrEnabled ? 'cursor-pointer hover:text-white transition-colors' : 'text-slate-600'}`}
-                      onClick={() => { if (isQrEnabled) handleSort('qr_status'); }}
-                    >
-                      Status QR {isQrEnabled ? (sortKey === 'qr_status' && (sortOrder === 'asc' ? '↑' : '↓')) : <span className="text-[10px] font-normal block text-slate-500">(Nonaktif)</span>}
-                    </th>
+                    {isQrEnabled && (
+                      <th
+                        className="py-3 px-3 text-center cursor-pointer hover:text-white transition-colors"
+                        onClick={() => handleSort('qr_status')}
+                      >
+                        Status QR {sortKey === 'qr_status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                    )}
                     <th
                       className="py-3 px-3 cursor-pointer hover:text-white transition-colors hidden lg:table-cell"
                       onClick={() => handleSort('waktu')}
@@ -898,8 +956,8 @@ export default function AbsensiReportClient({
                 <tbody className="divide-y divide-slate-800/60">
                   {processedList.length === 0 ? (
                     <tr>
-                      <td colSpan={7 + formFields.length} className="text-center py-10 text-slate-500">
-                        Tidak ada data anggota yang cocok dengan filter yang dipilih.
+                      <td colSpan={(isQrEnabled ? 7 : 6) + formFields.length} className="text-center py-10 text-slate-500">
+                        Tidak ada data mahasiswa yang cocok dengan filter yang dipilih.
                       </td>
                     </tr>
                   ) : (
@@ -917,7 +975,7 @@ export default function AbsensiReportClient({
                         <td className="py-3 px-3 text-center">
                           {row.is_form_filled ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold">
-                              ✓ Sudah
+                              ✓ {isQrEnabled ? 'Sudah' : 'Terisi'}
                             </span>
                           ) : (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-500 text-[10px]">
@@ -926,22 +984,20 @@ export default function AbsensiReportClient({
                           )}
                         </td>
 
-                        {/* Status Scan QR */}
-                        <td className="py-3 px-3 text-center">
-                          {!isQrEnabled ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800/80 border border-slate-700/60 text-slate-500 text-[10px]">
-                              Nonaktif
-                            </span>
-                          ) : row.is_qr_scanned ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[10px] font-bold">
-                              ✓ Scan QR
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-500 text-[10px]">
-                              Belum
-                            </span>
-                          )}
-                        </td>
+                        {/* Status Scan QR (Only if isQrEnabled) */}
+                        {isQrEnabled && (
+                          <td className="py-3 px-3 text-center">
+                            {row.is_qr_scanned ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-[10px] font-bold">
+                                ✓ Scan QR
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-500 text-[10px]">
+                                Belum
+                              </span>
+                            )}
+                          </td>
+                        )}
 
                         {/* Waktu */}
                         <td className="py-3 px-3 text-slate-400 font-mono text-[11px] hidden lg:table-cell">
@@ -1015,29 +1071,44 @@ export default function AbsensiReportClient({
         </div>
       )}
 
-      {/* ── VIEW 2: MODE SWEEPING PANITIA (DAFTAR CEPAT BELUM HADIR) ── */}
+      {/* ── VIEW 2: MODE SWEEPING & FOLLOW-UP ── */}
       {mainTab === 'sweeping' && (
         <div className="space-y-4 slide-up">
           <div className="glass-card rounded-2xl p-5 border border-amber-500/30">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">🎯</span>
               <div>
-                <h3 className="text-white font-bold text-base">Mode Sweeping Panitia Acara</h3>
+                <h3 className="text-white font-bold text-base">
+                  {isQrEnabled ? 'Mode Sweeping Panitia Acara' : 'Follow Up Status Pengisian Mahasiswa'}
+                </h3>
                 <p className="text-slate-400 text-xs">
-                  Daftar seluruh anggota yang belum melakukan check-in scan QR di lokasi atau belum mengisi form.
+                  {isQrEnabled
+                    ? 'Daftar seluruh mahasiswa yang belum melakukan check-in scan QR di lokasi atau belum mengisi form.'
+                    : 'Daftar rekapitulasi cepat mahasiswa yang belum mengisi vs sudah mengirimkan respon.'}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* 1. Belum Scan QR / Belum Isi Form */}
+            {/* 1. Belum Scan QR (if QR enabled) OR Belum Isi Form (if QR disabled) */}
             {isQrEnabled ? (
               <div className="glass-card rounded-2xl p-5 border border-cyan-500/20 space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
                   <h4 className="font-bold text-cyan-300 text-sm flex items-center gap-1.5">
                     <span>📱</span> Belum Scan QR Lokasi ({totalAnggota - countQrScanned})
                   </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text = merged.filter((a) => !a.is_qr_scanned).map((a) => `${a.nrp} - ${a.nama}`).join('\n');
+                      navigator.clipboard.writeText(text);
+                      alert('Daftar NRP belum scan QR berhasil disalin!');
+                    }}
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 font-semibold transition-colors"
+                  >
+                    Salin NRP
+                  </button>
                 </div>
                 <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
                   {merged.filter((a) => !a.is_qr_scanned).map((a, i) => (
@@ -1054,11 +1125,22 @@ export default function AbsensiReportClient({
                 </div>
               </div>
             ) : (
-              <div className="glass-card rounded-2xl p-5 border border-emerald-500/20 space-y-3">
+              <div className="glass-card rounded-2xl p-5 border border-red-500/30 space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
-                  <h4 className="font-bold text-emerald-300 text-sm flex items-center gap-1.5">
-                    <span>📝</span> Belum Isi Form Presensi ({totalAnggota - countFormFilled})
+                  <h4 className="font-bold text-red-400 text-sm flex items-center gap-1.5">
+                    <span>⏳</span> Belum Mengisi Formulir ({totalAnggota - countFormFilled})
                   </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text = merged.filter((a) => !a.is_form_filled).map((a) => `${a.nrp} - ${a.nama}`).join('\n');
+                      navigator.clipboard.writeText(text);
+                      alert('Daftar mahasiswa belum mengisi berhasil disalin ke clipboard!');
+                    }}
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 font-semibold transition-colors"
+                  >
+                    Salin List Belum Mengisi
+                  </button>
                 </div>
                 <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
                   {merged.filter((a) => !a.is_form_filled).map((a, i) => (
@@ -1068,7 +1150,7 @@ export default function AbsensiReportClient({
                         <p className="text-slate-400 font-mono text-[10px]">{a.nrp} • {a.program_studi}</p>
                       </div>
                       <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/20 text-red-300">
-                        Belum Isi
+                        Belum Mengisi
                       </span>
                     </div>
                   ))}
@@ -1076,27 +1158,72 @@ export default function AbsensiReportClient({
               </div>
             )}
 
-            {/* 2. Mangkir / Belum Ada Aktivitas Sama Sekali */}
-            <div className="glass-card rounded-2xl p-5 border border-red-500/20 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
-                <h4 className="font-bold text-red-400 text-sm flex items-center gap-1.5">
-                  <span>❌</span> Mangkir / Belum Ada Aksi ({countMangkir})
-                </h4>
-              </div>
-              <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
-                {merged.filter((a) => a.is_mangkir).map((a, i) => (
-                  <div key={a.nrp} className="p-2.5 rounded-xl bg-slate-800/60 border border-red-500/20 flex items-center justify-between text-xs">
-                    <div>
-                      <p className="text-white font-semibold">{i + 1}. {a.nama}</p>
-                      <p className="text-slate-400 font-mono text-[10px]">{a.nrp} • {a.program_studi}</p>
+            {/* 2. Mangkir (if QR enabled) OR Sudah Mengisi (if QR disabled) */}
+            {isQrEnabled ? (
+              <div className="glass-card rounded-2xl p-5 border border-red-500/20 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
+                  <h4 className="font-bold text-red-400 text-sm flex items-center gap-1.5">
+                    <span>❌</span> Mangkir / Belum Ada Aksi ({countMangkir})
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text = merged.filter((a) => a.is_mangkir).map((a) => `${a.nrp} - ${a.nama}`).join('\n');
+                      navigator.clipboard.writeText(text);
+                      alert('Daftar mahasiswa mangkir berhasil disalin!');
+                    }}
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 font-semibold transition-colors"
+                  >
+                    Salin List Mangkir
+                  </button>
+                </div>
+                <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+                  {merged.filter((a) => a.is_mangkir).map((a, i) => (
+                    <div key={a.nrp} className="p-2.5 rounded-xl bg-slate-800/60 border border-red-500/20 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="text-white font-semibold">{i + 1}. {a.nama}</p>
+                        <p className="text-slate-400 font-mono text-[10px]">{a.nrp} • {a.program_studi}</p>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 font-bold">
+                        Belum Hadir
+                      </span>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 font-bold">
-                      Belum Hadir
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="glass-card rounded-2xl p-5 border border-emerald-500/30 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
+                  <h4 className="font-bold text-emerald-400 text-sm flex items-center gap-1.5">
+                    <span>✓</span> Sudah Mengisi Formulir ({countFormFilled})
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text = merged.filter((a) => a.is_form_filled).map((a) => `${a.nrp} - ${a.nama}`).join('\n');
+                      navigator.clipboard.writeText(text);
+                      alert('Daftar mahasiswa sudah mengisi berhasil disalin ke clipboard!');
+                    }}
+                    className="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-semibold transition-colors"
+                  >
+                    Salin List Sudah Mengisi
+                  </button>
+                </div>
+                <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+                  {merged.filter((a) => a.is_form_filled).map((a, i) => (
+                    <div key={a.nrp} className="p-2.5 rounded-xl bg-slate-800/60 border border-emerald-500/20 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="text-white font-semibold">{i + 1}. {a.nama}</p>
+                        <p className="text-slate-400 font-mono text-[10px]">{a.nrp} • {a.program_studi}</p>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">
+                        Sudah Mengisi
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -29,6 +29,8 @@ export default function HomePageClient({ events, error }: Props) {
   const [memberAbsensiMap,  setMemberAbsensiMap]  = useState<Record<string, Absensi>>({});
   const [memberFeedbackMap, setMemberFeedbackMap] = useState<Record<string, Feedback>>({});
   const [searchFilter,      setSearchFilter]      = useState('');
+  const [categoryFilter,    setCategoryFilter]    = useState<'all' | 'form' | 'event'>('all');
+  const [statusFilter,      setStatusFilter]      = useState<'all' | 'unfilled' | 'filled'>('all');
 
   // Fetch logged-in member's participation across all events
   useEffect(() => {
@@ -66,9 +68,30 @@ export default function HomePageClient({ events, error }: Props) {
   }, [member?.nrp, supabase]);
 
   const filteredEvents = (events || []).filter((e) => {
-    if (!searchFilter.trim()) return true;
-    return e.nama_event.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    const evConfig = parseEventConfig(e);
+
+    // Search query
+    const matchSearch = !searchFilter.trim() ||
+      e.nama_event.toLowerCase().includes(searchFilter.toLowerCase()) ||
       (e.deskripsi && e.deskripsi.toLowerCase().includes(searchFilter.toLowerCase()));
+
+    // Category filter
+    let matchCategory = true;
+    if (categoryFilter === 'form') {
+      matchCategory = evConfig.is_qr_enabled === false;
+    } else if (categoryFilter === 'event') {
+      matchCategory = evConfig.is_qr_enabled !== false;
+    }
+
+    // Status filter (when logged in)
+    let matchStatus = true;
+    if (member) {
+      const isFilled = memberAbsensiMap[e.id]?.is_form_filled;
+      if (statusFilter === 'unfilled') matchStatus = !isFilled;
+      if (statusFilter === 'filled')   matchStatus = !!isFilled;
+    }
+
+    return matchSearch && matchCategory && matchStatus;
   });
 
   const totalEvents   = events?.length || 0;
@@ -79,7 +102,7 @@ export default function HomePageClient({ events, error }: Props) {
 
   return (
     <main className="min-h-[100dvh] animated-bg text-white relative overflow-hidden">
-      {/* Background Decorative Tech Blobs — fixed so they never stretch layout */}
+      {/* Background Decorative Tech Blobs */}
       <div className="fixed w-96 h-96 rounded-full bg-blue-600/10 top-0 left-0 -translate-x-1/3 -translate-y-1/3 blur-3xl pointer-events-none z-0" />
       <div className="fixed w-80 h-80 rounded-full bg-amber-500/8 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
@@ -97,7 +120,7 @@ export default function HomePageClient({ events, error }: Props) {
                     <h2 className="text-white font-extrabold text-base sm:text-lg truncate tracking-tight">{member.nama}</h2>
                     <span className="inline-flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full badge-open font-bold uppercase tracking-wider">
                       <CheckCircle size={11} weight="fill" />
-                      Anggota IT 26
+                      Mahasiswa IT 26
                     </span>
                   </div>
                   <p className="text-slate-400 text-xs font-mono mt-0.5">
@@ -111,13 +134,13 @@ export default function HomePageClient({ events, error }: Props) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/favicon.ico"
-                    alt="Logo IT"
+                    alt="Logo IT 26"
                     className="w-full h-full object-contain"
                   />
                 </div>
                 <div>
-                  <p className="text-white font-bold text-sm">Portal Presensi Terpadu IT 2026</p>
-                  <p className="text-slate-400 text-xs">Silakan masuk menggunakan NRP untuk mengakses tiket presensi</p>
+                  <p className="text-white font-bold text-sm">Portal Layanan &amp; Formulir IT 2026</p>
+                  <p className="text-slate-400 text-xs">Masuk menggunakan NRP untuk mengisi formulir pendataan &amp; kegiatan</p>
                 </div>
               </div>
             )}
@@ -147,7 +170,7 @@ export default function HomePageClient({ events, error }: Props) {
                   className="w-full md:w-auto btn-primary h-11 text-xs uppercase tracking-wider font-bold shadow-lg"
                 >
                   <Key size={14} weight="bold" />
-                  Masuk Anggota
+                  Masuk Mahasiswa
                   <ArrowRight size={14} weight="bold" />
                 </Link>
               )}
@@ -158,15 +181,15 @@ export default function HomePageClient({ events, error }: Props) {
           {member && (
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3 pt-5 mt-5 border-t border-slate-800">
               <div className="p-3 sm:p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-center">
-                <p className="text-slate-400 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Event Tersedia</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Formulir Tersedia</p>
                 <p className="text-lg sm:text-2xl font-extrabold text-white mt-0.5">{totalEvents}</p>
               </div>
               <div className="p-3 sm:p-4 rounded-2xl bg-blue-950/40 border border-blue-500/25 text-center">
-                <p className="text-blue-300 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Event Diikuti</p>
+                <p className="text-blue-300 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Sudah Diisi</p>
                 <p className="text-lg sm:text-2xl font-extrabold text-[#c8dcff] mt-0.5">{attendedCount}</p>
               </div>
               <div className="p-3 sm:p-4 rounded-2xl bg-amber-950/30 border border-amber-500/25 text-center">
-                <p className="text-amber-300 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Feedback Terkirim</p>
+                <p className="text-amber-300 text-[10px] sm:text-xs font-medium uppercase tracking-wider">Ulasan / Feedback</p>
                 <p className="text-lg sm:text-2xl font-extrabold text-[#ffc878] mt-0.5">{feedbackCount}</p>
               </div>
             </div>
@@ -179,32 +202,32 @@ export default function HomePageClient({ events, error }: Props) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/favicon.ico"
-              alt="Logo Absensi IT 26"
+              alt="Logo IT 26"
               className="w-full h-full object-contain"
             />
           </div>
 
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full badge-tech-blue text-xs font-bold tracking-wider uppercase">
             <span className="w-2 h-2 rounded-full bg-blue-400" />
-            Digital Attendance &amp; Event Portal
+            Portal Formulir &amp; Kegiatan Terpadu
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
-            PORTAL KEHADIRAN <span className="gradient-text-ifest">IT 2026</span>
+            PORTAL FORMULIR <span className="gradient-text-ifest">IT 2026</span>
           </h1>
-          <p className="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto leading-relaxed">
-            Pilih event aktif di bawah ini untuk melengkapi form kehadiran, menampilkan Tiket QR digital di lokasi, dan mengirimkan ulasan evaluasi acara.
+          <p className="text-slate-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
+            Satu portal terpadu untuk pendataan angkatan, registrasi lomba, survey kuesioner, dan kegiatan mahasiswa S1 Teknologi Informasi Angkatan 2026.
           </p>
         </div>
 
-        {/* ── EVENTS SEARCH & LIST ── */}
-        <div className="slide-up space-y-5">
+        {/* ── EVENTS SEARCH & CATEGORY FILTER ── */}
+        <div className="slide-up space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-white font-extrabold text-base tracking-tight">
               <CalendarBlank size={20} weight="bold" className="text-[#ffc878]" />
-              Daftar Acara Aktif
+              Daftar Formulir &amp; Kegiatan
               <span className="text-xs px-2.5 py-0.5 rounded-full badge-tech-amber font-mono font-bold">
-                {filteredEvents.length} Event
+                {filteredEvents.length}
               </span>
             </div>
 
@@ -213,16 +236,93 @@ export default function HomePageClient({ events, error }: Props) {
                 type="text"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Cari nama event..."
-                aria-label="Cari nama event"
+                placeholder="Cari formulir atau kegiatan..."
+                aria-label="Cari formulir atau kegiatan"
                 className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:border-blue-500"
               />
             </div>
           </div>
 
+          {/* Segmented Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <div className="inline-flex p-1 bg-slate-900/80 rounded-xl border border-slate-800 text-xs gap-1">
+              <button
+                type="button"
+                onClick={() => setCategoryFilter('all')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                  categoryFilter === 'all'
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Semua ({events?.length || 0})
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategoryFilter('form')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                  categoryFilter === 'form'
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                📝 Pendataan &amp; Lomba
+              </button>
+              <button
+                type="button"
+                onClick={() => setCategoryFilter('event')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
+                  categoryFilter === 'event'
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🎟️ Kegiatan &amp; Tiket QR
+              </button>
+            </div>
+
+            {member && (
+              <div className="inline-flex p-1 bg-slate-900/80 rounded-xl border border-slate-800 text-xs gap-1">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('all')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all ${
+                    statusFilter === 'all'
+                      ? 'bg-slate-700 text-white'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Semua Status
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('unfilled')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all ${
+                    statusFilter === 'unfilled'
+                      ? 'bg-amber-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Belum Diisi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('filled')}
+                  className={`px-2.5 py-1.5 rounded-lg font-bold transition-all ${
+                    statusFilter === 'filled'
+                      ? 'bg-emerald-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Sudah Diisi
+                </button>
+              </div>
+            )}
+          </div>
+
           {error && (
             <div className="tech-card p-6 text-center text-red-400 border border-red-500/30">
-              <p>Gagal memuat daftar event. Silakan muat ulang halaman.</p>
+              <p>Gagal memuat daftar formulir. Silakan muat ulang halaman.</p>
             </div>
           )}
 
@@ -230,10 +330,10 @@ export default function HomePageClient({ events, error }: Props) {
             <div className="tech-card p-12 text-center border border-slate-800">
               <Tray size={52} className="mx-auto mb-3 text-slate-600 float-anim" weight="regular" />
               <h3 className="text-white font-bold text-base mb-1">
-                Belum Ada Event Ditemukan
+                Belum Ada Formulir Ditemukan
               </h3>
               <p className="text-slate-400 text-xs">
-                {searchFilter ? 'Coba cari dengan kata kunci lain.' : 'Pantau terus! Event baru akan segera muncul di sini.'}
+                {searchFilter ? 'Coba cari dengan kata kunci lain.' : 'Pantau terus! Formulir atau kegiatan baru akan muncul di sini.'}
               </p>
             </div>
           )}
@@ -246,6 +346,7 @@ export default function HomePageClient({ events, error }: Props) {
                 const targetUrl = member ? `/event/${event.id}` : '/login';
                 const memberAbs = memberAbsensiMap[event.id];
                 const memberFb  = memberFeedbackMap[event.id];
+                const isFormTypeOnly = evConfig.is_qr_enabled === false && evConfig.is_feedback_enabled === false;
 
                 return (
                   <div
@@ -254,11 +355,22 @@ export default function HomePageClient({ events, error }: Props) {
                     style={{ animationDelay: `${idx * 0.08}s` }}
                   >
                     <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="badge-open inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          Sedang Berlangsung
-                        </span>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="badge-open inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Aktif
+                          </span>
+                          {evConfig.is_qr_enabled === false ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                              📝 Formulir / Pendataan
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-[#ffc878] border border-amber-500/30">
+                              🎟️ Kegiatan &amp; Tiket
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[11px] text-slate-400 font-mono">
                           {new Date(event.created_at).toLocaleDateString('id-ID', {
                             day: 'numeric', month: 'short', year: 'numeric'
@@ -278,38 +390,49 @@ export default function HomePageClient({ events, error }: Props) {
 
                       {/* Logged in member status badges */}
                       {member && (
-                        <div className="grid grid-cols-3 gap-1.5 pt-3 pb-1 border-t border-slate-800">
-                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
+                        isFormTypeOnly ? (
+                          <div className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 ${
                             memberAbs?.is_form_filled
                               ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-500'
+                              : 'bg-slate-900/60 border-slate-800 text-slate-400'
                           }`}>
-                            <NotePencil size={14} weight={memberAbs?.is_form_filled ? 'fill' : 'regular'} />
-                            {memberAbs?.is_form_filled ? 'Form OK' : 'Form Belum'}
+                            <NotePencil size={15} weight={memberAbs?.is_form_filled ? 'fill' : 'regular'} />
+                            <span>{memberAbs?.is_form_filled ? '✓ Respon Formulir Telah Terkirim' : 'Belum Mengisi Formulir Ini'}</span>
                           </div>
+                        ) : (
+                          <div className={`grid ${evConfig.is_feedback_enabled ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 pt-3 pb-1 border-t border-slate-800`}>
+                            <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
+                              memberAbs?.is_form_filled
+                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                                : 'bg-slate-900/60 border-slate-800 text-slate-500'
+                            }`}>
+                              <NotePencil size={14} weight={memberAbs?.is_form_filled ? 'fill' : 'regular'} />
+                              {memberAbs?.is_form_filled ? 'Form Terisi' : 'Form Belum'}
+                            </div>
 
-                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
-                            evConfig.is_qr_enabled === false
-                              ? 'bg-slate-900/40 border-slate-800/80 text-slate-600'
-                              : memberAbs?.is_qr_scanned
-                              ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-500'
-                          }`}>
-                            <DeviceMobile size={14} weight={memberAbs?.is_qr_scanned ? 'fill' : 'regular'} />
-                            {evConfig.is_qr_enabled === false ? 'QR Off' : memberAbs?.is_qr_scanned ? 'QR Discan' : 'QR Belum'}
-                          </div>
+                            {evConfig.is_qr_enabled && (
+                              <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
+                                memberAbs?.is_qr_scanned
+                                  ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
+                                  : 'bg-slate-900/60 border-slate-800 text-slate-500'
+                              }`}>
+                                <DeviceMobile size={14} weight={memberAbs?.is_qr_scanned ? 'fill' : 'regular'} />
+                                {memberAbs?.is_qr_scanned ? 'QR Discan' : 'Tiket Siap'}
+                              </div>
+                            )}
 
-                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
-                            evConfig.is_feedback_enabled === false
-                              ? 'bg-slate-900/40 border-slate-800/80 text-slate-600'
-                              : memberFb
-                              ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
-                              : 'bg-slate-900/60 border-slate-800 text-slate-500'
-                          }`}>
-                            <Star size={14} weight={memberFb ? 'fill' : 'regular'} />
-                            {evConfig.is_feedback_enabled === false ? 'Feedback Off' : memberFb ? 'Feedback OK' : 'Feedback Belum'}
+                            {evConfig.is_feedback_enabled && (
+                              <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
+                                memberFb
+                                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
+                                  : 'bg-slate-900/60 border-slate-800 text-slate-500'
+                              }`}>
+                                <Star size={14} weight={memberFb ? 'fill' : 'regular'} />
+                                {memberFb ? 'Ulasan OK' : 'Ulasan Belum'}
+                              </div>
+                            )}
                           </div>
-                        </div>
+                        )
                       )}
                     </div>
 
@@ -319,14 +442,10 @@ export default function HomePageClient({ events, error }: Props) {
                     >
                       <span>
                         {member
-                          ? !evConfig.is_qr_enabled && !evConfig.is_feedback_enabled
-                            ? 'Buka Form Presensi'
-                            : !evConfig.is_qr_enabled
-                            ? 'Buka Form & Feedback'
-                            : !evConfig.is_feedback_enabled
-                            ? 'Buka Form & Tiket QR'
-                            : 'Buka Form, Tiket & Feedback'
-                          : 'Login untuk Mengisi Presensi'}
+                          ? evConfig.is_qr_enabled === false
+                            ? (memberAbs?.is_form_filled ? 'Lihat / Ubah Jawaban Formulir' : 'Isi Formulir Sekarang')
+                            : 'Buka Formulir & Tiket QR'
+                          : 'Masuk untuk Mengisi Formulir'}
                       </span>
                       <ArrowRight size={14} weight="bold" />
                     </Link>
@@ -339,7 +458,7 @@ export default function HomePageClient({ events, error }: Props) {
 
         {/* ── FOOTER ── */}
         <footer className="text-center text-xs text-slate-500 pt-8 border-t border-slate-800/80 space-y-1">
-          <p className="font-semibold text-slate-400">© 2026 Mahasiswa S1 Teknologi Informasi · PRESENSI IT 26</p>
+          <p className="font-semibold text-slate-400">© 2026 Mahasiswa S1 Teknologi Informasi · PORTAL IT 26</p>
         </footer>
       </div>
     </main>

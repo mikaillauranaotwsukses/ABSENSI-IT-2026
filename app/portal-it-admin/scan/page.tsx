@@ -130,8 +130,10 @@ export default function AdminScanQRPage() {
         .order('created_at', { ascending: false });
 
       if (data && data.length > 0) {
-        setEvents(data as Event[]);
-        setSelectedEvent(data[0].id);
+        const evList = data as Event[];
+        setEvents(evList);
+        const firstQrEvent = evList.find((e) => parseEventConfig(e).is_qr_enabled !== false);
+        setSelectedEvent(firstQrEvent ? firstQrEvent.id : evList[0].id);
       }
     }
     loadEvents();
@@ -274,24 +276,24 @@ export default function AdminScanQRPage() {
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto mb-3">
             <Camera size={26} weight="bold" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">Scanner QR Absensi Panitia</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Scanner Tiket QR Acara Lapangan</h1>
           <p className="text-slate-400 text-xs mt-1">
-            Scan QR anggota • Konfirmasi kehadiran • Catat otomatis
+            Pindai tiket QR mahasiswa untuk kegiatan lapangan yang mengaktifkan fitur tiket masuk
           </p>
 
           {/* Event Selector */}
           <div className="mt-4 text-left">
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">Pilih Event Aktif:</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">Pilih Acara / Kegiatan:</label>
             <select
               value={selectedEvent}
               onChange={(e) => setSelectedEvent(e.target.value)}
               className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-white text-sm focus:border-blue-500 focus:outline-none"
             >
               {events.length === 0
-                ? <option value="">Tidak ada event aktif</option>
+                ? <option value="">Tidak ada acara aktif</option>
                 : events.map((e) => (
                     <option key={e.id} value={e.id}>
-                      {e.nama_event} {parseEventConfig(e).is_qr_enabled === false ? '(QR Nonaktif)' : ''}
+                      {e.nama_event} {parseEventConfig(e).is_qr_enabled === false ? '(Form Pendataan / QR Nonaktif)' : ''}
                     </option>
                   ))
               }
@@ -300,7 +302,7 @@ export default function AdminScanQRPage() {
             {parseEventConfig(events.find((e) => e.id === selectedEvent)).is_qr_enabled === false && (
               <div className="mt-3 p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2 slide-up">
                 <Warning size={18} weight="bold" className="shrink-0 text-amber-400" />
-                <span>Fitur Tiket QR dinonaktifkan untuk event ini. Pemindaian tidak aktif.</span>
+                <span>Formulir ini merupakan form pendataan tanpa tiket QR. Pemindaian tidak aktif.</span>
               </div>
             )}
           </div>

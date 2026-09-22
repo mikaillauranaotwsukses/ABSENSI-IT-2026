@@ -207,12 +207,12 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
       {/* Info event */}
       <div className="tech-card rounded-2xl p-6 space-y-5 border border-slate-700/60">
         <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-          <ListBullets size={16} weight="bold" className="text-slate-400" /> Informasi Event
+          <ListBullets size={16} weight="bold" className="text-slate-400" /> Informasi Formulir / Kegiatan
         </h2>
 
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">
-            Nama Event <span className="text-red-400">*</span>
+            Nama Formulir / Kegiatan <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
@@ -223,7 +223,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Broadcast / Deskripsi</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Petunjuk / Broadcast Informasi</label>
           <textarea
             value={deskripsi}
             onChange={(e) => setDeskripsi(e.target.value)}
@@ -234,14 +234,14 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
 
         {/* Toggle Status & Fitur Event */}
         <div className="space-y-3 pt-2 border-t border-slate-700/60">
-          <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Pengaturan Akses &amp; Fitur Event</p>
+          <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Aksesibilitas &amp; Tipe Formulir</p>
 
           {/* Status Event */}
           <div className="flex items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50">
             <div>
-              <p className="text-sm font-medium text-slate-200">Status Akses Event</p>
+              <p className="text-sm font-medium text-slate-200">Status Akses Formulir</p>
               <p className="text-slate-400 text-xs mt-0.5">
-                {status ? 'Buka — Anggota dapat mengakses dan mengisi absensi' : 'Tutup — Event dikunci, anggota tidak bisa mengisi form'}
+                {status ? 'Buka — Mahasiswa dapat mengakses dan mengirim jawaban formulir' : 'Tutup — Formulir dikunci, mahasiswa tidak bisa mengirim respon'}
               </p>
             </div>
             <button
@@ -259,15 +259,15 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
             <div className="pr-4">
               <div className="flex items-center gap-2">
                 <DeviceMobile size={16} weight="bold" className={isQrEnabled ? 'text-cyan-400' : 'text-slate-500'} />
-                <p className="text-sm font-medium text-slate-200">Tab &amp; Tiket QR Code</p>
+                <p className="text-sm font-medium text-slate-200">Tiket QR Acara Lapangan</p>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isQrEnabled ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>
-                  {isQrEnabled ? 'Aktif' : 'Nonaktif'}
+                  {isQrEnabled ? 'Aktif (Acara Lapangan)' : 'Nonaktif (Form Murni)'}
                 </span>
               </div>
               <p className="text-slate-400 text-xs mt-1">
                 {isQrEnabled
-                  ? 'Aktif — Tab Tiket QR muncul untuk peserta dan QR dicatat di laporan.'
-                  : 'Nonaktif — Tab Tiket QR disembunyikan dari peserta dan dinonaktifkan di tabel laporan.'}
+                  ? 'Aktif — Tab Tiket QR muncul untuk peserta (gunakan untuk acara fisik/lapangan yang butuh scan tiket).'
+                  : 'Nonaktif — Form murni tanpa tiket QR (cocok untuk pendataan lomba, kuesioner, aspirasi, pendaftaran tim).'}
               </p>
             </div>
             <button
@@ -285,7 +285,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
             <div className="pr-4">
               <div className="flex items-center gap-2">
                 <Star size={16} weight={isFeedbackEnabled ? 'fill' : 'regular'} className={isFeedbackEnabled ? 'text-amber-400' : 'text-slate-500'} />
-                <p className="text-sm font-medium text-slate-200">Tab Feedback &amp; Evaluasi Peserta</p>
+                <p className="text-sm font-medium text-slate-200">Kuesioner Feedback / Evaluasi</p>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isFeedbackEnabled ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>
                   {isFeedbackEnabled ? 'Aktif' : 'Nonaktif'}
                 </span>
@@ -293,7 +293,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
               <p className="text-slate-400 text-xs mt-1">
                 {isFeedbackEnabled
                   ? 'Aktif — Peserta dapat mengisi penilaian bintang & saran evaluasi.'
-                  : 'Nonaktif — Tab Feedback disembunyikan dari peserta.'}
+                  : 'Nonaktif — Tab Feedback dinonaktifkan (cukup formulir utama).'}
               </p>
             </div>
             <button
@@ -319,7 +319,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <NotePencil size={15} weight="bold" /> Form Absensi / Pendaftaran
+          <NotePencil size={15} weight="bold" /> Pertanyaan Formulir
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
             {fields.length} field
           </span>
@@ -333,24 +333,24 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <Star size={15} weight={activeTab === 'feedback' ? 'fill' : 'regular'} /> Form Feedback / Evaluasi
+          <Star size={15} weight={activeTab === 'feedback' ? 'fill' : 'regular'} /> Kuesioner Feedback
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
             {feedbackFields.length} field
           </span>
         </button>
       </div>
 
-      {/* Tab 1: Form Absensi Builder */}
+      {/* Tab 1: Form Builder */}
       {activeTab === 'form' && (
         <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-              <NotePencil size={16} weight="bold" className="text-blue-300" /> Form Builder — Absensi &amp; Registrasi
+              <NotePencil size={16} weight="bold" className="text-blue-300" /> Form Builder — Susun Pertanyaan
             </h2>
             <span className="text-xs text-slate-400">{fields.length} pertanyaan</span>
           </div>
           <p className="text-slate-400 text-xs leading-relaxed">
-            Pertanyaan yang harus diisi anggota pada saat melakukan absensi awal.
+            Susun pertanyaan atau input yang harus dijawab oleh mahasiswa.
           </p>
           <FormBuilder fields={fields} setFields={setFields} isAdmin />
         </div>
@@ -361,12 +361,12 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
         <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-              <Star size={16} weight="fill" className="text-[#ffc878]" /> Form Builder — Feedback &amp; Evaluasi Acara
+              <Star size={16} weight="fill" className="text-[#ffc878]" /> Form Builder — Feedback &amp; Evaluasi
             </h2>
             <span className="text-xs text-slate-400">{feedbackFields.length} pertanyaan</span>
           </div>
           <p className="text-slate-400 text-xs leading-relaxed">
-            Kuesioner evaluasi yang akan diisi oleh peserta pada tab ke-3 di halaman event.
+            Kuesioner evaluasi yang akan diisi oleh peserta jika fitur feedback diaktifkan.
           </p>
           <FormBuilder fields={feedbackFields} setFields={setFeedbackFields} isAdmin />
         </div>
@@ -434,7 +434,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
           Zona Bahaya
         </h3>
         <div className="flex items-center justify-between">
-          <p className="text-slate-400 text-sm">Hapus event ini beserta semua data absensinya secara permanen.</p>
+          <p className="text-slate-400 text-sm">Hapus formulir ini beserta semua data responnya secara permanen.</p>
           <DeleteEventButton eventId={event.id} eventName={event.nama_event} />
         </div>
       </div>
