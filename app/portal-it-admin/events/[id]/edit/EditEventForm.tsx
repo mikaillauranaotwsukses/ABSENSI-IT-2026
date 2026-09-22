@@ -13,11 +13,13 @@ import {
   Star,
   ArrowRight,
   DeviceMobile,
+  Copy,
+  Check,
+  Warning,
 } from '@phosphor-icons/react';
 import {
   parseEventConfig,
   cleanEventDeskripsi,
-  buildEventDeskripsiWithConfig,
 } from '@/lib/eventConfig';
 import DeleteEventButton from '../../DeleteEventButton';
 import Link from 'next/link';
@@ -51,6 +53,16 @@ export default function EditEventForm({ event }: Props) {
   const [copyNotice,         setCopyNotice]         = useState<string>('');
   const [saving,             setSaving]             = useState(false);
   const [error,              setError]              = useState('');
+  const [migrationNeeded,    setMigrationNeeded]    = useState(false);
+  const [copiedSql,          setCopiedSql]          = useState(false);
+
+  const SQL_MIGRATION = `-- Buka Supabase Dashboard -> Project vomaluikqvcryocefoke -> SQL Editor:
+ALTER TABLE public."event" 
+  ADD COLUMN IF NOT EXISTS is_qr_enabled BOOLEAN DEFAULT true,
+  ADD COLUMN IF NOT EXISTS is_feedback_enabled BOOLEAN DEFAULT true;
+
+UPDATE public."event" SET is_qr_enabled = true WHERE is_qr_enabled IS NULL;
+UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled IS NULL;`;
 
   // Load other events for copy dropdown
   useEffect(() => {
@@ -89,18 +101,19 @@ export default function EditEventForm({ event }: Props) {
     setTimeout(() => setCopyNotice(''), 5000);
   };
 
+  const copySqlToClipboard = () => {
+    navigator.clipboard.writeText(SQL_MIGRATION);
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 3000);
+  };
+
   const handleSave = async () => {
     if (!namaEvent.trim()) { setError('Nama event wajib diisi.'); return; }
-    setSaving(true); setError('');
-
-    const finalDeskripsi = buildEventDeskripsiWithConfig(deskripsi.trim(), {
-      is_qr_enabled: isQrEnabled,
-      is_feedback_enabled: isFeedbackEnabled,
-    });
+    setSaving(true); setError(''); setMigrationNeeded(false);
 
     const payload: any = {
       nama_event:          namaEvent.trim(),
-      deskripsi:           finalDeskripsi,
+      deskripsi:           cleanEventDeskripsi(deskripsi).trim(),
       status,
       is_qr_enabled:       isQrEnabled,
       is_feedback_enabled: isFeedbackEnabled,
@@ -110,16 +123,12 @@ export default function EditEventForm({ event }: Props) {
 
     let { error: err } = await supabase.from('event').update(payload).eq('id', event.id);
 
-    // Fallback if column does not exist in DB yet
+    // If columns do not exist in DB yet, prompt user with SQL migration
     if (err && (err.message?.includes('is_qr_enabled') || err.message?.includes('is_feedback_enabled') || err.message?.includes('schema cache'))) {
-      delete payload.is_qr_enabled;
-      delete payload.is_feedback_enabled;
-      if (err.message?.includes('feedback_schema')) {
-        delete payload.feedback_schema;
-      }
-      // payload.deskripsi still contains finalDeskripsi with the config tag!
-      const fallbackRes = await supabase.from('event').update(payload).eq('id', event.id);
-      err = fallbackRes.error;
+      setMigrationNeeded(true);
+      setError('Kolom toggle "is_qr_enabled" & "is_feedback_enabled" belum dibuat di tabel Supabase. Jalankan query migrasi di bawah pada SQL Editor Supabase agar perubahan toggle tersimpan.');
+      setSaving(false);
+      return;
     }
 
     if (err) {
@@ -360,6 +369,35 @@ export default function EditEventForm({ event }: Props) {
             Kuesioner evaluasi yang akan diisi oleh peserta pada tab ke-3 di halaman event.
           </p>
           <FormBuilder fields={feedbackFields} setFields={setFeedbackFields} isAdmin />
+        </div>
+      )}
+
+      {migrationNeeded && (
+        <div className="p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-amber-200 text-sm space-y-3 slide-up">
+          <div className="flex items-start gap-3">
+            <Warning size={22} weight="bold" className="text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-bold text-amber-300 text-base">Langkah Terakhir: Jalankan Script SQL di Supabase</h4>
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                Fitur toggle QR dan Feedback membutuhkan kolom <code className="text-amber-300 font-mono">is_qr_enabled</code> &amp; <code className="text-amber-300 font-mono">is_feedback_enabled</code> di database.
+                Buka <strong>Supabase Dashboard → SQL Editor → New Query</strong>, tempel script di bawah, lalu klik <strong>Run</strong>:
+              </p>
+            </div>
+          </div>
+
+          <div className="relative">
+            <pre className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-700/70 font-mono text-xs text-blue-300 overflow-x-auto whitespace-pre leading-relaxed">
+              {SQL_MIGRATION}
+            </pre>
+            <button
+              type="button"
+              onClick={copySqlToClipboard}
+              className="absolute top-2 right-2 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow"
+            >
+              {copiedSql ? <Check size={14} weight="bold" /> : <Copy size={14} weight="bold" />}
+              <span>{copiedSql ? 'Tersalin!' : 'Salin SQL'}</span>
+            </button>
+          </div>
         </div>
       )}
 
