@@ -74,9 +74,23 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
     setFields((prev) =>
       prev.map((f, i) => {
         if (i !== fi || !f.options) return f;
+        const oldVal = f.options[oi];
         const opts = [...f.options];
         opts[oi] = value;
-        return { ...f, options: opts };
+
+        let option_quotas = f.option_quotas;
+        if (f.enable_quota && f.option_quotas && oldVal !== value) {
+          option_quotas = { ...f.option_quotas };
+          if (oldVal && option_quotas[oldVal] !== undefined) {
+            const q = option_quotas[oldVal];
+            delete option_quotas[oldVal];
+            if (value.trim()) {
+              option_quotas[value] = q;
+            }
+          }
+        }
+
+        return { ...f, options: opts, option_quotas };
       })
     );
 
@@ -89,7 +103,16 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
     setFields((prev) =>
       prev.map((f, i) => {
         if (i !== fi || !f.options) return f;
-        return { ...f, options: f.options.filter((_, j) => j !== oi) };
+        const oldVal = f.options[oi];
+        const opts = f.options.filter((_, j) => j !== oi);
+
+        let option_quotas = f.option_quotas;
+        if (f.enable_quota && f.option_quotas && oldVal) {
+          option_quotas = { ...f.option_quotas };
+          delete option_quotas[oldVal];
+        }
+
+        return { ...f, options: opts, option_quotas };
       })
     );
 
@@ -331,41 +354,110 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
 
                     {/* Options for select / radio */}
                     {(field.type === 'select' || field.type === 'radio') && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-slate-500 font-medium">Pilihan:</p>
-                        {field.options?.map((opt, oi) => (
-                          <div key={oi} className="flex items-center gap-2">
-                            <span className="text-slate-600 text-xs w-4 text-center">{oi + 1}.</span>
-                            <input
-                              type="text"
-                              value={opt}
-                              onChange={(e) => updateOption(idx, oi, e.target.value)}
-                              placeholder={`Pilihan ${oi + 1}...`}
-                              className="input-glow flex-1 bg-slate-900/60 border border-slate-600/40 rounded-lg px-3 py-2 text-white placeholder-slate-400 text-xs transition-all"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeOption(idx, oi)}
-                              disabled={(field.options?.length ?? 0) <= 1}
-                              aria-label={`Hapus pilihan ${oi + 1}`}
-                              className="min-w-[36px] min-h-[36px] p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-25 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
+                      <div className="space-y-3 pt-1">
+                        {/* Toggle Batas Kuota */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-900/60 border border-slate-700/60">
+                          <div className="flex items-start sm:items-center gap-2.5">
+                            <span className="text-base p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300">🎯</span>
+                            <div>
+                              <p className="text-xs font-semibold text-slate-200">Batasi Kuota Pendaftar per Opsi</p>
+                              <p className="text-[11px] text-slate-400">
+                                Opsi yang telah mencapai kuota maksimal akan otomatis terkunci di formulir
+                              </p>
+                            </div>
                           </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => addOption(idx)}
-                          className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 font-medium"
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                          </svg>
-                          Tambah pilihan
-                        </button>
+                          <label className="flex items-center gap-2 cursor-pointer self-start sm:self-center shrink-0">
+                            <input
+                              type="checkbox"
+                              checked={!!field.enable_quota}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                updateField(idx, {
+                                  enable_quota: checked,
+                                  option_quotas: checked ? (field.option_quotas || {}) : undefined,
+                                });
+                              }}
+                              className="sr-only"
+                            />
+                            <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${field.enable_quota ? 'bg-amber-500' : 'bg-slate-700'}`}>
+                              <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${field.enable_quota ? 'translate-x-5' : 'translate-x-1'}`} />
+                            </div>
+                            <span className={`text-xs font-semibold ${field.enable_quota ? 'text-amber-400' : 'text-slate-400'}`}>
+                              {field.enable_quota ? 'Kuota Aktif' : 'Tidak Dibatasi'}
+                            </span>
+                          </label>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                            <span>Daftar Pilihan:</span>
+                            {field.enable_quota && (
+                              <span className="text-[11px] text-amber-400/90 font-normal">
+                                Kosongkan jika suatu opsi tidak dibatasi (∞)
+                              </span>
+                            )}
+                          </div>
+
+                          {field.options?.map((opt, oi) => (
+                            <div key={oi} className="flex items-center gap-2">
+                              <span className="text-slate-500 text-xs w-4 text-center shrink-0">{oi + 1}.</span>
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) => updateOption(idx, oi, e.target.value)}
+                                placeholder={`Pilihan ${oi + 1}...`}
+                                className="input-glow flex-1 bg-slate-900/60 border border-slate-600/40 rounded-lg px-3 py-2 text-white placeholder-slate-400 text-xs transition-all"
+                              />
+
+                              {field.enable_quota && (
+                                <div className="flex items-center gap-1.5 shrink-0 bg-slate-900/80 border border-amber-500/30 rounded-lg px-2.5 py-1.5" title="Batas kuota maksimal orang yang bisa memilih opsi ini">
+                                  <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Kuota:</span>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={field.option_quotas?.[opt] !== undefined ? field.option_quotas[opt] : ''}
+                                    onChange={(e) => {
+                                      const raw = e.target.value;
+                                      const val = raw === '' ? undefined : Math.max(1, parseInt(raw, 10));
+                                      const updatedQuotas = { ...(field.option_quotas || {}) };
+                                      if (val === undefined || isNaN(val)) {
+                                        delete updatedQuotas[opt];
+                                      } else {
+                                        updatedQuotas[opt] = val;
+                                      }
+                                      updateField(idx, { option_quotas: updatedQuotas });
+                                    }}
+                                    placeholder="∞"
+                                    className="w-14 bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-amber-200 text-center font-mono focus:outline-none focus:border-amber-400"
+                                  />
+                                </div>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => removeOption(idx, oi)}
+                                disabled={(field.options?.length ?? 0) <= 1}
+                                aria-label={`Hapus pilihan ${oi + 1}`}
+                                className="min-w-[36px] min-h-[36px] p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-25 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 shrink-0"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={() => addOption(idx)}
+                            className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 font-medium pt-1"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Tambah pilihan
+                          </button>
+                        </div>
                       </div>
                     )}
                   </>

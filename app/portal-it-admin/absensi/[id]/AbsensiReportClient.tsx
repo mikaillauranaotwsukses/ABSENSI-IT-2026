@@ -142,6 +142,49 @@ export default function AbsensiReportClient({
     return field?.options || [];
   }, [formFields, selectedRespField]);
 
+  // Option Quotas aggregation
+  const quotaSummary = useMemo(() => {
+    const fieldsWithQuota = formFields.filter((f) => f.enable_quota && f.option_quotas);
+    if (fieldsWithQuota.length === 0) return [];
+
+    return fieldsWithQuota.map((field) => {
+      const options = field.options || [];
+      const quotas = field.option_quotas || {};
+
+      const counts: Record<string, number> = {};
+      absensiList.forEach((a) => {
+        const val = String(a.data_respons?.[field.label] || '');
+        if (val) {
+          counts[val] = (counts[val] || 0) + 1;
+        }
+      });
+
+      const items = options.map((opt) => {
+        const limit = quotas[opt];
+        const used = counts[opt] || 0;
+        const isLimited = limit !== undefined && limit > 0;
+        const remaining = isLimited ? Math.max(0, limit - used) : null;
+        const percentage = isLimited ? Math.min(100, Math.round((used / limit) * 100)) : null;
+        const isFull = isLimited ? used >= limit : false;
+
+        return {
+          opt,
+          limit,
+          used,
+          isLimited,
+          remaining,
+          percentage,
+          isFull,
+        };
+      });
+
+      return {
+        fieldLabel: field.label,
+        items,
+      };
+    });
+  }, [formFields, absensiList]);
+
   // Reset all filters helper
   const resetFilters = () => {
     setCombinedStatus('all');
@@ -697,6 +740,77 @@ export default function AbsensiReportClient({
             </div>
             <p className="text-2xl font-extrabold text-amber-300">{countFeedback}</p>
             <p className="text-[10px] text-slate-400 mt-0.5">Feedback Peserta</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── REKAPITULASI KUOTA OPSI DROPDOWN ── */}
+      {quotaSummary.length > 0 && (
+        <div className="tech-card rounded-2xl p-5 border border-amber-500/30 shadow-xl slide-up space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="text-lg p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30">🎯</span>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-white">Monitoring Kuota Pendaftar Opsi Dropdown</h3>
+                <p className="text-xs text-slate-400">Pantau sisa kuota dan keterisian pilihan secara langsung</p>
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              {quotaSummary.reduce((acc, q) => acc + q.items.filter((i) => i.isFull).length, 0)} Opsi Penuh
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            {quotaSummary.map((qGroup, gIdx) => (
+              <div key={gIdx} className="space-y-2">
+                <p className="text-xs font-bold text-blue-300 uppercase tracking-wider">{qGroup.fieldLabel}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {qGroup.items.map((item, iIdx) => (
+                    <div
+                      key={iIdx}
+                      className={`p-3 rounded-xl border transition-all ${
+                        item.isFull
+                          ? 'bg-red-950/20 border-red-500/30'
+                          : item.isLimited
+                          ? 'bg-slate-900/60 border-slate-700/60 hover:border-slate-600'
+                          : 'bg-slate-900/40 border-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="font-semibold text-white truncate mr-2" title={item.opt}>{item.opt}</span>
+                        {item.isFull ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 shrink-0">
+                            PENUH
+                          </span>
+                        ) : item.isLimited ? (
+                          <span className="text-[10px] font-mono text-emerald-400 shrink-0">
+                            Sisa: <strong className="font-bold">{item.remaining}</strong>/{item.limit}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 shrink-0">Tanpa Batas</span>
+                        )}
+                      </div>
+
+                      {item.isLimited && (
+                        <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              item.isFull ? 'bg-red-500' : (item.percentage ?? 0) > 75 ? 'bg-amber-400' : 'bg-blue-500'
+                            }`}
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+                        <span>{item.used} pemilih</span>
+                        {item.percentage !== null && <span>{item.percentage}%</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

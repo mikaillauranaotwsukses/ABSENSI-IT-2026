@@ -29,6 +29,70 @@ const PRESET_TEMPLATES: Record<string, {
   form: FormField[];
   feedback: FormField[];
 }> = {
+  recruitment_panitia: {
+    name: 'Open Recruitment Panitia (Batas Kuota Divisi)',
+    icon: '👥',
+    is_qr_enabled: false,
+    is_feedback_enabled: false,
+    form: [
+      {
+        label: 'Pilihan Divisi Utama',
+        type: 'select',
+        options: [
+          'Divisi Acara',
+          'Divisi Perlengkapan & Logistik',
+          'Divisi Publikasi & Dokumentasi (Pubdok)',
+          'Divisi Hubungan Masyarakat (Humas)',
+          'Divisi Konsumsi',
+          'Divisi Sponsorship & Dana Usaha',
+        ],
+        required: true,
+        enable_quota: true,
+        option_quotas: {
+          'Divisi Acara': 10,
+          'Divisi Perlengkapan & Logistik': 8,
+          'Divisi Publikasi & Dokumentasi (Pubdok)': 6,
+          'Divisi Hubungan Masyarakat (Humas)': 6,
+          'Divisi Konsumsi': 5,
+          'Divisi Sponsorship & Dana Usaha': 5,
+        },
+      },
+      {
+        label: 'Pilihan Divisi Alternatif',
+        type: 'select',
+        options: [
+          'Divisi Acara',
+          'Divisi Perlengkapan & Logistik',
+          'Divisi Publikasi & Dokumentasi (Pubdok)',
+          'Divisi Hubungan Masyarakat (Humas)',
+          'Divisi Konsumsi',
+          'Divisi Sponsorship & Dana Usaha',
+        ],
+        required: false,
+      },
+      {
+        label: 'Alasan & Motivasi Mendaftar Divisi Tersebut',
+        type: 'textarea',
+        required: true,
+      },
+      {
+        label: 'Pengalaman Organisasi / Kepanitiaan Sebelumnya',
+        type: 'textarea',
+        required: false,
+      },
+      {
+        label: 'Nomor WhatsApp Aktif',
+        type: 'text',
+        required: true,
+      },
+      {
+        label: 'Link Portofolio / CV (Google Drive)',
+        type: 'text',
+        required: false,
+      },
+    ],
+    feedback: [],
+  },
   pendataan_lomba: {
     name: 'Pendataan Lomba & Prestasi',
     icon: '🏆',

@@ -25,6 +25,9 @@ export interface FormField {
   image_url?: string;                   // optional image from Supabase Storage or Base64
   // Branching / Conditional logic:
   condition?: FormFieldCondition;       // optional condition for visibility
+  // Option Quotas (for select dropdown or radio):
+  enable_quota?: boolean;               // whether options in this field have quotas
+  option_quotas?: Record<string, number>; // quota per option (e.g. { "Divisi Acara": 10 })
 }
 
 export interface Anggota {

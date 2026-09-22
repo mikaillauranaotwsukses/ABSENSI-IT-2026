@@ -117,10 +117,57 @@ export default function AbsensiForm({ event }: Props) {
     }
   }, [event.id, member?.nrp, supabase]);
 
+  // ── Quota Counts for Dropdown / Options ──────────────────────
+  const [quotaCounts, setQuotaCounts] = useState<Record<string, Record<string, number>>>({});
+
+  const fetchQuotaCounts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('absensi')
+        .select('nrp, data_respons')
+        .eq('event_id', event.id);
+
+      if (error || !data) return;
+
+      const counts: Record<string, Record<string, number>> = {};
+      data.forEach((row: any) => {
+        const resp = row.data_respons;
+        if (resp && typeof resp === 'object') {
+          Object.entries(resp).forEach(([fLabel, chosen]) => {
+            if (chosen && typeof chosen === 'string') {
+              if (!counts[fLabel]) counts[fLabel] = {};
+              counts[fLabel][chosen] = (counts[fLabel][chosen] || 0) + 1;
+            }
+          });
+        }
+      });
+      setQuotaCounts(counts);
+    } catch (e) {
+      console.warn('Gagal memuat data kuota opsi:', e);
+    }
+  }, [event.id, supabase]);
+
   useEffect(() => {
     fetchExistingAbsensi();
     fetchExistingFeedback();
-  }, [fetchExistingAbsensi, fetchExistingFeedback]);
+    fetchQuotaCounts();
+
+    // Supabase Realtime channel for live quota updates
+    const channel = supabase
+      .channel(`event-quota-${event.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'absensi', filter: `event_id=eq.${event.id}` },
+        () => {
+          fetchQuotaCounts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [event.id, fetchExistingAbsensi, fetchExistingFeedback, fetchQuotaCounts, supabase]);
 
   // ── Branching / Condition Checker ────────────────────────────
   const isFieldVisible = (field: FormField): boolean => {
@@ -191,6 +238,36 @@ export default function AbsensiForm({ event }: Props) {
 
     setSubmitState('loading');
     setErrorMsg('');
+
+    // Pre-check quotas before saving
+    const schemaFields = (event.form_schema as FormField[]) || [];
+    const fieldsWithQuota = schemaFields.filter((f) => f.enable_quota && f.option_quotas && isFieldVisible(f));
+
+    if (fieldsWithQuota.length > 0) {
+      const { data: latestAbsensi } = await supabase
+        .from('absensi')
+        .select('nrp, data_respons')
+        .eq('event_id', event.id);
+
+      for (const field of fieldsWithQuota) {
+        const chosenVal = responses[field.label];
+        if (chosenVal && field.option_quotas?.[chosenVal] !== undefined) {
+          const quota = field.option_quotas[chosenVal];
+          if (quota > 0) {
+            const countOtherUsers = (latestAbsensi || []).filter(
+              (r: any) => r.nrp !== member.nrp && r.data_respons?.[field.label] === chosenVal
+            ).length;
+
+            if (countOtherUsers >= quota) {
+              setSubmitState('error');
+              setErrorMsg(`Maaf, kuota untuk pilihan "${chosenVal}" pada pertanyaan "${field.label}" sudah penuh (${countOtherUsers}/${quota}). Silakan pilih opsi lain.`);
+              fetchQuotaCounts();
+              return;
+            }
+          }
+        }
+      }
+    }
 
     const dataRespons: Record<string, string> = {};
     (event.form_schema as FormField[])
@@ -608,47 +685,133 @@ export default function AbsensiForm({ event }: Props) {
                       )}
 
                       {field.type === 'select' && field.options && (
-                        <select
-                          value={responses[field.label] || ''}
-                          onChange={(e) => setResponses((prev) => ({ ...prev, [field.label]: e.target.value }))}
-                          required={field.required}
-                          aria-required={field.required}
-                          className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white text-sm transition-all appearance-none cursor-pointer"
-                        >
-                          <option value="" disabled className="bg-slate-800">Pilih {field.label.toLowerCase()}...</option>
-                          {field.options.map((opt, i) => (
-                            <option key={i} value={opt} className="bg-slate-800">{opt}</option>
-                          ))}
-                        </select>
+                        <div>
+                          <div className="relative">
+                            <select
+                              value={responses[field.label] || ''}
+                              onChange={(e) => setResponses((prev) => ({ ...prev, [field.label]: e.target.value }))}
+                              required={field.required}
+                              aria-required={field.required}
+                              className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white text-sm transition-all appearance-none cursor-pointer pr-10"
+                            >
+                              <option value="" disabled className="bg-slate-800">Pilih {field.label.toLowerCase()}...</option>
+                              {field.options.map((opt, i) => {
+                                let isFull = false;
+                                let quotaText = '';
+
+                                if (field.enable_quota && field.option_quotas) {
+                                  const quota = field.option_quotas[opt];
+                                  if (quota !== undefined && quota > 0) {
+                                    const used = quotaCounts[field.label]?.[opt] || 0;
+                                    const isCurrentSelection = (existingAbsensi?.data_respons?.[field.label] === opt) || (responses[field.label] === opt);
+                                    const remaining = quota - used;
+
+                                    if (remaining <= 0 && !isCurrentSelection) {
+                                      isFull = true;
+                                      quotaText = ` (Penuh • 0/${quota})`;
+                                    } else {
+                                      const displayRemaining = isCurrentSelection && remaining <= 0 ? 1 : Math.max(0, remaining);
+                                      quotaText = ` (Sisa: ${displayRemaining}/${quota})`;
+                                    }
+                                  }
+                                }
+
+                                return (
+                                  <option
+                                    key={i}
+                                    value={opt}
+                                    disabled={isFull}
+                                    className={`bg-slate-800 ${isFull ? 'text-slate-500 line-through' : 'text-white'}`}
+                                  >
+                                    {opt}{quotaText}
+                                  </option>
+                                );
+                              })}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </div>
+                          {field.enable_quota && (
+                            <p className="text-[11px] text-amber-400/90 mt-1.5 flex items-center gap-1.5 font-medium">
+                              <span>🎯</span>
+                              <span>Pilihan ini dibatasi kuota. Opsi yang telah penuh otomatis dinonaktifkan.</span>
+                            </p>
+                          )}
+                        </div>
                       )}
 
                       {field.type === 'radio' && field.options && (
-                        <div className="flex flex-wrap gap-2.5">
-                          {field.options.map((opt, i) => (
-                            <label
-                              key={i}
-                              className={`flex items-center gap-2.5 min-h-[44px] px-4 py-2.5 rounded-xl border cursor-pointer transition-all text-sm select-none ${
-                                responses[field.label] === opt
-                                  ? 'border-blue-500 bg-blue-600/20 text-blue-200'
-                                  : 'border-slate-600/50 bg-slate-800/40 text-slate-300 hover:border-slate-500 hover:text-white'
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name={`field-${idx}`}
-                                value={opt}
-                                checked={responses[field.label] === opt}
-                                onChange={() => setResponses((prev) => ({ ...prev, [field.label]: opt }))}
-                                required={field.required}
-                                aria-required={field.required}
-                                className="sr-only"
-                              />
-                              <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${responses[field.label] === opt ? 'border-blue-400' : 'border-slate-500'}`}>
-                                {responses[field.label] === opt && <span className="w-2 h-2 rounded-full bg-blue-400" />}
-                              </span>
-                              {opt}
-                            </label>
-                          ))}
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2.5">
+                            {field.options.map((opt, i) => {
+                              let isFull = false;
+                              let quotaBadge = null;
+
+                              if (field.enable_quota && field.option_quotas) {
+                                const quota = field.option_quotas[opt];
+                                if (quota !== undefined && quota > 0) {
+                                  const used = quotaCounts[field.label]?.[opt] || 0;
+                                  const isCurrentSelection = (existingAbsensi?.data_respons?.[field.label] === opt) || (responses[field.label] === opt);
+                                  const remaining = quota - used;
+
+                                  if (remaining <= 0 && !isCurrentSelection) {
+                                    isFull = true;
+                                    quotaBadge = (
+                                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 ml-auto shrink-0">
+                                        Penuh (0/{quota})
+                                      </span>
+                                    );
+                                  } else {
+                                    const displayRemaining = isCurrentSelection && remaining <= 0 ? 1 : Math.max(0, remaining);
+                                    quotaBadge = (
+                                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 ml-auto shrink-0">
+                                        Sisa {displayRemaining}/${quota}
+                                      </span>
+                                    );
+                                  }
+                                }
+                              }
+
+                              return (
+                                <label
+                                  key={i}
+                                  className={`flex items-center gap-2.5 min-h-[44px] px-4 py-2.5 rounded-xl border transition-all text-sm select-none ${
+                                    isFull
+                                      ? 'opacity-50 cursor-not-allowed border-slate-800 bg-slate-900/40 text-slate-500'
+                                      : responses[field.label] === opt
+                                      ? 'border-blue-500 bg-blue-600/20 text-blue-200 cursor-pointer'
+                                      : 'border-slate-600/50 bg-slate-800/40 text-slate-300 hover:border-slate-500 hover:text-white cursor-pointer'
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`field-${idx}`}
+                                    value={opt}
+                                    disabled={isFull}
+                                    checked={responses[field.label] === opt}
+                                    onChange={() => !isFull && setResponses((prev) => ({ ...prev, [field.label]: opt }))}
+                                    required={field.required && !responses[field.label]}
+                                    aria-required={field.required}
+                                    className="sr-only"
+                                  />
+                                  <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${responses[field.label] === opt ? 'border-blue-400' : 'border-slate-500'}`}>
+                                    {responses[field.label] === opt && <span className="w-2 h-2 rounded-full bg-blue-400" />}
+                                  </span>
+                                  <span className="truncate">{opt}</span>
+                                  {quotaBadge}
+                                </label>
+                              );
+                            })}
+                          </div>
+                          {field.enable_quota && (
+                            <p className="text-[11px] text-amber-400/90 mt-1 flex items-center gap-1.5 font-medium">
+                              <span>🎯</span>
+                              <span>Pilihan ini dibatasi kuota. Pilihan yang penuh tidak dapat dipilih.</span>
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
