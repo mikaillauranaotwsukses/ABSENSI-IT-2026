@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import AbsensiForm from './AbsensiForm';
 import Link from 'next/link';
+import { ArrowLeft, Megaphone, LockSimple } from '@phosphor-icons/react/dist/ssr';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,7 @@ export default async function EventPage({ params }: Props) {
   if (error || !event) return notFound();
 
   return (
-    <main className="min-h-screen animated-bg text-white relative overflow-hidden">
+    <main className="min-h-[100dvh] animated-bg text-white relative overflow-hidden">
       {/* Background Decorative Tech Blobs */}
       <div className="fixed w-96 h-96 rounded-full bg-blue-600/12 top-0 left-0 -translate-x-1/4 -translate-y-1/4 blur-3xl pointer-events-none z-0" />
       <div className="fixed w-80 h-80 rounded-full bg-amber-500/8 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
@@ -33,9 +34,7 @@ export default async function EventPage({ params }: Props) {
           href="/"
           className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-300 text-xs sm:text-sm font-semibold transition-colors group"
         >
-          <svg className="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <ArrowLeft size={16} weight="bold" className="group-hover:-translate-x-1 transition-transform" />
           Kembali ke Portal Beranda
         </Link>
 
@@ -84,10 +83,8 @@ export default async function EventPage({ params }: Props) {
           {event.deskripsi && (
             <div className="p-4 rounded-2xl bg-slate-900/90 border border-blue-500/20">
               <div className="flex items-center gap-2 text-blue-300 text-[11px] font-bold uppercase tracking-wider mb-1.5">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46" />
-                </svg>
-                Informasi & Petunjuk Acara:
+                <Megaphone size={14} weight="bold" />
+                Informasi &amp; Petunjuk Acara:
               </div>
               <p className="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
                 {event.deskripsi}
@@ -101,7 +98,9 @@ export default async function EventPage({ params }: Props) {
           <AbsensiForm event={event} />
         ) : (
           <div className="tech-card p-10 text-center slide-up border border-red-500/20">
-            <div className="text-5xl mb-3">🔒</div>
+            <div className="w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
+              <LockSimple size={32} weight="bold" className="text-red-400" />
+            </div>
             <h3 className="text-xl font-bold text-white mb-2">
               Absensi Ditutup
             </h3>

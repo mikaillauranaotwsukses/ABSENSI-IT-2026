@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import EventStatusToggle from './EventStatusToggle';
 import DeleteEventButton from './DeleteEventButton';
+import { ArrowLeft, Plus, Tray, ClipboardText } from '@phosphor-icons/react/dist/ssr';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export default async function EventsPage() {
     .order('created_at', { ascending: false });
 
   return (
-    <main className="min-h-screen animated-bg text-white">
+    <main className="min-h-[100dvh] animated-bg text-white">
       <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
       <div className="fixed w-72 h-72 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
@@ -26,9 +27,7 @@ export default async function EventsPage() {
         <div className="flex items-center justify-between mb-8 slide-up">
           <div className="flex items-center gap-3">
             <Link href="/portal-it-admin" className="text-slate-400 hover:text-white transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
+              <ArrowLeft size={20} weight="bold" />
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-white">Manajemen Event</h1>
@@ -37,11 +36,9 @@ export default async function EventsPage() {
           </div>
           <Link
             href="/portal-it-admin/events/new"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl btn-primary text-xs uppercase font-bold tracking-wider transition-all glow-blue"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl btn-primary text-xs uppercase font-bold tracking-wider transition-all"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
+            <Plus size={16} weight="bold" />
             Buat Event
           </Link>
         </div>
@@ -50,7 +47,7 @@ export default async function EventsPage() {
         <div className="tech-card rounded-2xl overflow-hidden slide-up border border-slate-700/60">
           {(!events || events.length === 0) ? (
             <div className="text-center py-16">
-              <div className="text-5xl mb-4">📋</div>
+              <Tray size={52} className="mx-auto mb-4 text-slate-600" weight="regular" />
               <p className="text-slate-400">Belum ada event. Buat event pertama kamu!</p>
             </div>
           ) : (
@@ -104,10 +101,10 @@ export default async function EventsPage() {
                             </Link>
                             <Link
                               href={`/portal-it-admin/events/new?copy_from=${ev.id}`}
-                              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-semibold transition-colors flex items-center gap-1 border border-amber-500/20"
+                              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-semibold transition-colors inline-flex items-center gap-1 border border-amber-500/20"
                               title="Duplikat susunan form & feedback event ini untuk acara baru"
                             >
-                              <span>📋</span> Duplikat
+                              <ClipboardText size={13} weight="bold" /> Duplikat
                             </Link>
                             <Link
                               href={`/portal-it-admin/events/${ev.id}/edit`}

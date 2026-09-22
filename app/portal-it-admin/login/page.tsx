@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Eye, EyeSlash, Warning, ArrowRight, ShieldCheck } from '@phosphor-icons/react';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen animated-bg flex items-center justify-center px-4 relative overflow-hidden">
+    <main className="min-h-[100dvh] animated-bg flex items-center justify-center px-4 relative overflow-hidden">
       {/* Background Tech Orbs */}
       <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
       <div className="fixed w-80 h-80 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
@@ -69,14 +70,14 @@ export default function AdminLoginPage() {
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full badge-tech-blue text-[11px] font-bold tracking-wider uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
               Admin Portal IT
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Portal Admin <span className="gradient-text-ifest">IT 2026</span>
             </h1>
             <p className="text-slate-400 text-xs sm:text-sm max-w-xs mx-auto mt-1">
-              Dashboard Administrator & Manajemen Absensi Acara
+              Dashboard Administrator &amp; Manajemen Absensi Acara
             </p>
           </div>
         </div>
@@ -119,23 +120,17 @@ export default function AdminLoginPage() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
                   aria-label={showPass ? 'Sembunyikan password' : 'Lihat password'}
                 >
-                  {showPass ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
+                  {showPass
+                    ? <EyeSlash size={18} weight="regular" />
+                    : <Eye size={18} weight="regular" />
+                  }
                 </button>
               </div>
             </div>
 
             {error && (
               <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 fade-in">
-                <span>⚠️</span>
+                <Warning size={15} weight="bold" className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
@@ -152,7 +147,11 @@ export default function AdminLoginPage() {
                   Masuk...
                 </span>
               ) : (
-                'Masuk Dashboard →'
+                <>
+                  <ShieldCheck size={16} weight="bold" />
+                  Masuk Dashboard
+                  <ArrowRight size={16} weight="bold" />
+                </>
               )}
             </button>
           </form>

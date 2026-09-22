@@ -6,6 +6,12 @@ import { useMemberAuth } from '@/lib/context/MemberAuthContext';
 import { Event, FormField, Absensi, Feedback } from '@/lib/types';
 import MemberQRCard from '@/components/MemberQRCard';
 import Link from 'next/link';
+import {
+  LockSimple, NotePencil, DeviceMobile, Star, CheckCircle,
+  Warning, PencilSimple, ChatCircle, Confetti, Lightbulb,
+  ArrowRight,
+} from '@phosphor-icons/react';
+import { AbsensiFormSkeleton } from '@/components/Skeleton';
 
 interface Props {
   event: Event;
@@ -270,33 +276,26 @@ export default function AbsensiForm({ event }: Props) {
 
   // ── If auth is loading ──
   if (authLoading) {
-    return (
-      <div className="tech-card p-12 text-center text-slate-400">
-        <svg className="animate-spin h-8 w-8 mx-auto mb-3 text-blue-400" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-        </svg>
-        <p className="text-sm">Memverifikasi sesi anggota IT 2026...</p>
-      </div>
-    );
+    return <AbsensiFormSkeleton />;
   }
 
   // ── If user is NOT logged in ──
   if (!member) {
     return (
       <div className="tech-card p-8 sm:p-10 text-center slide-up border border-blue-500/30 shadow-2xl space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-3xl mx-auto glow-blue">
-          🔒
+        <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center mx-auto">
+          <LockSimple size={32} weight="bold" className="text-blue-300" />
         </div>
         <h3 className="text-xl font-extrabold text-white">Login Anggota Diperlukan</h3>
         <p className="text-slate-400 text-xs sm:text-sm max-w-sm mx-auto leading-relaxed">
-          Silakan masuk dengan NRP & Password Anda untuk melengkapi form absensi atau melihat Tiket QR acara.
+          Silakan masuk dengan NRP &amp; Password Anda untuk melengkapi form absensi atau melihat Tiket QR acara.
         </p>
         <Link
           href="/login"
           className="btn-primary h-12 text-xs uppercase tracking-wider font-bold shadow-lg"
         >
-          🔑 Masuk Anggota Sekarang →
+          Masuk Anggota Sekarang
+          <ArrowRight size={14} weight="bold" />
         </Link>
       </div>
     );
@@ -306,8 +305,8 @@ export default function AbsensiForm({ event }: Props) {
   if (submitState === 'success' && tabMode === 'form') {
     return (
       <div className="tech-card p-8 sm:p-10 text-center slide-up space-y-5 border border-emerald-500/30">
-        <div className="w-20 h-20 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-4xl mx-auto">
-          ✅
+        <div className="w-20 h-20 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mx-auto">
+          <CheckCircle size={44} weight="fill" className="text-emerald-400" />
         </div>
         <div>
           <h3 className="text-2xl font-extrabold text-white">
@@ -323,13 +322,13 @@ export default function AbsensiForm({ event }: Props) {
             onClick={() => { setSubmitState('idle'); setTabMode('qr'); }}
             className="btn-secondary h-11 text-xs uppercase tracking-wider font-bold"
           >
-            📱 Tampilkan Tiket QR
+            <DeviceMobile size={15} weight="bold" /> Tampilkan Tiket QR
           </button>
           <button
             onClick={() => { setSubmitState('idle'); setTabMode('feedback'); }}
             className="btn-primary h-11 text-xs uppercase tracking-wider font-bold"
           >
-            ⭐ Isi Feedback Acara
+            <Star size={15} weight="fill" /> Isi Feedback Acara
           </button>
           <a href="/" className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-colors inline-flex items-center justify-center">
             Kembali ke Beranda
@@ -345,7 +344,7 @@ export default function AbsensiForm({ event }: Props) {
     <div className="space-y-6">
       {/* ── Logged-in Member Auto-Greeting Card ── */}
       <div className="tech-card p-4 sm:p-5 slide-up flex items-center gap-4 border border-blue-500/20">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 border border-blue-400/40 flex items-center justify-center text-white font-extrabold text-lg shrink-0 shadow-md glow-blue">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 border border-blue-400/40 flex items-center justify-center text-white font-extrabold text-lg shrink-0 shadow-md">
           {member.nama.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">
@@ -366,33 +365,36 @@ export default function AbsensiForm({ event }: Props) {
           onClick={() => setTabMode('form')}
           className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             tabMode === 'form'
-              ? 'bg-[#214afe] text-white shadow-lg glow-blue'
+              ? 'bg-[#214afe] text-white shadow-lg'
               : 'text-slate-400 hover:text-white'
           }`}
         >
-          <span>📝</span> <span className="hidden sm:inline">Form</span> Keterangan
+          <NotePencil size={15} weight="bold" />
+          <span className="hidden sm:inline">Form</span> Keterangan
         </button>
         <button
           type="button"
           onClick={() => setTabMode('qr')}
           className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             tabMode === 'qr'
-              ? 'bg-[#ffc878] text-slate-950 shadow-lg glow-amber'
+              ? 'bg-[#ffc878] text-slate-950 shadow-lg'
               : 'text-slate-400 hover:text-white'
           }`}
         >
-          <span>📱</span> Tiket QR <span className="hidden sm:inline">Saya</span>
+          <DeviceMobile size={15} weight="bold" />
+          Tiket QR <span className="hidden sm:inline">Saya</span>
         </button>
         <button
           type="button"
           onClick={() => setTabMode('feedback')}
           className={`py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
             tabMode === 'feedback'
-              ? 'bg-[#214afe] text-white shadow-lg glow-blue'
+              ? 'bg-[#214afe] text-white shadow-lg'
               : 'text-slate-400 hover:text-white'
           }`}
         >
-          <span>⭐</span> Feedback <span className="hidden sm:inline">Acara</span>
+          <Star size={15} weight={tabMode === 'feedback' ? 'fill' : 'regular'} />
+          Feedback <span className="hidden sm:inline">Acara</span>
         </button>
       </div>
 
@@ -404,18 +406,18 @@ export default function AbsensiForm({ event }: Props) {
       {/* ── TAB 1: FORM KETERANGAN ── */}
       {tabMode === 'form' && (
         <form onSubmit={handleSubmit} className="tech-card p-6 sm:p-8 slide-up space-y-6 border border-blue-500/25">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="border-b border-slate-800 pb-3">
             <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
-              <span>📝</span> Formulir Presensi & Keterangan
+              <NotePencil size={18} weight="bold" className="text-blue-300" />
+              Formulir Presensi &amp; Keterangan
             </h2>
-            <span className="text-[11px] font-mono text-slate-400">Step 1 of 3</span>
           </div>
 
           {/* Warning Alert if user ALREADY submitted before */}
           {existingAbsensi?.is_form_filled && !isEditing && (
             <div className="p-4 sm:p-5 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-3 slide-up">
               <div className="flex items-start gap-3">
-                <span className="text-2xl shrink-0">⚠️</span>
+                <Warning size={22} weight="bold" className="text-[#ffc878] shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-[#ffc878] font-bold text-sm">Formulir Telah Diisi Sebelumnya</h4>
                   <p className="text-slate-300 text-xs mt-1 leading-relaxed">
@@ -436,14 +438,14 @@ export default function AbsensiForm({ event }: Props) {
                   onClick={() => setIsEditing(true)}
                   className="btn-secondary h-10 text-xs font-bold uppercase tracking-wider"
                 >
-                  ✏️ Edit / Ubah Jawaban Saya
+                  <PencilSimple size={13} weight="bold" /> Edit / Ubah Jawaban Saya
                 </button>
                 <button
                   type="button"
                   onClick={() => setTabMode('qr')}
                   className="btn-primary h-10 text-xs font-bold uppercase tracking-wider"
                 >
-                  📱 Buka Tiket QR Saya →
+                  <DeviceMobile size={13} weight="bold" /> Buka Tiket QR Saya
                 </button>
               </div>
             </div>
@@ -454,7 +456,7 @@ export default function AbsensiForm({ event }: Props) {
             <div className="space-y-5 fade-in">
               {existingAbsensi?.is_form_filled && (
                 <div className="p-3 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-300 text-xs flex items-center gap-2">
-                  <span>✏️</span>
+                  <PencilSimple size={13} weight="bold" className="shrink-0" />
                   <span>Kamu sedang memperbarui respon absensi sebelumnya. Silakan sesuaikan isianmu.</span>
                 </div>
               )}
@@ -467,7 +469,7 @@ export default function AbsensiForm({ event }: Props) {
                       <div key={idx} className="p-4 rounded-xl bg-amber-600/5 border border-amber-500/20 slide-up">
                         {field.label && (
                           <p className="text-amber-300 font-semibold text-sm mb-2 flex items-center gap-2">
-                            <span>💡</span> {field.label}
+                            <Lightbulb size={15} weight="bold" className="shrink-0" /> {field.label}
                           </p>
                         )}
                         {field.image_url && (
@@ -496,7 +498,7 @@ export default function AbsensiForm({ event }: Props) {
                         </label>
                         {uploaded ? (
                           <div className="flex items-center gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/25">
-                            <span className="text-green-400 text-lg">✓</span>
+                            <CheckCircle size={18} weight="fill" className="text-green-400 shrink-0" />
                             <div className="flex-1 min-w-0">
                               <p className="text-green-300 text-sm font-medium">File tersimpan</p>
                               <a
@@ -633,7 +635,7 @@ export default function AbsensiForm({ event }: Props) {
 
           {submitState === 'error' && (
             <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 fade-in">
-              <span>⚠️</span>
+              <Warning size={15} weight="bold" className="shrink-0" />
               <span>{errorMsg || 'Terjadi kesalahan. Silakan coba lagi.'}</span>
             </div>
           )}
@@ -657,30 +659,28 @@ export default function AbsensiForm({ event }: Props) {
       {/* ── TAB 3: FORM FEEDBACK & EVALUASI ACARA ── */}
       {tabMode === 'feedback' && (
         <div className="tech-card p-6 sm:p-8 slide-up space-y-6 border border-blue-500/25">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
-                <span>⭐</span> Feedback & Evaluasi Acara
-              </h2>
-              <p className="text-slate-400 text-xs mt-0.5">
-                Berikan penilaian dan masukan Anda untuk peningkatan kualitas acara mendatang.
-              </p>
-            </div>
-            <span className="text-[11px] font-mono text-slate-400">Step 3 of 3</span>
+          <div className="border-b border-slate-800 pb-3">
+            <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+              <Star size={18} weight="fill" className="text-[#ffc878]" />
+              Feedback &amp; Evaluasi Acara
+            </h2>
+            <p className="text-slate-400 text-xs mt-0.5">
+              Berikan penilaian dan masukan Anda untuk peningkatan kualitas acara mendatang.
+            </p>
           </div>
 
           {/* Feedback Success View */}
           {feedbackSubmitState === 'success' && (
             <div className="p-6 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-center slide-up space-y-3">
-              <div className="text-4xl">🎉</div>
-              <h3 className="text-lg font-extrabold text-white">Terima Kasih atas Ulasan & Feedback Anda!</h3>
+              <Confetti size={44} weight="fill" className="mx-auto text-emerald-400" />
+              <h3 className="text-lg font-extrabold text-white">Terima Kasih atas Ulasan &amp; Feedback Anda!</h3>
               <p className="text-emerald-300 text-xs">Masukan Anda telah berhasil dicatat untuk evaluasi panitia.</p>
               <button
                 type="button"
                 onClick={() => { setFeedbackSubmitState('idle'); setIsEditingFeedback(true); }}
                 className="btn-secondary h-10 text-xs font-bold uppercase tracking-wider"
               >
-                ✏️ Edit Respon Feedback
+                <PencilSimple size={13} weight="bold" /> Edit Respon Feedback
               </button>
             </div>
           )}
@@ -690,8 +690,8 @@ export default function AbsensiForm({ event }: Props) {
             <div className="p-5 rounded-2xl bg-blue-950/40 border border-blue-500/30 space-y-3 slide-up">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full badge-tech-amber font-semibold">
-                    ✓ Feedback Sudah Dikirim
+                  <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full badge-tech-amber font-semibold">
+                    <CheckCircle size={11} weight="fill" /> Feedback Sudah Dikirim
                   </span>
                   <div className="flex items-center gap-1.5 mt-3">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -707,9 +707,9 @@ export default function AbsensiForm({ event }: Props) {
                 <button
                   type="button"
                   onClick={() => setIsEditingFeedback(true)}
-                  className="px-3.5 py-1.5 rounded-xl btn-primary text-xs font-semibold transition-all shadow"
+                  className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl btn-primary text-xs font-semibold transition-all shadow"
                 >
-                  ✏️ Edit Feedback
+                  <PencilSimple size={13} weight="bold" /> Edit Feedback
                 </button>
               </div>
 
@@ -802,18 +802,18 @@ export default function AbsensiForm({ event }: Props) {
                   <div className="text-xs">
                     {overallRating === 0 ? (
                       <span className="text-blue-300/80 italic font-medium">
-                        👆 Klik salah satu bintang di atas untuk memberi rating (1 - 5)
+                        Klik salah satu bintang di atas untuk memberi rating (1–5)
                       </span>
                     ) : overallRating === 5 ? (
-                      <span className="text-amber-300 font-bold">🌟 Sangat Puas / Luar Biasa! (5/5)</span>
+                      <span className="text-amber-300 font-bold">Sangat Puas / Luar Biasa! (5/5)</span>
                     ) : overallRating === 4 ? (
-                      <span className="text-amber-300 font-bold">👍 Puas / Bagus Sekali (4/5)</span>
+                      <span className="text-amber-300 font-bold">Puas / Bagus Sekali (4/5)</span>
                     ) : overallRating === 3 ? (
-                      <span className="text-amber-300 font-bold">👌 Cukup / Rata-rata (3/5)</span>
+                      <span className="text-amber-300 font-bold">Cukup / Rata-rata (3/5)</span>
                     ) : overallRating === 2 ? (
-                      <span className="text-amber-300 font-bold">👎 Kurang Puas (2/5)</span>
+                      <span className="text-amber-300 font-bold">Kurang Puas (2/5)</span>
                     ) : (
-                      <span className="text-amber-300 font-bold">⚠️ Sangat Kurang (1/5)</span>
+                      <span className="text-amber-300 font-bold">Sangat Kurang (1/5)</span>
                     )}
                   </div>
                 </div>
@@ -821,7 +821,7 @@ export default function AbsensiForm({ event }: Props) {
                 {/* Sub-unit comment for overall rating */}
                 <div className="pt-3 border-t border-slate-700/50">
                   <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
-                    <span>💬</span> Ulasan / Kesan Keseluruhan Acara (Opsional):
+                    <ChatCircle size={13} weight="bold" className="shrink-0" /> Ulasan / Kesan Keseluruhan Acara (Opsional):
                   </label>
                   <textarea
                     rows={2}
@@ -870,7 +870,7 @@ export default function AbsensiForm({ event }: Props) {
                       {/* Sub-unit text feedback paired with this star rating */}
                       <div className="pt-2.5 border-t border-slate-700/40">
                         <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1.5">
-                          <span>💬</span> Masukan / Alasan Penilaian (Opsional):
+                          <ChatCircle size={12} weight="bold" className="shrink-0" /> Masukan / Alasan Penilaian (Opsional):
                         </label>
                         <input
                           type="text"
@@ -919,7 +919,7 @@ export default function AbsensiForm({ event }: Props) {
                       {/* Sub-unit text feedback paired with this scale */}
                       <div className="pt-2.5 border-t border-slate-700/40">
                         <label className="block text-[11px] font-medium text-slate-400 mb-1 flex items-center gap-1.5">
-                          <span>💬</span> Masukan / Alasan Penilaian (Opsional):
+                          <ChatCircle size={12} weight="bold" className="shrink-0" /> Masukan / Alasan Penilaian (Opsional):
                         </label>
                         <input
                           type="text"
@@ -970,7 +970,7 @@ export default function AbsensiForm({ event }: Props) {
 
               {feedbackErrorMsg && (
                 <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 fade-in">
-                  <span>⚠️</span>
+                  <Warning size={15} weight="bold" className="shrink-0" />
                   <span>{feedbackErrorMsg}</span>
                 </div>
               )}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMemberAuth } from '@/lib/context/MemberAuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Key, Lightbulb, LockKey, Eye, EyeSlash, Warning, ArrowRight } from '@phosphor-icons/react';
 
 export default function MemberLoginPage() {
   const { loginMember, member } = useMemberAuth();
@@ -38,7 +39,7 @@ export default function MemberLoginPage() {
   };
 
   return (
-    <main className="min-h-screen animated-bg flex items-center justify-center px-4 py-8 relative overflow-hidden">
+    <main className="min-h-[100dvh] animated-bg flex items-center justify-center px-4 py-8 relative overflow-hidden">
       {/* Background Tech Orbs */}
       <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
       <div className="fixed w-80 h-80 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
@@ -56,14 +57,14 @@ export default function MemberLoginPage() {
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full badge-tech-blue text-[11px] font-bold tracking-wider uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
               Member Access Portal
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Portal Anggota <span className="gradient-text-ifest">IT 2026</span>
             </h1>
             <p className="text-slate-400 text-xs sm:text-sm max-w-xs mx-auto mt-1">
-              Masuk menggunakan NRP & Password untuk mengakses tiket QR dan formulir acara.
+              Masuk menggunakan NRP &amp; Password untuk mengakses tiket QR dan formulir acara.
             </p>
           </div>
         </div>
@@ -107,24 +108,19 @@ export default function MemberLoginPage() {
                   onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
                   title={showPass ? 'Sembunyikan' : 'Tampilkan'}
+                  aria-label={showPass ? 'Sembunyikan password' : 'Tampilkan password'}
                 >
-                  {showPass ? (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
+                  {showPass
+                    ? <EyeSlash size={18} weight="regular" />
+                    : <Eye size={18} weight="regular" />
+                  }
                 </button>
               </div>
             </div>
 
             {error && (
               <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 fade-in">
-                <span>⚠️</span>
+                <Warning size={16} weight="bold" className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
@@ -141,7 +137,11 @@ export default function MemberLoginPage() {
                   Memverifikasi...
                 </span>
               ) : (
-                'Masuk ke Portal →'
+                <>
+                  <Key size={16} weight="bold" />
+                  Masuk ke Portal
+                  <ArrowRight size={16} weight="bold" />
+                </>
               )}
             </button>
           </form>
@@ -149,7 +149,8 @@ export default function MemberLoginPage() {
           {/* Quick instructions box */}
           <div className="mt-6 pt-4 border-t border-slate-700/50 text-[11px] text-slate-400 space-y-1.5 bg-slate-900/40 p-3 rounded-xl border border-slate-800">
             <p className="font-semibold text-slate-300 flex items-center gap-1.5">
-              <span>💡</span> Informasi Login Pertama:
+              <Lightbulb size={14} weight="bold" className="text-[#ffc878] shrink-0" />
+              Informasi Login Pertama:
             </p>
             <p>• Masukkan NRP Anda yang terdaftar.</p>
             <p>• Password awal: <strong>12345678</strong> (Anda akan diminta membuat sandi baru saat pertama kali masuk).</p>
@@ -160,9 +161,11 @@ export default function MemberLoginPage() {
         <div className="text-center">
           <Link
             href="/portal-it-admin/login"
-            className="text-xs text-slate-400 hover:text-blue-400 transition-colors inline-flex items-center gap-1 font-medium"
+            className="text-xs text-slate-400 hover:text-blue-400 transition-colors inline-flex items-center gap-1.5 font-medium"
           >
-            <span>🔐</span> Masuk sebagai Admin Panitia →
+            <LockKey size={13} weight="bold" />
+            Masuk sebagai Admin Panitia
+            <ArrowRight size={13} weight="bold" />
           </Link>
         </div>
       </div>

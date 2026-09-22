@@ -6,6 +6,10 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { Event } from '@/lib/types';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
+import {
+  IdentificationCard, User, Camera, CameraSlash, Keyboard,
+  CheckCircle, X, ArrowLeft, Warning,
+} from '@phosphor-icons/react';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,10 +47,8 @@ function ConfirmModal({
          style={{ background: 'rgba(9, 13, 22, 0.85)', backdropFilter: 'blur(8px)' }}>
       <div className="tech-card rounded-3xl p-8 max-w-sm w-full border border-blue-500/40 shadow-2xl text-center slide-up">
         {/* Ikon & Header */}
-        <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-400/30 flex items-center justify-center text-blue-400 mx-auto mb-4 glow-blue">
-          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
-          </svg>
+        <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-400/30 flex items-center justify-center text-blue-400 mx-auto mb-4">
+          <IdentificationCard size={32} weight="bold" />
         </div>
         <h2 className="text-xl font-bold text-white mb-1">Konfirmasi Check-in</h2>
         <p className="text-slate-400 text-xs mb-6">Apakah anggota berikut akan dikonfirmasi hadir?</p>
@@ -55,9 +57,7 @@ function ConfirmModal({
         <div className="bg-slate-900/80 rounded-2xl p-4 mb-6 border border-slate-700/60 text-left space-y-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-300 shrink-0">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              </svg>
+              <User size={20} weight="bold" />
             </div>
             <div>
               <p className="text-white font-semibold text-sm leading-tight">
@@ -247,24 +247,21 @@ export default function AdminScanQRPage() {
 
   // ────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen animated-bg text-white p-3.5 sm:p-6 md:p-8 overflow-x-hidden max-w-full">
+    <main className="min-h-[100dvh] animated-bg text-white p-3.5 sm:p-6 md:p-8 overflow-x-hidden max-w-full">
       <div className="max-w-2xl w-full mx-auto space-y-5">
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <Link href="/portal-it-admin" className="text-slate-400 hover:text-white text-xs font-medium transition-colors">
-            ← Kembali ke Dashboard
+          <Link href="/portal-it-admin" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-medium transition-colors">
+            <ArrowLeft size={14} weight="bold" /> Kembali ke Dashboard
           </Link>
           <span className="text-xs text-blue-400 font-mono font-semibold">Scanner QR Panitia</span>
         </div>
 
         {/* Title */}
         <div className="tech-card rounded-2xl p-5 sm:p-6 text-center border border-blue-500/30 shadow-2xl">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto mb-3 glow-blue">
-            <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-            </svg>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto mb-3">
+            <Camera size={26} weight="bold" />
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white">Scanner QR Absensi Panitia</h1>
           <p className="text-slate-400 text-xs mt-1">
@@ -291,18 +288,21 @@ export default function AdminScanQRPage() {
         <div className="tech-card rounded-2xl p-4 sm:p-6 space-y-4 border border-blue-500/20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-              <span className="text-blue-400">📹</span> Kamera Scanner Langsung
+              <Camera size={16} weight="bold" className="text-blue-400" /> Kamera Scanner Langsung
             </h3>
             <button
               type="button"
               onClick={isCameraActive ? stopCamera : startCamera}
-              className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 isCameraActive
                   ? 'bg-red-600 hover:bg-red-500 text-white'
-                  : 'btn-primary glow-blue'
+                  : 'btn-primary'
               }`}
             >
-              {isCameraActive ? '🛑 Matikan Kamera' : '📷 Aktifkan Kamera'}
+              {isCameraActive
+                ? <><CameraSlash size={14} weight="bold" /> Matikan Kamera</>
+                : <><Camera size={14} weight="bold" /> Aktifkan Kamera</>
+              }
             </button>
           </div>
 
@@ -312,8 +312,8 @@ export default function AdminScanQRPage() {
             <div id="qr-reader-container" className="w-full max-w-full mx-auto" />
             {!isCameraActive && (
               <div className="py-8 sm:py-10 text-center text-slate-400 text-xs px-4">
-                <div className="text-3xl sm:text-4xl mb-2">📷</div>
-                <p>Klik <strong>"Aktifkan Kamera"</strong> untuk memindai QR anggota secara langsung.</p>
+                <Camera size={40} weight="regular" className="mx-auto mb-2 text-slate-600" />
+                <p>Klik <strong>&quot;Aktifkan Kamera&quot;</strong> untuk memindai QR anggota secara langsung.</p>
               </div>
             )}
           </div>
@@ -334,9 +334,9 @@ export default function AdminScanQRPage() {
 
         {/* Input Manual */}
         <div className="tech-card rounded-2xl p-4 sm:p-6 space-y-3 border border-slate-700/50">
-          <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-            <span>⌨️</span> Input NRP Manual / Barcode Scanner Fisik
-          </h3>
+            <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+              <Keyboard size={16} weight="bold" className="text-slate-400" /> Input NRP Manual / Barcode Scanner Fisik
+            </h3>
           <form
             onSubmit={(e) => { e.preventDefault(); if (inputNrp.trim()) handleScannedCode(inputNrp); }}
             className="flex flex-col sm:flex-row gap-2 w-full"
@@ -365,7 +365,10 @@ export default function AdminScanQRPage() {
               ? 'bg-green-500/15 border-green-500/40'
               : 'bg-red-500/15 border-red-500/40'
           }`}>
-            <div className="text-3xl sm:text-4xl mb-2 sm:mb-3">{lastResult.success ? '✅' : '❌'}</div>
+            {lastResult.success
+              ? <CheckCircle size={40} weight="fill" className={`mx-auto mb-2 sm:mb-3 ${lastResult.success ? 'text-green-400' : 'text-red-400'}`} />
+              : <X size={40} weight="bold" className="mx-auto mb-2 sm:mb-3 text-red-400" />
+            }
             <h3 className="text-base sm:text-lg font-bold text-white mb-1">
               {lastResult.success ? 'CHECK-IN BERHASIL!' : 'CHECK-IN GAGAL!'}
             </h3>

@@ -2,6 +2,7 @@
 
 import { QRCodeSVG } from 'qrcode.react';
 import { Event, Anggota, Absensi } from '@/lib/types';
+import { Lightning, Hourglass, CheckCircle } from '@phosphor-icons/react';
 
 interface Props {
   event: Event;
@@ -20,11 +21,12 @@ export default function MemberQRCard({ event, member, absensi }: Props) {
   return (
     <div className="max-w-md mx-auto slide-up">
       {/* Digital Festival Pass Container */}
-      <div className="relative rounded-3xl bg-[#101728] border-2 border-blue-500/30 overflow-hidden shadow-2xl glow-blue">
+      <div className="relative rounded-2xl bg-[#101728] border-2 border-blue-500/30 overflow-hidden shadow-2xl">
         {/* Top Header Ticket Banner */}
         <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 p-5 text-center text-white relative">
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-black/25 backdrop-blur-md border border-white/20 text-[#ffc878] text-[11px] font-mono font-bold uppercase tracking-wider mb-2">
-            <span>⚡</span> OFFICIAL DIGITAL EVENT PASS
+            <Lightning size={12} weight="fill" />
+            OFFICIAL DIGITAL EVENT PASS
           </div>
           <h2 className="text-lg sm:text-xl font-extrabold text-white leading-tight">
             {event.nama_event}
@@ -50,7 +52,7 @@ export default function MemberQRCard({ event, member, absensi }: Props) {
         {/* Pass Body */}
         <div className="p-6 text-center space-y-5">
           {/* QR Code Frame */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl inline-block shadow-2xl border-4 border-slate-200/80 mx-auto relative group">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl inline-block shadow-2xl border-4 border-slate-200/80 mx-auto relative">
             <QRCodeSVG
               value={qrData}
               size={190}
@@ -92,14 +94,13 @@ export default function MemberQRCard({ event, member, absensi }: Props) {
             <span className="text-slate-400 font-medium">Status Presensi di Tempat:</span>
             {isScanned ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full badge-open font-bold text-[11px]">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                ✓ Sudah Hadir / Discan
+                <CheckCircle size={13} weight="fill" />
+                Sudah Hadir
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full badge-tech-amber font-semibold text-[11px]">
-                <span>⏳</span> Belum Discan
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full badge-tech-amber font-semibold text-[11px]">
+                <Hourglass size={13} weight="regular" />
+                Belum Discan
               </span>
             )}
           </div>

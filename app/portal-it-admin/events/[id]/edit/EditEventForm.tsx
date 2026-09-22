@@ -3,8 +3,16 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { FormField, Event } from '@/lib/types';
+import { Event, FormField } from '@/lib/types';
 import FormBuilder from '@/components/FormBuilder';
+import {
+  Lightning,
+  ClipboardText,
+  ListBullets,
+  NotePencil,
+  Star,
+  ArrowRight,
+} from '@phosphor-icons/react';
 import DeleteEventButton from '../../DeleteEventButton';
 import Link from 'next/link';
 
@@ -105,7 +113,7 @@ export default function EditEventForm({ event }: Props) {
         <div className="tech-card rounded-2xl p-5 border border-blue-500/30 shadow-xl slide-up space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-blue-300 flex items-center gap-2">
-              <span className="text-amber-400">⚡</span> Salin Susunan Form / Feedback dari Event Lain
+              <Lightning size={14} weight="fill" className="text-[#ffc878]" /> Salin Susunan Form / Feedback dari Event Lain
             </h3>
             <span className="text-[10px] text-slate-400">Timpa susunan dengan cepat</span>
           </div>
@@ -129,9 +137,9 @@ export default function EditEventForm({ event }: Props) {
                 type="button"
                 disabled={!selectedCopyId}
                 onClick={() => applyCopyFromEvent('all')}
-                className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl btn-primary text-xs font-bold disabled:opacity-40 transition-all shadow"
+                className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl btn-primary text-xs font-bold disabled:opacity-40 transition-all shadow flex items-center gap-1.5"
               >
-                📋 Salin Semua
+                <ClipboardText size={13} weight="bold" /> Salin Semua
               </button>
               <button
                 type="button"
@@ -164,7 +172,9 @@ export default function EditEventForm({ event }: Props) {
 
       {/* Info event */}
       <div className="tech-card rounded-2xl p-6 space-y-5 border border-slate-700/60">
-        <h2 className="font-semibold text-slate-200">📋 Informasi Event</h2>
+        <h2 className="font-semibold text-slate-200 flex items-center gap-2">
+          <ListBullets size={16} weight="bold" className="text-slate-400" /> Informasi Event
+        </h2>
 
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -214,7 +224,7 @@ export default function EditEventForm({ event }: Props) {
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <span>📝</span> Form Absensi / Pendaftaran
+          <NotePencil size={15} weight="bold" /> Form Absensi / Pendaftaran
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
             {fields.length} field
           </span>
@@ -228,7 +238,7 @@ export default function EditEventForm({ event }: Props) {
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <span>⭐</span> Form Feedback / Evaluasi
+          <Star size={15} weight={activeTab === 'feedback' ? 'fill' : 'regular'} /> Form Feedback / Evaluasi
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
             {feedbackFields.length} field
           </span>
@@ -240,7 +250,7 @@ export default function EditEventForm({ event }: Props) {
         <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-              📝 Form Builder — Absensi & Registrasi
+              <NotePencil size={16} weight="bold" className="text-blue-300" /> Form Builder — Absensi &amp; Registrasi
             </h2>
             <span className="text-xs text-slate-400">{fields.length} pertanyaan</span>
           </div>
@@ -256,7 +266,7 @@ export default function EditEventForm({ event }: Props) {
         <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-              ⭐ Form Builder — Feedback & Evaluasi Acara
+              <Star size={16} weight="fill" className="text-[#ffc878]" /> Form Builder — Feedback &amp; Evaluasi Acara
             </h2>
             <span className="text-xs text-slate-400">{feedbackFields.length} pertanyaan</span>
           </div>
@@ -284,7 +294,10 @@ export default function EditEventForm({ event }: Props) {
           disabled={saving}
           className="flex-1 py-3.5 rounded-xl btn-primary text-sm uppercase tracking-wider font-bold transition-all glow-blue disabled:opacity-60"
         >
-          {saving ? 'Menyimpan...' : 'Simpan Perubahan →'}
+          {saving
+            ? 'Menyimpan...'
+            : <><span>Simpan Perubahan</span><ArrowRight size={15} weight="bold" /></>
+          }
         </button>
       </div>
 

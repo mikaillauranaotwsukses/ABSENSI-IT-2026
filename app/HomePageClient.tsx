@@ -5,6 +5,16 @@ import { useMemberAuth } from '@/lib/context/MemberAuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Event, Absensi, Feedback } from '@/lib/types';
 import Link from 'next/link';
+import {
+  Key,
+  CalendarBlank,
+  NotePencil,
+  DeviceMobile,
+  Star,
+  CheckCircle,
+  Tray,
+  ArrowRight,
+} from '@phosphor-icons/react';
 
 interface Props {
   events: Event[] | null;
@@ -60,14 +70,14 @@ export default function HomePageClient({ events, error }: Props) {
       (e.deskripsi && e.deskripsi.toLowerCase().includes(searchFilter.toLowerCase()));
   });
 
-  const totalEvents = events?.length || 0;
+  const totalEvents   = events?.length || 0;
   const attendedCount = Object.values(memberAbsensiMap).filter(
     (a) => a.is_form_filled || a.is_qr_scanned
   ).length;
   const feedbackCount = Object.keys(memberFeedbackMap).length;
 
   return (
-    <main className="min-h-screen animated-bg text-white relative overflow-hidden">
+    <main className="min-h-[100dvh] animated-bg text-white relative overflow-hidden">
       {/* Background Decorative Tech Blobs — fixed so they never stretch layout */}
       <div className="fixed w-96 h-96 rounded-full bg-blue-600/10 top-0 left-0 -translate-x-1/3 -translate-y-1/3 blur-3xl pointer-events-none z-0" />
       <div className="fixed w-80 h-80 rounded-full bg-amber-500/8 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
@@ -78,14 +88,15 @@ export default function HomePageClient({ events, error }: Props) {
           <div className="flex flex-col md:flex-row items-center justify-between gap-5">
             {member ? (
               <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 border-2 border-blue-400/40 flex items-center justify-center text-white font-extrabold text-2xl shrink-0 shadow-lg glow-blue">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 border-2 border-blue-400/40 flex items-center justify-center text-white font-extrabold text-2xl shrink-0 shadow-lg">
                   {member.nama.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h2 className="text-white font-extrabold text-base sm:text-lg truncate tracking-tight">{member.nama}</h2>
-                    <span className="text-[10px] px-2.5 py-0.5 rounded-full badge-open font-bold uppercase tracking-wider">
-                      ✓ Anggota IT 26
+                    <span className="inline-flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full badge-open font-bold uppercase tracking-wider">
+                      <CheckCircle size={11} weight="fill" />
+                      Anggota IT 26
                     </span>
                   </div>
                   <p className="text-slate-400 text-xs font-mono mt-0.5">
@@ -116,9 +127,10 @@ export default function HomePageClient({ events, error }: Props) {
                   <button
                     type="button"
                     onClick={() => setShowChangePasswordModal(true)}
-                    className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600/60 text-slate-200 text-xs font-bold transition-all shadow"
+                    className="flex-1 md:flex-none inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600/60 text-slate-200 text-xs font-bold transition-all shadow"
                   >
-                    🔑 Ganti Password
+                    <Key size={14} weight="bold" />
+                    Ganti Password
                   </button>
                   <button
                     type="button"
@@ -133,7 +145,9 @@ export default function HomePageClient({ events, error }: Props) {
                   href="/login"
                   className="w-full md:w-auto btn-primary h-11 text-xs uppercase tracking-wider font-bold shadow-lg"
                 >
-                  🔑 Masuk Anggota →
+                  <Key size={14} weight="bold" />
+                  Masuk Anggota
+                  <ArrowRight size={14} weight="bold" />
                 </Link>
               )}
             </div>
@@ -170,8 +184,8 @@ export default function HomePageClient({ events, error }: Props) {
           </div>
 
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full badge-tech-blue text-xs font-bold tracking-wider uppercase">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-            Digital Attendance & Event Portal
+            <span className="w-2 h-2 rounded-full bg-blue-400" />
+            Digital Attendance &amp; Event Portal
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
@@ -186,7 +200,8 @@ export default function HomePageClient({ events, error }: Props) {
         <div className="slide-up space-y-5">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-white font-extrabold text-base tracking-tight">
-              <span>📅</span> Daftar Acara Aktif
+              <CalendarBlank size={20} weight="bold" className="text-[#ffc878]" />
+              Daftar Acara Aktif
               <span className="text-xs px-2.5 py-0.5 rounded-full badge-tech-amber font-mono font-bold">
                 {filteredEvents.length} Event
               </span>
@@ -212,7 +227,7 @@ export default function HomePageClient({ events, error }: Props) {
 
           {!error && filteredEvents.length === 0 && (
             <div className="tech-card p-12 text-center border border-slate-800">
-              <div className="text-5xl mb-3 float-anim">📋</div>
+              <Tray size={52} className="mx-auto mb-3 text-slate-600 float-anim" weight="regular" />
               <h3 className="text-white font-bold text-base mb-1">
                 Belum Ada Event Ditemukan
               </h3>
@@ -261,28 +276,31 @@ export default function HomePageClient({ events, error }: Props) {
                       {/* Logged in member status badges */}
                       {member && (
                         <div className="grid grid-cols-3 gap-1.5 pt-3 pb-1 border-t border-slate-800">
-                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold ${
+                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
                             memberAbs?.is_form_filled
                               ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
                               : 'bg-slate-900/60 border-slate-800 text-slate-500'
                           }`}>
-                            <span>📝</span> {memberAbs?.is_form_filled ? '✓ Form OK' : 'Form Belum'}
+                            <NotePencil size={14} weight={memberAbs?.is_form_filled ? 'fill' : 'regular'} />
+                            {memberAbs?.is_form_filled ? 'Form OK' : 'Form Belum'}
                           </div>
 
-                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold ${
+                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
                             memberAbs?.is_qr_scanned
                               ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
                               : 'bg-slate-900/60 border-slate-800 text-slate-500'
                           }`}>
-                            <span>📱</span> {memberAbs?.is_qr_scanned ? '✓ QR Discan' : 'QR Belum'}
+                            <DeviceMobile size={14} weight={memberAbs?.is_qr_scanned ? 'fill' : 'regular'} />
+                            {memberAbs?.is_qr_scanned ? 'QR Discan' : 'QR Belum'}
                           </div>
 
-                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold ${
+                          <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
                             memberFb
                               ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
                               : 'bg-slate-900/60 border-slate-800 text-slate-500'
                           }`}>
-                            <span>⭐</span> {memberFb ? '✓ Feedback' : 'Feedback Belum'}
+                            <Star size={14} weight={memberFb ? 'fill' : 'regular'} />
+                            {memberFb ? 'Feedback OK' : 'Feedback Belum'}
                           </div>
                         </div>
                       )}
@@ -293,7 +311,7 @@ export default function HomePageClient({ events, error }: Props) {
                       className="w-full btn-primary h-12 text-xs uppercase tracking-wider font-bold shadow-md rounded-xl"
                     >
                       <span>{member ? 'Buka Form, Tiket & Feedback' : 'Login untuk Mengisi Presensi'}</span>
-                      <span>→</span>
+                      <ArrowRight size={14} weight="bold" />
                     </Link>
                   </div>
                 );

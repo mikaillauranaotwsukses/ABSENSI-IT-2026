@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { Trash, Warning } from '@phosphor-icons/react';
 
 interface Props {
   eventId: string;
@@ -40,11 +41,9 @@ export default function DeleteEventButton({ eventId, eventName, redirectAfter = 
       <button
         type="button"
         onClick={() => setShowConfirm(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/10 hover:bg-red-600/25 border border-red-500/25 hover:border-red-500/50 text-red-400 hover:text-red-300 text-xs font-medium transition-all"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/10 hover:bg-red-600/25 border border-red-500/25 hover:border-red-500/50 text-red-400 hover:text-red-300 text-xs font-medium transition-all"
       >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-        </svg>
+        <Trash size={13} weight="bold" />
         Hapus
       </button>
 
@@ -59,8 +58,8 @@ export default function DeleteEventButton({ eventId, eventName, redirectAfter = 
           {/* Modal */}
           <div className="relative glass rounded-2xl p-6 w-full max-w-md scale-in z-10 shadow-2xl border border-red-500/20">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-600/20 flex items-center justify-center text-xl shrink-0">
-                🗑️
+              <div className="w-10 h-10 rounded-xl bg-red-600/20 flex items-center justify-center shrink-0">
+                <Trash size={20} weight="bold" className="text-red-400" />
               </div>
               <div>
                 <h3 className="font-bold text-white">Hapus Event</h3>
@@ -101,10 +100,7 @@ export default function DeleteEventButton({ eventId, eventName, redirectAfter = 
               >
                 {deleting ? (
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Menghapus...
                   </span>
                 ) : (

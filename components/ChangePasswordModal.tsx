@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useMemberAuth } from '@/lib/context/MemberAuthContext';
+import { LockKey, Eye, EyeSlash, Warning, ArrowRight } from '@phosphor-icons/react';
 
 export default function ChangePasswordModal() {
   const { member, showChangePasswordModal, changePassword } = useMemberAuth();
@@ -41,8 +42,8 @@ export default function ChangePasswordModal() {
       <div className="fixed inset-0 bg-black/85 backdrop-blur-md" />
       <div className="relative tech-card p-6 sm:p-7 w-full max-w-md scale-in z-10 border border-blue-500/30 shadow-2xl space-y-4">
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-2xl mx-auto glow-blue">
-            🔐
+          <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center mx-auto">
+            <LockKey size={28} weight="bold" className="text-blue-300" />
           </div>
           <h3 className="text-xl font-extrabold text-white">Buat Password Baru</h3>
           <p className="text-slate-400 text-xs leading-relaxed">
@@ -88,14 +89,17 @@ export default function ChangePasswordModal() {
               className="min-h-[44px] py-2 text-slate-300 hover:text-white transition-colors flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
               aria-label={showPass ? 'Sembunyikan karakter password' : 'Tampilkan karakter password'}
             >
-              <span>{showPass ? '🙈' : '👁️'}</span>
+              {showPass
+                ? <EyeSlash size={15} weight="regular" />
+                : <Eye size={15} weight="regular" />
+              }
               <span>{showPass ? 'Sembunyikan karakter' : 'Tampilkan karakter'}</span>
             </button>
           </div>
 
           {error && (
             <div role="alert" aria-live="polite" className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
-              <span aria-hidden="true">⚠️</span>
+              <Warning size={15} weight="bold" aria-hidden="true" className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -105,7 +109,10 @@ export default function ChangePasswordModal() {
             disabled={loading}
             className="w-full btn-primary h-12 text-sm font-bold uppercase tracking-wider rounded-xl mt-2 disabled:opacity-50"
           >
-            {loading ? 'Menyimpan Sandi...' : 'Simpan & Masuk ke Dashboard →'}
+            {loading
+              ? 'Menyimpan Sandi...'
+              : <><span>Simpan &amp; Masuk ke Dashboard</span><ArrowRight size={15} weight="bold" /></>
+            }
           </button>
         </form>
       </div>

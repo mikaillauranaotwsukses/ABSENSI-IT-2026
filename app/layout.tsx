@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { MemberAuthProvider } from '@/lib/context/MemberAuthContext';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' });
 
 export const metadata: Metadata = {
   title: 'Absensi IT 26 — Mahasiswa Teknologi Informasi',
@@ -25,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${geist.variable} ${geistMono.variable} font-sans antialiased`}>
         <MemberAuthProvider>
           {children}
           <ChangePasswordModal />

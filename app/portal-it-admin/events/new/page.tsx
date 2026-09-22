@@ -6,6 +6,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FormField, Event } from '@/lib/types';
 import FormBuilder from '@/components/FormBuilder';
 import Link from 'next/link';
+import {
+  ArrowLeft, Lightning, ClipboardText, NotePencil, Star, ListBullets, ArrowRight,
+} from '@phosphor-icons/react';
 
 export const dynamic = 'force-dynamic';
 
@@ -227,16 +230,14 @@ function NewEventContent() {
   };
 
   return (
-    <main className="min-h-screen animated-bg text-white">
+    <main className="min-h-[100dvh] animated-bg text-white">
       <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
       <div className="fixed w-72 h-72 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6 slide-up">
           <Link href="/portal-it-admin/events" className="text-slate-400 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <ArrowLeft size={20} weight="bold" />
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-white">Buat Event Baru</h1>
@@ -248,7 +249,7 @@ function NewEventContent() {
         <div className="tech-card rounded-2xl p-5 border border-blue-500/30 shadow-xl mb-6 slide-up space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-blue-300 flex items-center gap-2">
-              <span className="text-amber-400">⚡</span> Fitur Cepat: Salin / Gunakan Template Form
+              <Lightning size={14} weight="fill" className="text-[#ffc878]" /> Fitur Cepat: Salin / Gunakan Template Form
             </h3>
             <span className="text-[10px] text-slate-400">Efisien & Tanpa Ketik Ulang</span>
           </div>
@@ -296,7 +297,7 @@ function NewEventContent() {
                     onClick={() => applyCopyFromEvent('all')}
                     className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl btn-primary text-xs font-bold disabled:opacity-40 transition-all shadow"
                   >
-                    📋 Salin Semua
+                    <ClipboardText size={13} weight="bold" /> Salin Semua
                   </button>
                   <button
                     type="button"
@@ -331,7 +332,9 @@ function NewEventContent() {
         <div className="space-y-6">
           {/* Info event */}
           <div className="tech-card rounded-2xl p-6 slide-up space-y-5 border border-slate-700/60">
-            <h2 className="font-semibold text-slate-200 flex items-center gap-2">📋 Informasi Event</h2>
+            <h2 className="font-semibold text-slate-200 flex items-center gap-2">
+              <ListBullets size={16} weight="bold" className="text-slate-400" /> Informasi Event
+            </h2>
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -387,7 +390,7 @@ function NewEventContent() {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <span>📝</span> Form Absensi / Pendaftaran
+              <NotePencil size={15} weight="bold" /> Form Absensi / Pendaftaran
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
                 {fields.length} field
               </span>
@@ -401,7 +404,7 @@ function NewEventContent() {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <span>⭐</span> Form Feedback / Evaluasi
+              <Star size={15} weight={activeTab === 'feedback' ? 'fill' : 'regular'} /> Form Feedback / Evaluasi
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
                 {feedbackFields.length} field
               </span>
@@ -413,7 +416,7 @@ function NewEventContent() {
             <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-                  📝 Form Builder — Absensi & Registrasi
+                  <NotePencil size={16} weight="bold" className="text-blue-300" /> Form Builder — Absensi &amp; Registrasi
                 </h2>
                 <span className="text-xs text-slate-400">{fields.length} pertanyaan</span>
               </div>
@@ -429,7 +432,7 @@ function NewEventContent() {
             <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold text-slate-200 flex items-center gap-2">
-                  ⭐ Form Builder — Feedback & Evaluasi Acara
+                  <Star size={16} weight="fill" className="text-[#ffc878]" /> Form Builder — Feedback &amp; Evaluasi Acara
                 </h2>
                 <span className="text-xs text-slate-400">{feedbackFields.length} pertanyaan</span>
               </div>
@@ -457,7 +460,10 @@ function NewEventContent() {
               disabled={saving}
               className="flex-1 py-3.5 rounded-xl btn-primary text-sm uppercase tracking-wider font-bold transition-all glow-blue disabled:opacity-60"
             >
-              {saving ? 'Menyimpan...' : 'Simpan Event →'}
+              {saving
+                ? 'Menyimpan...'
+                : <><span>Simpan Event</span><ArrowRight size={15} weight="bold" /></>
+              }
             </button>
           </div>
         </div>
@@ -468,7 +474,7 @@ function NewEventContent() {
 
 export default function NewEventPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen animated-bg flex items-center justify-center text-slate-400">Memuat formulir...</div>}>
+    <Suspense fallback={<div className="min-h-[100dvh] animated-bg flex items-center justify-center text-slate-400">Memuat formulir...</div>}>
       <NewEventContent />
     </Suspense>
   );

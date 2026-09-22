@@ -24,7 +24,7 @@ export default async function EditEventPage({ params }: Props) {
   if (error || !event) return notFound();
 
   return (
-    <main className="min-h-screen animated-bg text-white">
+    <main className="min-h-[100dvh] animated-bg text-white">
       <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
       <div className="fixed w-72 h-72 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-8">
