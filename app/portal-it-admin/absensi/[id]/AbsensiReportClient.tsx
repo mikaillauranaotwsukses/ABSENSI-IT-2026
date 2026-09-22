@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { Event, Anggota, Absensi, Feedback, FormField } from '@/lib/types';
+import { parseEventConfig } from '@/lib/eventConfig';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -34,7 +35,7 @@ export default function AbsensiReportClient({
 }: Props) {
   const supabase = createClient();
   const router   = useRouter();
-  const isQrEnabled = event.is_qr_enabled !== false;
+  const { is_qr_enabled: isQrEnabled } = parseEventConfig(event);
 
   const [mainTab, setMainTab] = useState<MainViewTab>('kehadiran');
 

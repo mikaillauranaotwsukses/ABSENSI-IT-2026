@@ -14,6 +14,11 @@ import {
   ArrowRight,
   DeviceMobile,
 } from '@phosphor-icons/react';
+import {
+  parseEventConfig,
+  cleanEventDeskripsi,
+  buildEventDeskripsiWithConfig,
+} from '@/lib/eventConfig';
 import DeleteEventButton from '../../DeleteEventButton';
 import Link from 'next/link';
 
@@ -25,11 +30,12 @@ export default function EditEventForm({ event }: Props) {
   const supabase = createClient();
   const router   = useRouter();
 
+  const initialConfig = parseEventConfig(event);
   const [namaEvent,          setNamaEvent]          = useState(event.nama_event);
-  const [deskripsi,          setDeskripsi]          = useState(event.deskripsi || '');
+  const [deskripsi,          setDeskripsi]          = useState(cleanEventDeskripsi(event.deskripsi));
   const [status,             setStatus]             = useState(event.status);
-  const [isQrEnabled,        setIsQrEnabled]        = useState(event.is_qr_enabled !== false);
-  const [isFeedbackEnabled,  setIsFeedbackEnabled]  = useState(event.is_feedback_enabled !== false);
+  const [isQrEnabled,        setIsQrEnabled]        = useState(initialConfig.is_qr_enabled);
+  const [isFeedbackEnabled,  setIsFeedbackEnabled]  = useState(initialConfig.is_feedback_enabled);
   const [fields,             setFields]             = useState<FormField[]>(event.form_schema || []);
   const [feedbackFields,     setFeedbackFields]     = useState<FormField[]>(
     event.feedback_schema && event.feedback_schema.length > 0
@@ -75,12 +81,9 @@ export default function EditEventForm({ event }: Props) {
       }
     }
 
-    if (source.is_qr_enabled !== undefined) {
-      setIsQrEnabled(source.is_qr_enabled !== false);
-    }
-    if (source.is_feedback_enabled !== undefined) {
-      setIsFeedbackEnabled(source.is_feedback_enabled !== false);
-    }
+    const sourceConfig = parseEventConfig(source);
+    setIsQrEnabled(sourceConfig.is_qr_enabled);
+    setIsFeedbackEnabled(sourceConfig.is_feedback_enabled);
 
     setCopyNotice(`✓ Susunan ${mode === 'all' ? 'Form & Feedback' : mode === 'form' ? 'Form Absensi' : 'Feedback'} berhasil disalin dari "${source.nama_event}"!`);
     setTimeout(() => setCopyNotice(''), 5000);
@@ -90,9 +93,14 @@ export default function EditEventForm({ event }: Props) {
     if (!namaEvent.trim()) { setError('Nama event wajib diisi.'); return; }
     setSaving(true); setError('');
 
+    const finalDeskripsi = buildEventDeskripsiWithConfig(deskripsi.trim(), {
+      is_qr_enabled: isQrEnabled,
+      is_feedback_enabled: isFeedbackEnabled,
+    });
+
     const payload: any = {
       nama_event:          namaEvent.trim(),
-      deskripsi:           deskripsi.trim(),
+      deskripsi:           finalDeskripsi,
       status,
       is_qr_enabled:       isQrEnabled,
       is_feedback_enabled: isFeedbackEnabled,
@@ -103,10 +111,13 @@ export default function EditEventForm({ event }: Props) {
     let { error: err } = await supabase.from('event').update(payload).eq('id', event.id);
 
     // Fallback if column does not exist in DB yet
-    if (err && (err.message?.includes('is_qr_enabled') || err.message?.includes('is_feedback_enabled') || err.message?.includes('feedback_schema') || err.message?.includes('schema cache'))) {
+    if (err && (err.message?.includes('is_qr_enabled') || err.message?.includes('is_feedback_enabled') || err.message?.includes('schema cache'))) {
       delete payload.is_qr_enabled;
       delete payload.is_feedback_enabled;
-      delete payload.feedback_schema;
+      if (err.message?.includes('feedback_schema')) {
+        delete payload.feedback_schema;
+      }
+      // payload.deskripsi still contains finalDeskripsi with the config tag!
       const fallbackRes = await supabase.from('event').update(payload).eq('id', event.id);
       err = fallbackRes.error;
     }

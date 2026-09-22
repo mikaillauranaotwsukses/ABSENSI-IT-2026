@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useMemberAuth } from '@/lib/context/MemberAuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Event, Absensi, Feedback } from '@/lib/types';
+import { parseEventConfig, cleanEventDeskripsi } from '@/lib/eventConfig';
 import Link from 'next/link';
 import {
   Key,
@@ -240,6 +241,8 @@ export default function HomePageClient({ events, error }: Props) {
           {filteredEvents.length > 0 && (
             <div className="grid gap-5 md:grid-cols-2">
               {filteredEvents.map((event: Event, idx: number) => {
+                const evConfig = parseEventConfig(event);
+                const cleanDesc = cleanEventDeskripsi(event.deskripsi);
                 const targetUrl = member ? `/event/${event.id}` : '/login';
                 const memberAbs = memberAbsensiMap[event.id];
                 const memberFb  = memberFeedbackMap[event.id];
@@ -267,9 +270,9 @@ export default function HomePageClient({ events, error }: Props) {
                         {event.nama_event}
                       </h3>
 
-                      {event.deskripsi && (
+                      {cleanDesc && (
                         <p className="text-slate-400 text-xs line-clamp-3 leading-relaxed whitespace-pre-line">
-                          {event.deskripsi}
+                          {cleanDesc}
                         </p>
                       )}
 
@@ -286,25 +289,25 @@ export default function HomePageClient({ events, error }: Props) {
                           </div>
 
                           <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
-                            event.is_qr_enabled === false
+                            evConfig.is_qr_enabled === false
                               ? 'bg-slate-900/40 border-slate-800/80 text-slate-600'
                               : memberAbs?.is_qr_scanned
                               ? 'bg-blue-500/15 border-blue-500/30 text-blue-300'
                               : 'bg-slate-900/60 border-slate-800 text-slate-500'
                           }`}>
                             <DeviceMobile size={14} weight={memberAbs?.is_qr_scanned ? 'fill' : 'regular'} />
-                            {event.is_qr_enabled === false ? 'QR Off' : memberAbs?.is_qr_scanned ? 'QR Discan' : 'QR Belum'}
+                            {evConfig.is_qr_enabled === false ? 'QR Off' : memberAbs?.is_qr_scanned ? 'QR Discan' : 'QR Belum'}
                           </div>
 
                           <div className={`p-2 rounded-xl text-center border text-[10px] font-bold flex flex-col items-center gap-1 ${
-                            event.is_feedback_enabled === false
+                            evConfig.is_feedback_enabled === false
                               ? 'bg-slate-900/40 border-slate-800/80 text-slate-600'
                               : memberFb
                               ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
                               : 'bg-slate-900/60 border-slate-800 text-slate-500'
                           }`}>
                             <Star size={14} weight={memberFb ? 'fill' : 'regular'} />
-                            {event.is_feedback_enabled === false ? 'Feedback Off' : memberFb ? 'Feedback OK' : 'Feedback Belum'}
+                            {evConfig.is_feedback_enabled === false ? 'Feedback Off' : memberFb ? 'Feedback OK' : 'Feedback Belum'}
                           </div>
                         </div>
                       )}
@@ -314,7 +317,17 @@ export default function HomePageClient({ events, error }: Props) {
                       href={targetUrl}
                       className="w-full btn-primary h-12 text-xs uppercase tracking-wider font-bold shadow-md rounded-xl"
                     >
-                      <span>{member ? 'Buka Form, Tiket & Feedback' : 'Login untuk Mengisi Presensi'}</span>
+                      <span>
+                        {member
+                          ? !evConfig.is_qr_enabled && !evConfig.is_feedback_enabled
+                            ? 'Buka Form Presensi'
+                            : !evConfig.is_qr_enabled
+                            ? 'Buka Form & Feedback'
+                            : !evConfig.is_feedback_enabled
+                            ? 'Buka Form & Tiket QR'
+                            : 'Buka Form, Tiket & Feedback'
+                          : 'Login untuk Mengisi Presensi'}
+                      </span>
                       <ArrowRight size={14} weight="bold" />
                     </Link>
                   </div>

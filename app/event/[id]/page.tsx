@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import AbsensiForm from './AbsensiForm';
 import Link from 'next/link';
 import { ArrowLeft, Megaphone, LockSimple } from '@phosphor-icons/react/dist/ssr';
+import { cleanEventDeskripsi } from '@/lib/eventConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,14 +81,14 @@ export default async function EventPage({ params }: Props) {
           </div>
 
           {/* Broadcast / Deskripsi */}
-          {event.deskripsi && (
+          {cleanEventDeskripsi(event.deskripsi) && (
             <div className="p-4 rounded-2xl bg-slate-900/90 border border-blue-500/20">
               <div className="flex items-center gap-2 text-blue-300 text-[11px] font-bold uppercase tracking-wider mb-1.5">
                 <Megaphone size={14} weight="bold" />
                 Informasi &amp; Petunjuk Acara:
               </div>
               <p className="text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
-                {event.deskripsi}
+                {cleanEventDeskripsi(event.deskripsi)}
               </p>
             </div>
           )}

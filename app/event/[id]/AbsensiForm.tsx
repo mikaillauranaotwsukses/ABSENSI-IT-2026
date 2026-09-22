@@ -12,6 +12,7 @@ import {
   ArrowRight,
 } from '@phosphor-icons/react';
 import { AbsensiFormSkeleton } from '@/components/Skeleton';
+import { parseEventConfig } from '@/lib/eventConfig';
 
 interface Props {
   event: Event;
@@ -23,8 +24,7 @@ type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 export default function AbsensiForm({ event }: Props) {
   const supabase = createClient();
   const { member, loading: authLoading } = useMemberAuth();
-  const isQrEnabled       = event.is_qr_enabled !== false;
-  const isFeedbackEnabled = event.is_feedback_enabled !== false;
+  const { is_qr_enabled: isQrEnabled, is_feedback_enabled: isFeedbackEnabled } = parseEventConfig(event);
 
   const [tabMode,          setTabMode]          = useState<TabMode>('form');
   const [existingAbsensi,  setExistingAbsensi]  = useState<Absensi | null>(null);

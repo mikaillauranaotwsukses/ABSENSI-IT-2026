@@ -11,6 +11,12 @@ import {
   DeviceMobile,
 } from '@phosphor-icons/react';
 
+import {
+  parseEventConfig,
+  cleanEventDeskripsi,
+  buildEventDeskripsiWithConfig,
+} from '@/lib/eventConfig';
+
 export const dynamic = 'force-dynamic';
 
 type BuilderTab = 'form' | 'feedback';
@@ -153,19 +159,16 @@ function NewEventContent() {
       const { data } = await supabase.from('event').select('*').eq('id', copyFromId).maybeSingle();
       if (data) {
         setNamaEvent(`[Salinan] ${data.nama_event}`);
-        setDeskripsi(data.deskripsi || '');
+        setDeskripsi(cleanEventDeskripsi(data.deskripsi));
         if (data.form_schema && Array.isArray(data.form_schema)) {
           setFields(data.form_schema);
         }
         if (data.feedback_schema && Array.isArray(data.feedback_schema)) {
           setFeedbackFields(data.feedback_schema);
         }
-        if (data.is_qr_enabled !== undefined) {
-          setIsQrEnabled(data.is_qr_enabled !== false);
-        }
-        if (data.is_feedback_enabled !== undefined) {
-          setIsFeedbackEnabled(data.is_feedback_enabled !== false);
-        }
+        const sourceConfig = parseEventConfig(data);
+        setIsQrEnabled(sourceConfig.is_qr_enabled);
+        setIsFeedbackEnabled(sourceConfig.is_feedback_enabled);
         setSelectedCopyId(data.id);
         setCopyNotice(`✓ Berhasil menyalin susunan form & feedback dari "${data.nama_event}"!`);
       }
@@ -193,12 +196,9 @@ function NewEventContent() {
       }
     }
 
-    if (source.is_qr_enabled !== undefined) {
-      setIsQrEnabled(source.is_qr_enabled !== false);
-    }
-    if (source.is_feedback_enabled !== undefined) {
-      setIsFeedbackEnabled(source.is_feedback_enabled !== false);
-    }
+    const sourceConfig = parseEventConfig(source);
+    setIsQrEnabled(sourceConfig.is_qr_enabled);
+    setIsFeedbackEnabled(sourceConfig.is_feedback_enabled);
 
     setCopyNotice(`✓ Susunan ${mode === 'all' ? 'Form & Feedback' : mode === 'form' ? 'Form Absensi' : 'Feedback'} berhasil disalin dari "${source.nama_event}"!`);
     setTimeout(() => setCopyNotice(''), 5000);
@@ -220,9 +220,14 @@ function NewEventContent() {
     if (!namaEvent.trim()) { setError('Nama event wajib diisi.'); return; }
     setSaving(true); setError('');
 
+    const finalDeskripsi = buildEventDeskripsiWithConfig(deskripsi.trim(), {
+      is_qr_enabled: isQrEnabled,
+      is_feedback_enabled: isFeedbackEnabled,
+    });
+
     const payload: any = {
       nama_event:          namaEvent.trim(),
-      deskripsi:           deskripsi.trim(),
+      deskripsi:           finalDeskripsi,
       status,
       is_qr_enabled:       isQrEnabled,
       is_feedback_enabled: isFeedbackEnabled,
@@ -232,10 +237,12 @@ function NewEventContent() {
 
     let { error: err } = await supabase.from('event').insert(payload);
 
-    if (err && (err.message?.includes('is_qr_enabled') || err.message?.includes('is_feedback_enabled') || err.message?.includes('feedback_schema') || err.message?.includes('schema cache'))) {
+    if (err && (err.message?.includes('is_qr_enabled') || err.message?.includes('is_feedback_enabled') || err.message?.includes('schema cache'))) {
       delete payload.is_qr_enabled;
       delete payload.is_feedback_enabled;
-      delete payload.feedback_schema;
+      if (err.message?.includes('feedback_schema')) {
+        delete payload.feedback_schema;
+      }
       const fallbackRes = await supabase.from('event').insert(payload);
       err = fallbackRes.error;
     }

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import EventStatusToggle from './EventStatusToggle';
 import DeleteEventButton from './DeleteEventButton';
 import { ArrowLeft, Plus, Tray, ClipboardText } from '@phosphor-icons/react/dist/ssr';
+import { parseEventConfig, cleanEventDeskripsi } from '@/lib/eventConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,6 +65,8 @@ export default async function EventsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-700/30">
                   {events.map((ev) => {
+                    const evConfig = parseEventConfig(ev);
+                    const cleanDesc = cleanEventDeskripsi(ev.deskripsi);
                     const absensiCount = Array.isArray(ev.absensi)
                       ? (ev.absensi[0]?.count ?? 0)
                       : 0;
@@ -73,19 +76,19 @@ export default async function EventsPage() {
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-white font-medium">{ev.nama_event}</p>
-                              {ev.is_qr_enabled === false && (
+                              {evConfig.is_qr_enabled === false && (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700" title="Fitur Tiket QR dinonaktifkan">
                                   QR Off
                                 </span>
                               )}
-                              {ev.is_feedback_enabled === false && (
+                              {evConfig.is_feedback_enabled === false && (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-400 border border-slate-700" title="Fitur Feedback dinonaktifkan">
                                   Feedback Off
                                 </span>
                               )}
                             </div>
-                            {ev.deskripsi && (
-                              <p className="text-slate-500 text-xs mt-0.5 line-clamp-1">{ev.deskripsi}</p>
+                            {cleanDesc && (
+                              <p className="text-slate-500 text-xs mt-0.5 line-clamp-1">{cleanDesc}</p>
                             )}
                           </div>
                         </td>
