@@ -40,26 +40,32 @@ function ConfirmModal({
 }) {
   return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-4"
-         style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}>
-      <div className="glass rounded-3xl p-8 max-w-sm w-full border border-indigo-500/40 shadow-2xl text-center slide-up">
+         style={{ background: 'rgba(9, 13, 22, 0.85)', backdropFilter: 'blur(8px)' }}>
+      <div className="tech-card rounded-3xl p-8 max-w-sm w-full border border-blue-500/40 shadow-2xl text-center slide-up">
         {/* Ikon & Header */}
-        <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-4xl mx-auto mb-4 glow-indigo">
-          🪪
+        <div className="w-16 h-16 rounded-2xl bg-blue-600/20 border border-blue-400/30 flex items-center justify-center text-blue-400 mx-auto mb-4 glow-blue">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+          </svg>
         </div>
         <h2 className="text-xl font-bold text-white mb-1">Konfirmasi Check-in</h2>
         <p className="text-slate-400 text-xs mb-6">Apakah anggota berikut akan dikonfirmasi hadir?</p>
 
         {/* Info Anggota */}
-        <div className="bg-slate-800/60 rounded-2xl p-4 mb-6 border border-slate-700/50 text-left space-y-2">
+        <div className="bg-slate-900/80 rounded-2xl p-4 mb-6 border border-slate-700/60 text-left space-y-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-lg shrink-0">👤</div>
+            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-300 shrink-0">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
             <div>
               <p className="text-white font-semibold text-sm leading-tight">
                 {pending.anggotaNama || pending.scannedNrp}
               </p>
               <p className="text-slate-400 text-xs font-mono">{pending.scannedNrp}</p>
               {pending.anggotaProdi && (
-                <p className="text-indigo-300 text-xs">{pending.anggotaProdi}</p>
+                <p className="text-blue-300 text-xs font-medium">{pending.anggotaProdi}</p>
               )}
             </div>
           </div>
@@ -72,19 +78,19 @@ function ConfirmModal({
             disabled={loading}
             className="flex-1 py-3 rounded-2xl border border-slate-600/50 text-slate-300 text-sm font-semibold hover:bg-slate-700/50 transition-all disabled:opacity-50"
           >
-            ❌ Batal
+            Batal
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white text-sm font-bold transition-all disabled:opacity-50 shadow-lg"
+            className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition-all disabled:opacity-50 shadow-lg"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Memproses...
               </span>
-            ) : '✅ Konfirmasi Hadir'}
+            ) : 'Konfirmasi Hadir'}
           </button>
         </div>
       </div>
@@ -249,13 +255,16 @@ export default function AdminScanQRPage() {
           <Link href="/portal-it-admin" className="text-slate-400 hover:text-white text-xs font-medium transition-colors">
             ← Kembali ke Dashboard
           </Link>
-          <span className="text-xs text-indigo-400 font-mono font-semibold">Scanner QR Panitia</span>
+          <span className="text-xs text-blue-400 font-mono font-semibold">Scanner QR Panitia</span>
         </div>
 
         {/* Title */}
-        <div className="glass rounded-2xl p-5 sm:p-6 text-center border border-indigo-500/30 shadow-2xl">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-2xl sm:text-3xl mx-auto mb-3 glow-indigo">
-            📷
+        <div className="tech-card rounded-2xl p-5 sm:p-6 text-center border border-blue-500/30 shadow-2xl">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto mb-3 glow-blue">
+            <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+            </svg>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white">Scanner QR Absensi Panitia</h1>
           <p className="text-slate-400 text-xs mt-1">
@@ -268,7 +277,7 @@ export default function AdminScanQRPage() {
             <select
               value={selectedEvent}
               onChange={(e) => setSelectedEvent(e.target.value)}
-              className="w-full bg-slate-800/90 border border-slate-600/50 rounded-xl px-3.5 py-2.5 sm:py-3 text-white text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 sm:py-3 text-white text-sm focus:border-blue-500 focus:outline-none"
             >
               {events.length === 0
                 ? <option value="">Tidak ada event aktif</option>
@@ -279,10 +288,10 @@ export default function AdminScanQRPage() {
         </div>
 
         {/* Kamera Scanner */}
-        <div className="glass-card rounded-2xl p-4 sm:p-6 space-y-4 border border-indigo-500/20">
+        <div className="tech-card rounded-2xl p-4 sm:p-6 space-y-4 border border-blue-500/20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-              <span>📹</span> Kamera Scanner Langsung
+              <span className="text-blue-400">📹</span> Kamera Scanner Langsung
             </h3>
             <button
               type="button"
@@ -290,7 +299,7 @@ export default function AdminScanQRPage() {
               className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 isCameraActive
                   ? 'bg-red-600 hover:bg-red-500 text-white'
-                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white glow-indigo'
+                  : 'btn-primary glow-blue'
               }`}
             >
               {isCameraActive ? '🛑 Matikan Kamera' : '📷 Aktifkan Kamera'}
@@ -298,7 +307,7 @@ export default function AdminScanQRPage() {
           </div>
 
           <div className={`relative overflow-hidden rounded-2xl border max-w-full ${
-            isCameraActive ? 'border-indigo-500/50 bg-black' : 'border-slate-700/50 bg-slate-900/60'
+            isCameraActive ? 'border-blue-500/50 bg-black' : 'border-slate-700/50 bg-slate-900/60'
           }`}>
             <div id="qr-reader-container" className="w-full max-w-full mx-auto" />
             {!isCameraActive && (
@@ -310,8 +319,8 @@ export default function AdminScanQRPage() {
           </div>
 
           {lookupLoading && (
-            <div className="flex items-center gap-2 text-indigo-300 text-xs justify-center py-2">
-              <span className="w-3.5 h-3.5 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-blue-300 text-xs justify-center py-2">
+              <span className="w-3.5 h-3.5 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
               Memvalidasi QR Code...
             </div>
           )}
@@ -324,7 +333,7 @@ export default function AdminScanQRPage() {
         </div>
 
         {/* Input Manual */}
-        <div className="glass-card rounded-2xl p-4 sm:p-6 space-y-3 border border-slate-700/50">
+        <div className="tech-card rounded-2xl p-4 sm:p-6 space-y-3 border border-slate-700/50">
           <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
             <span>⌨️</span> Input NRP Manual / Barcode Scanner Fisik
           </h3>
@@ -336,13 +345,13 @@ export default function AdminScanQRPage() {
               type="text"
               value={inputNrp}
               onChange={(e) => setInputNrp(e.target.value)}
-              placeholder="Masukkan NRP anggota (contoh: C14230001)..."
-              className="input-glow flex-1 min-w-0 w-full bg-slate-800/80 border border-slate-600/50 rounded-xl px-4 py-2.5 sm:py-3 text-white placeholder-slate-500 text-sm"
+              placeholder="Masukkan NRP anggota (contoh: 5027261001)..."
+              className="input-glow flex-1 min-w-0 w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-2.5 sm:py-3 text-white placeholder-slate-500 text-sm focus:border-blue-500"
             />
             <button
               type="submit"
               disabled={loading || !inputNrp.trim()}
-              className="w-full sm:w-auto px-5 py-2.5 sm:py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all disabled:opacity-50 shrink-0"
+              className="w-full sm:w-auto px-5 py-2.5 sm:py-3 rounded-xl btn-primary text-xs uppercase font-bold tracking-wider transition-all disabled:opacity-50 shrink-0"
             >
               Check-in
             </button>

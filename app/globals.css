@@ -212,6 +212,19 @@ html, body {
   color: #fca5a5;
 }
 
+/* ─── Browser Surface & Selection ────────────── */
+::selection {
+  background: rgba(33, 74, 254, 0.45);
+  color: #ffffff;
+}
+input, textarea, select {
+  caret-color: #214afe;
+}
+input::placeholder, textarea::placeholder {
+  color: #94a3b8 !important; /* WCAG AA 4.5:1 compliant contrast on dark surfaces */
+  opacity: 0.85;
+}
+
 /* ─── Animations ─────────────────────────────── */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
@@ -234,4 +247,27 @@ html, body {
 .glow-blue   { box-shadow: 0 0 24px rgba(33, 74, 254, 0.35); }
 .glow-amber  { box-shadow: 0 0 24px rgba(255, 200, 120, 0.35); }
 .glow-indigo { box-shadow: 0 0 24px rgba(33, 74, 254, 0.35); }
-.glow-purple { box-shadow: 0 0 24px rgba(139, 92, 246, 0.35); }
+.glow-purple { box-shadow: 0 0 24px rgba(255, 200, 120, 0.35); }
+
+/* ─── Intentional Reduced Motion Support ──────── */
+@media (prefers-reduced-motion: reduce) {
+  .float-anim {
+    animation: none !important;
+    transform: none !important;
+  }
+  .slide-up {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .fade-in {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .tech-card-hover:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-tertiary:hover {
+    transform: none !important;
+  }
+}

@@ -60,8 +60,9 @@ export default function ChangePasswordModal() {
               value={newPass}
               onChange={(e) => setNewPass(e.target.value)}
               required
+              aria-required="true"
               placeholder="Minimal 4 karakter..."
-              className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500"
+              className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-400 text-sm focus:border-blue-500"
             />
           </div>
 
@@ -74,8 +75,9 @@ export default function ChangePasswordModal() {
               value={confirmPass}
               onChange={(e) => setConfirmPass(e.target.value)}
               required
+              aria-required="true"
               placeholder="Ketik ulang password baru..."
-              className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500"
+              className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-400 text-sm focus:border-blue-500"
             />
           </div>
 
@@ -83,15 +85,17 @@ export default function ChangePasswordModal() {
             <button
               type="button"
               onClick={() => setShowPass(!showPass)}
-              className="hover:text-slate-200 transition-colors"
+              className="min-h-[44px] py-2 text-slate-300 hover:text-white transition-colors flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
+              aria-label={showPass ? 'Sembunyikan karakter password' : 'Tampilkan karakter password'}
             >
-              {showPass ? '🙈 Sembunyikan karakter' : '👁️ Tampilkan karakter'}
+              <span>{showPass ? '🙈' : '👁️'}</span>
+              <span>{showPass ? 'Sembunyikan karakter' : 'Tampilkan karakter'}</span>
             </button>
           </div>
 
           {error && (
-            <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
-              <span>⚠️</span>
+            <div role="alert" aria-live="polite" className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
+              <span aria-hidden="true">⚠️</span>
               <span>{error}</span>
             </div>
           )}

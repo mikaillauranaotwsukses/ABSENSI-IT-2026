@@ -275,7 +275,7 @@ export default function AbsensiReportClient({
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
-      doc.setTextColor(79, 70, 229); // Indigo-600
+      doc.setTextColor(33, 74, 254); // IFEST Primary Blue #214afe
       doc.text(`${event.nama_event.toUpperCase()}`, 14, 22);
 
       doc.setFont('helvetica', 'normal');
@@ -338,7 +338,7 @@ export default function AbsensiReportClient({
           valign: 'middle',
         },
         headStyles: {
-          fillColor: [79, 70, 229], // Indigo-600
+          fillColor: [33, 74, 254], // IFEST Primary Blue #214afe
           textColor: 255,
           fontStyle: 'bold',
         },
@@ -390,7 +390,7 @@ export default function AbsensiReportClient({
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
-      doc.setTextColor(124, 58, 237); // Purple
+      doc.setTextColor(217, 119, 6); // Warm Amber
       doc.text(event.nama_event.toUpperCase(), 14, 22);
 
       doc.setFont('helvetica', 'normal');
@@ -524,7 +524,7 @@ export default function AbsensiReportClient({
           onClick={resetFilters}
           className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
             !isFilterActive
-              ? 'bg-indigo-600/25 border-indigo-500 shadow-lg glow-indigo'
+              ? 'bg-blue-600/25 border-blue-500 shadow-lg glow-blue'
               : 'glass-card border-slate-700/50 hover:border-slate-500'
           }`}
         >
@@ -542,7 +542,7 @@ export default function AbsensiReportClient({
           onClick={() => { resetFilters(); setFilterForm('yes'); }}
           className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
             filterForm === 'yes' && combinedStatus === 'all'
-              ? 'bg-emerald-600/25 border-emerald-500 shadow-lg glow-indigo'
+              ? 'bg-emerald-600/25 border-emerald-500 shadow-lg'
               : 'glass-card border-slate-700/50 hover:border-slate-500'
           }`}
         >
@@ -560,7 +560,7 @@ export default function AbsensiReportClient({
           onClick={() => { resetFilters(); setFilterQr('yes'); }}
           className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
             filterQr === 'yes' && combinedStatus === 'all'
-              ? 'bg-cyan-600/25 border-cyan-500 shadow-lg glow-indigo'
+              ? 'bg-cyan-600/25 border-cyan-500 shadow-lg'
               : 'glass-card border-slate-700/50 hover:border-slate-500'
           }`}
         >
@@ -578,7 +578,7 @@ export default function AbsensiReportClient({
           onClick={() => { resetFilters(); setCombinedStatus('lengkap'); }}
           className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
             combinedStatus === 'lengkap'
-              ? 'bg-green-600/25 border-green-500 shadow-lg glow-indigo'
+              ? 'bg-green-600/25 border-green-500 shadow-lg'
               : 'glass-card border-slate-700/50 hover:border-slate-500'
           }`}
         >
@@ -596,7 +596,7 @@ export default function AbsensiReportClient({
           onClick={() => { resetFilters(); setCombinedStatus('sebagian'); }}
           className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
             combinedStatus === 'sebagian'
-              ? 'bg-amber-600/25 border-amber-500 shadow-lg glow-indigo'
+              ? 'bg-amber-600/25 border-amber-500 shadow-lg'
               : 'glass-card border-slate-700/50 hover:border-slate-500'
           }`}
         >
@@ -614,7 +614,7 @@ export default function AbsensiReportClient({
           onClick={() => { resetFilters(); setCombinedStatus('mangkir'); }}
           className={`p-4 rounded-2xl border text-left transition-all hover:scale-102 ${
             combinedStatus === 'mangkir'
-              ? 'bg-red-600/25 border-red-500 shadow-lg glow-indigo'
+              ? 'bg-red-600/25 border-red-500 shadow-lg'
               : 'glass-card border-slate-700/50 hover:border-slate-500'
           }`}
         >
@@ -628,14 +628,14 @@ export default function AbsensiReportClient({
       </div>
 
       {/* ── TOP MAIN NAVIGATION TABS ── */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-1.5 bg-slate-800/80 rounded-2xl border border-slate-700/50 slide-up">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-700/70 slide-up">
         <div className="flex gap-1 w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setMainTab('kehadiran')}
             className={`flex-1 sm:flex-none py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
               mainTab === 'kehadiran'
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
+                ? 'bg-blue-600 text-white shadow-lg glow-blue'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -655,9 +655,9 @@ export default function AbsensiReportClient({
           <button
             type="button"
             onClick={() => setMainTab('feedback')}
-            className={`flex-1 sm:flex-none py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+            className={`flex-1 sm:flex-none py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
               mainTab === 'feedback'
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg glow-purple'
+                ? 'bg-amber-500 text-slate-950 shadow-lg'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -707,7 +707,7 @@ export default function AbsensiReportClient({
                 <button
                   type="button"
                   onClick={resetFilters}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                  className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
                 >
                   ↺ Reset Semua Filter
                 </button>
@@ -733,7 +733,7 @@ export default function AbsensiReportClient({
                 <select
                   value={filterForm}
                   onChange={(e) => setFilterForm(e.target.value as StatusBinaryFilter)}
-                  className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                 >
                   <option value="all">Semua Status Form</option>
                   <option value="yes">✓ Sudah Isi Form ({countFormFilled})</option>
@@ -747,7 +747,7 @@ export default function AbsensiReportClient({
                 <select
                   value={filterQr}
                   onChange={(e) => setFilterQr(e.target.value as StatusBinaryFilter)}
-                  className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                 >
                   <option value="all">Semua Status QR</option>
                   <option value="yes">✓ Sudah Scan QR ({countQrScanned})</option>
@@ -761,7 +761,7 @@ export default function AbsensiReportClient({
                 <select
                   value={selectedProdi}
                   onChange={(e) => setSelectedProdi(e.target.value)}
-                  className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                 >
                   <option value="all">Semua Program Studi</option>
                   {prodiOptions.map((p) => (
@@ -782,7 +782,7 @@ export default function AbsensiReportClient({
                       setSelectedRespField(e.target.value);
                       setSelectedRespVal('all');
                     }}
-                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                    className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                   >
                     <option value="all">— Pilih Pertanyaan Form (Opsi) —</option>
                     {dynamicResponseFieldOptions.map((f) => (
@@ -797,7 +797,7 @@ export default function AbsensiReportClient({
                     <select
                       value={selectedRespVal}
                       onChange={(e) => setSelectedRespVal(e.target.value)}
-                      className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                      className="w-full bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                     >
                       <option value="all">Semua Jawaban</option>
                       {dynamicResponseValues.map((opt) => (
@@ -943,7 +943,7 @@ export default function AbsensiReportClient({
                                   href={val}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-600/30 text-indigo-300 hover:text-white border border-indigo-500/30 text-[10px]"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-600/20 text-blue-300 hover:text-white border border-blue-500/30 text-[10px]"
                                 >
                                   📎 File
                                 </a>
@@ -964,10 +964,11 @@ export default function AbsensiReportClient({
                             <button
                               type="button"
                               onClick={() => setDeleteTarget({ absensiId: row.absensi!.id, nama: row.nama, nrp: row.nrp })}
-                              title="Hapus data absensi ini agar anggota bisa mengisi ulang"
-                              className="w-7 h-7 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-300 border border-red-500/30 flex items-center justify-center transition-all mx-auto"
+                              title={`Hapus data absensi ${row.nama}`}
+                              aria-label={`Hapus data absensi ${row.nama} (${row.nrp})`}
+                              className="min-w-[38px] min-h-[38px] p-2 rounded-xl bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-200 border border-red-500/30 flex items-center justify-center transition-all mx-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                             >
-                              🗑️
+                              <span className="text-base" aria-hidden="true">🗑️</span>
                             </button>
                           ) : (
                             <span className="text-slate-700">-</span>
@@ -1050,16 +1051,16 @@ export default function AbsensiReportClient({
       {mainTab === 'feedback' && (
         <div className="space-y-5 slide-up">
           {/* Feedback Rating Header Card */}
-          <div className="glass-card rounded-3xl p-6 border border-purple-500/30 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="tech-card rounded-3xl p-6 border border-amber-500/30 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-5">
-              <div className="w-20 h-20 rounded-2xl bg-purple-600/30 border border-purple-500/40 flex flex-col items-center justify-center glow-purple">
+              <div className="w-20 h-20 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex flex-col items-center justify-center">
                 <span className="text-3xl font-extrabold text-amber-400">{avgRating}</span>
-                <span className="text-[10px] text-purple-200">dari 5.0</span>
+                <span className="text-[10px] text-amber-200/80">dari 5.0</span>
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white">Kepuasan Peserta Acara</h3>
                 <p className="text-slate-400 text-xs mt-1">
-                  Total <span className="text-purple-300 font-bold">{countFeedback}</span> dari {totalAnggota} anggota telah memberikan ulasan evaluasi.
+                  Total <span className="text-amber-400 font-bold">{countFeedback}</span> dari {totalAnggota} anggota telah memberikan ulasan evaluasi.
                 </p>
                 <div className="flex items-center gap-1 mt-2">
                   {[1, 2, 3, 4, 5].map((s) => (
@@ -1093,7 +1094,7 @@ export default function AbsensiReportClient({
                 type="button"
                 onClick={generateFeedbackPdfReport}
                 disabled={exportingPdf || feedbackList.length === 0}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg transition-all disabled:opacity-50"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg transition-all disabled:opacity-50"
               >
                 <span>📄</span>
                 <span>{exportingPdf ? 'Exporting PDF...' : 'Download PDF Feedback'}</span>
@@ -1138,8 +1139,8 @@ export default function AbsensiReportClient({
 
                       {/* Overall Note Callout if provided */}
                       {overallNote && (
-                        <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs">
-                          <span className="text-indigo-300 font-semibold block mb-0.5">💬 Kesan & Ulasan Keseluruhan:</span>
+                        <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs">
+                          <span className="text-blue-300 font-semibold block mb-0.5">💬 Kesan & Ulasan Keseluruhan:</span>
                           <p className="text-white italic">"{String(overallNote)}"</p>
                         </div>
                       )}
@@ -1165,7 +1166,7 @@ export default function AbsensiReportClient({
                                       <span className="text-[10px] text-amber-400/70 font-normal">Bintang</span>
                                     </div>
                                   ) : (
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-mono font-bold text-xs">
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 font-mono font-bold text-xs">
                                       <span>📊 Skala {val !== undefined ? `${val} / 10` : '-'}</span>
                                     </div>
                                   )}

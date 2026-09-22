@@ -156,7 +156,7 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                 ? 'border-amber-500/40 bg-amber-600/10 text-amber-300 hover:border-amber-500/70 hover:bg-amber-600/20'
                 : type === 'file'
                 ? 'border-cyan-500/40 bg-cyan-600/10 text-cyan-300 hover:border-cyan-500/70 hover:bg-cyan-600/20'
-                : 'border-slate-600/50 bg-slate-800/40 text-slate-300 hover:border-indigo-500/50 hover:bg-indigo-600/10 hover:text-indigo-300'
+                : 'border-slate-600/50 bg-slate-800/40 text-slate-300 hover:border-blue-500/50 hover:bg-blue-600/10 hover:text-blue-300'
             }`}
           >
             <span>{FIELD_META[type].icon}</span>
@@ -198,21 +198,35 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                     {FIELD_META[field.type].label}
                   </span>
                   <div className="flex-1" />
-                  <button type="button" onClick={() => moveField(idx, -1)} disabled={idx === 0}
-                    className="p-1 rounded text-slate-500 hover:text-slate-300 disabled:opacity-30 transition-colors">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <button
+                    type="button"
+                    onClick={() => moveField(idx, -1)}
+                    disabled={idx === 0}
+                    aria-label={`Pindahkan field ${field.label || idx + 1} ke atas`}
+                    className="min-w-[36px] min-h-[36px] p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-25 transition-all flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
                     </svg>
                   </button>
-                  <button type="button" onClick={() => moveField(idx, 1)} disabled={idx === fields.length - 1}
-                    className="p-1 rounded text-slate-500 hover:text-slate-300 disabled:opacity-30 transition-colors">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <button
+                    type="button"
+                    onClick={() => moveField(idx, 1)}
+                    disabled={idx === fields.length - 1}
+                    aria-label={`Pindahkan field ${field.label || idx + 1} ke bawah`}
+                    className="min-w-[36px] min-h-[36px] p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-25 transition-all flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                     </svg>
                   </button>
-                  <button type="button" onClick={() => removeField(idx)}
-                    className="p-1 rounded text-slate-500 hover:text-red-400 transition-colors">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <button
+                    type="button"
+                    onClick={() => removeField(idx)}
+                    aria-label={`Hapus field ${field.label || idx + 1}`}
+                    className="min-w-[36px] min-h-[36px] p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
@@ -309,7 +323,7 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                       className="flex items-center gap-2 cursor-pointer w-fit"
                       onClick={() => updateField(idx, { required: !field.required })}
                     >
-                      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${field.required ? 'bg-indigo-500' : 'bg-slate-600'}`}>
+                      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${field.required ? 'bg-blue-600' : 'bg-slate-600'}`}>
                         <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${field.required ? 'translate-x-5' : 'translate-x-1'}`} />
                       </div>
                       <span className="text-xs text-slate-400">Wajib diisi</span>
@@ -327,15 +341,16 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                               value={opt}
                               onChange={(e) => updateOption(idx, oi, e.target.value)}
                               placeholder={`Pilihan ${oi + 1}...`}
-                              className="input-glow flex-1 bg-slate-900/60 border border-slate-600/40 rounded-lg px-3 py-1.5 text-white placeholder-slate-600 text-xs transition-all"
+                              className="input-glow flex-1 bg-slate-900/60 border border-slate-600/40 rounded-lg px-3 py-2 text-white placeholder-slate-400 text-xs transition-all"
                             />
                             <button
                               type="button"
                               onClick={() => removeOption(idx, oi)}
                               disabled={(field.options?.length ?? 0) <= 1}
-                              className="text-slate-500 hover:text-red-400 transition-colors disabled:opacity-30"
+                              aria-label={`Hapus pilihan ${oi + 1}`}
+                              className="min-w-[36px] min-h-[36px] p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-25 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </button>
@@ -344,7 +359,7 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                         <button
                           type="button"
                           onClick={() => addOption(idx)}
-                          className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
+                          className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 font-medium"
                         >
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -360,8 +375,8 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                 {idx > 0 && previousFieldsWithLabels.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-slate-700/40">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-purple-300 flex items-center gap-1.5">
-                        <span>⚡</span> Logika Percabangan (Tampilkan Hanya Jika...)
+                      <span className="text-xs font-medium text-amber-300 flex items-center gap-1.5">
+                        <span className="text-amber-400">⚡</span> Logika Percabangan (Tampilkan Hanya Jika...)
                       </span>
                       <button
                         type="button"
@@ -381,7 +396,7 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                         }}
                         className={`text-xs px-2.5 py-1 rounded-lg transition-all font-medium ${
                           field.condition
-                            ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40'
+                            ? 'bg-amber-500/20 text-amber-200 border border-amber-500/40'
                             : 'bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700'
                         }`}
                       >
@@ -390,10 +405,10 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                     </div>
 
                     {field.condition && (
-                      <div className="mt-2.5 p-3 rounded-xl bg-purple-950/30 border border-purple-500/30 space-y-2">
+                      <div className="mt-2.5 p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 space-y-2">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <div>
-                            <label className="block text-[10px] text-purple-300 uppercase tracking-wider mb-1 font-semibold">
+                            <label className="block text-[10px] text-amber-300 uppercase tracking-wider mb-1 font-semibold">
                               1. Jika Pertanyaan:
                             </label>
                             <select
@@ -409,7 +424,7 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                                   },
                                 });
                               }}
-                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-purple-500 focus:outline-none"
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none"
                             >
                               {previousFieldsWithLabels.map((f, i) => (
                                 <option key={i} value={f.label}>{f.label || `Field ${i + 1}`}</option>
@@ -418,7 +433,7 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                           </div>
 
                           <div>
-                            <label className="block text-[10px] text-purple-300 uppercase tracking-wider mb-1 font-semibold">
+                            <label className="block text-[10px] text-amber-300 uppercase tracking-wider mb-1 font-semibold">
                               2. Syarat:
                             </label>
                             <select
@@ -426,15 +441,15 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                               onChange={(e) => updateField(idx, {
                                 condition: { ...field.condition!, operator: e.target.value as 'equals' | 'not_equals' }
                               })}
-                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-purple-500 focus:outline-none"
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none"
                             >
                               <option value="equals">Dijawab == (Sama Dengan)</option>
-                              <option value="not_equals">Dijawab != (Tidak Sama With)</option>
+                              <option value="not_equals">Dijawab != (Tidak Sama Dengan)</option>
                             </select>
                           </div>
 
                           <div>
-                            <label className="block text-[10px] text-purple-300 uppercase tracking-wider mb-1 font-semibold">
+                            <label className="block text-[10px] text-amber-300 uppercase tracking-wider mb-1 font-semibold">
                               3. Nilai Jawaban:
                             </label>
                             {(() => {
@@ -446,7 +461,7 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                                     onChange={(e) => updateField(idx, {
                                       condition: { ...field.condition!, value: e.target.value }
                                     })}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-purple-500 focus:outline-none"
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none"
                                   >
                                     {parentField.options.map((opt, i) => (
                                       <option key={i} value={opt}>{opt || `Opsi ${i + 1}`}</option>
@@ -462,7 +477,7 @@ export default function FormBuilder({ fields, setFields, isAdmin = false }: Prop
                                     condition: { ...field.condition!, value: e.target.value }
                                   })}
                                   placeholder="cth: Hadir"
-                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-purple-500 focus:outline-none"
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-amber-500 focus:outline-none"
                                 />
                               );
                             })()}

@@ -345,7 +345,7 @@ export default function AbsensiForm({ event }: Props) {
     <div className="space-y-6">
       {/* ── Logged-in Member Auto-Greeting Card ── */}
       <div className="tech-card p-4 sm:p-5 slide-up flex items-center gap-4 border border-blue-500/20">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 border border-blue-400/40 flex items-center justify-center text-white font-extrabold text-lg shrink-0 shadow-md glow-blue">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 border border-blue-400/40 flex items-center justify-center text-white font-extrabold text-lg shrink-0 shadow-md glow-blue">
           {member.nama.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">
@@ -453,7 +453,7 @@ export default function AbsensiForm({ event }: Props) {
           {isEditing && (event.form_schema as FormField[]).length > 0 && (
             <div className="space-y-5 fade-in">
               {existingAbsensi?.is_form_filled && (
-                <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-xs flex items-center gap-2">
+                <div className="p-3 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-300 text-xs flex items-center gap-2">
                   <span>✏️</span>
                   <span>Kamu sedang memperbarui respon absensi sebelumnya. Silakan sesuaikan isianmu.</span>
                 </div>
@@ -503,7 +503,7 @@ export default function AbsensiForm({ event }: Props) {
                                 href={responses[field.label]}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors truncate block"
+                                className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors truncate block"
                               >
                                 Lihat file →
                               </a>
@@ -522,11 +522,11 @@ export default function AbsensiForm({ event }: Props) {
                         ) : (
                           <label className={`flex flex-col items-center gap-2 p-6 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
                             isUploading
-                              ? 'border-indigo-500/50 bg-indigo-600/10'
-                              : 'border-slate-600/50 hover:border-indigo-500/50 hover:bg-indigo-600/5'
+                              ? 'border-blue-500/50 bg-blue-600/10'
+                              : 'border-slate-600/50 hover:border-blue-500/50 hover:bg-blue-600/5'
                           }`}>
                             {isUploading ? (
-                              <span className="text-indigo-400 text-sm">Mengupload...</span>
+                              <span className="text-blue-400 text-sm">Mengupload...</span>
                             ) : (
                               <div className="text-center">
                                 <span className="text-slate-300 text-sm font-medium">Klik untuk upload file</span>
@@ -563,8 +563,9 @@ export default function AbsensiForm({ event }: Props) {
                           value={responses[field.label] || ''}
                           onChange={(e) => setResponses((prev) => ({ ...prev, [field.label]: e.target.value }))}
                           required={field.required}
+                          aria-required={field.required}
                           placeholder={`Isi ${field.label.toLowerCase()}...`}
-                          className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all"
+                          className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-400 text-sm transition-all"
                         />
                       )}
 
@@ -573,9 +574,10 @@ export default function AbsensiForm({ event }: Props) {
                           value={responses[field.label] || ''}
                           onChange={(e) => setResponses((prev) => ({ ...prev, [field.label]: e.target.value }))}
                           required={field.required}
+                          aria-required={field.required}
                           rows={3}
                           placeholder={`Isi ${field.label.toLowerCase()}...`}
-                          className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all resize-none"
+                          className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-400 text-sm transition-all resize-none"
                         />
                       )}
 
@@ -584,6 +586,7 @@ export default function AbsensiForm({ event }: Props) {
                           value={responses[field.label] || ''}
                           onChange={(e) => setResponses((prev) => ({ ...prev, [field.label]: e.target.value }))}
                           required={field.required}
+                          aria-required={field.required}
                           className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white text-sm transition-all appearance-none cursor-pointer"
                         >
                           <option value="" disabled className="bg-slate-800">Pilih {field.label.toLowerCase()}...</option>
@@ -594,14 +597,14 @@ export default function AbsensiForm({ event }: Props) {
                       )}
 
                       {field.type === 'radio' && field.options && (
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-2.5">
                           {field.options.map((opt, i) => (
                             <label
                               key={i}
-                              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border cursor-pointer transition-all text-sm ${
+                              className={`flex items-center gap-2.5 min-h-[44px] px-4 py-2.5 rounded-xl border cursor-pointer transition-all text-sm select-none ${
                                 responses[field.label] === opt
-                                  ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300'
-                                  : 'border-slate-600/50 bg-slate-800/40 text-slate-400 hover:border-slate-500'
+                                  ? 'border-blue-500 bg-blue-600/20 text-blue-200'
+                                  : 'border-slate-600/50 bg-slate-800/40 text-slate-300 hover:border-slate-500 hover:text-white'
                               }`}
                             >
                               <input
@@ -611,10 +614,11 @@ export default function AbsensiForm({ event }: Props) {
                                 checked={responses[field.label] === opt}
                                 onChange={() => setResponses((prev) => ({ ...prev, [field.label]: opt }))}
                                 required={field.required}
-                                className="hidden"
+                                aria-required={field.required}
+                                className="sr-only"
                               />
-                              <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${responses[field.label] === opt ? 'border-indigo-400' : 'border-slate-500'}`}>
-                                {responses[field.label] === opt && <span className="w-2 h-2 rounded-full bg-indigo-400" />}
+                              <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${responses[field.label] === opt ? 'border-blue-400' : 'border-slate-500'}`}>
+                                {responses[field.label] === opt && <span className="w-2 h-2 rounded-full bg-blue-400" />}
                               </span>
                               {opt}
                             </label>
@@ -686,7 +690,7 @@ export default function AbsensiForm({ event }: Props) {
             <div className="p-5 rounded-2xl bg-blue-950/40 border border-blue-500/30 space-y-3 slide-up">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/40 font-semibold">
+                  <span className="text-xs px-2.5 py-0.5 rounded-full badge-tech-amber font-semibold">
                     ✓ Feedback Sudah Dikirim
                   </span>
                   <div className="flex items-center gap-1.5 mt-3">
@@ -703,7 +707,7 @@ export default function AbsensiForm({ event }: Props) {
                 <button
                   type="button"
                   onClick={() => setIsEditingFeedback(true)}
-                  className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition-all shadow"
+                  className="px-3.5 py-1.5 rounded-xl btn-primary text-xs font-semibold transition-all shadow"
                 >
                   ✏️ Edit Feedback
                 </button>
@@ -711,8 +715,8 @@ export default function AbsensiForm({ event }: Props) {
 
               {/* Show previous answers summary */}
               {existingFeedback.data_respons && Object.keys(existingFeedback.data_respons).length > 0 && (
-                <div className="pt-3 border-t border-purple-500/20 space-y-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-purple-300">Rincian Penilaian & Masukan Anda:</p>
+                <div className="pt-3 border-t border-amber-500/20 space-y-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-amber-300">Rincian Penilaian & Masukan Anda:</p>
                   <div className="grid grid-cols-1 gap-2.5">
                     {feedbackSchema.map((field, i) => {
                       const val = existingFeedback.data_respons?.[field.label];
@@ -729,7 +733,7 @@ export default function AbsensiForm({ event }: Props) {
                                   ★ {val} / 5
                                 </span>
                               ) : (
-                                <span className="text-indigo-300 font-mono font-bold text-xs bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                                <span className="text-blue-300 font-mono font-bold text-xs bg-blue-600/20 px-2 py-0.5 rounded-full border border-blue-500/30">
                                   Skala {val} / 10
                                 </span>
                               )}
@@ -756,8 +760,8 @@ export default function AbsensiForm({ event }: Props) {
 
                     {/* Overall note if any */}
                     {existingFeedback.data_respons?.['Ulasan Keseluruhan Acara'] && (
-                      <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs">
-                        <span className="text-indigo-300 font-semibold block mb-1">Ulasan Keseluruhan Acara:</span>
+                      <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs">
+                        <span className="text-blue-300 font-semibold block mb-1">Ulasan Keseluruhan Acara:</span>
                         <span className="text-white italic">"{String(existingFeedback.data_respons['Ulasan Keseluruhan Acara'])}"</span>
                       </div>
                     )}
@@ -776,7 +780,7 @@ export default function AbsensiForm({ event }: Props) {
                   <label className="block text-sm font-semibold text-slate-200">
                     Seberapa puas Anda dengan acara ini secara keseluruhan? <span className="text-red-400">*</span>
                   </label>
-                  <div className="flex items-center justify-center gap-3 py-1">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2 py-1 flex-wrap">
                     {[1, 2, 3, 4, 5].map((star) => {
                       const isSelected = overallRating > 0 && star <= overallRating;
                       return (
@@ -784,7 +788,8 @@ export default function AbsensiForm({ event }: Props) {
                           key={star}
                           type="button"
                           onClick={() => setOverallRating(star)}
-                          className="p-1 text-3xl sm:text-4xl transition-all hover:scale-125 focus:outline-none"
+                          className="min-w-[44px] min-h-[44px] p-2 text-3xl sm:text-4xl transition-all hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-xl flex items-center justify-center"
+                          aria-label={`Beri rating ${star} dari 5 bintang`}
                           title={`${star} Bintang`}
                         >
                           <span className={isSelected ? 'text-amber-400 drop-shadow-md' : 'text-slate-500 hover:text-amber-300'}>
@@ -796,7 +801,7 @@ export default function AbsensiForm({ event }: Props) {
                   </div>
                   <div className="text-xs">
                     {overallRating === 0 ? (
-                      <span className="text-indigo-300/80 italic font-medium">
+                      <span className="text-blue-300/80 italic font-medium">
                         👆 Klik salah satu bintang di atas untuk memberi rating (1 - 5)
                       </span>
                     ) : overallRating === 5 ? (
@@ -823,7 +828,7 @@ export default function AbsensiForm({ event }: Props) {
                     value={feedbackResponses['Ulasan Keseluruhan Acara'] || ''}
                     onChange={(e) => setFeedbackResponses((prev) => ({ ...prev, 'Ulasan Keseluruhan Acara': e.target.value }))}
                     placeholder="Tulis ulasan, kesan & pesan umum Anda selama mengikuti kegiatan ini..."
-                    className="input-glow w-full bg-slate-900/70 border border-slate-700/60 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 transition-all resize-none"
+                    className="input-glow w-full bg-slate-900/70 border border-slate-700/60 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 transition-all resize-none"
                   />
                 </div>
               </div>
@@ -838,7 +843,7 @@ export default function AbsensiForm({ event }: Props) {
                         <label className="block text-sm font-medium text-slate-300">
                           {field.label} {field.required && <span className="text-red-400">*</span>}
                         </label>
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="flex items-center gap-1 sm:gap-2 mt-2 flex-wrap">
                           {[1, 2, 3, 4, 5].map((s) => {
                             const isSel = currentVal > 0 && s <= currentVal;
                             return (
@@ -846,7 +851,8 @@ export default function AbsensiForm({ event }: Props) {
                                 key={s}
                                 type="button"
                                 onClick={() => setFeedbackResponses((prev) => ({ ...prev, [field.label]: s }))}
-                                className="text-2xl sm:text-3xl transition-transform hover:scale-110 focus:outline-none"
+                                className="min-w-[44px] min-h-[44px] p-2 text-2xl sm:text-3xl transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-xl flex items-center justify-center"
+                                aria-label={`Beri rating ${s} bintang untuk ${field.label}`}
                                 title={`${s} Bintang`}
                               >
                                 <span className={isSel ? 'text-amber-400 drop-shadow-sm' : 'text-slate-500 hover:text-amber-300'}>
@@ -871,7 +877,7 @@ export default function AbsensiForm({ event }: Props) {
                           value={feedbackResponses[`${field.label}__catatan`] || ''}
                           onChange={(e) => setFeedbackResponses((prev) => ({ ...prev, [`${field.label}__catatan`]: e.target.value }))}
                           placeholder={`Tulis masukan atau alasan rating untuk "${field.label}"...`}
-                          className="input-glow w-full bg-slate-900/70 border border-slate-700/60 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 transition-all"
+                          className="input-glow w-full bg-slate-900/70 border border-slate-700/60 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-400 transition-all"
                         />
                       </div>
                     </div>
@@ -887,7 +893,7 @@ export default function AbsensiForm({ event }: Props) {
                           <label className="block text-sm font-medium text-slate-300">
                             {field.label} {field.required && <span className="text-red-400">*</span>}
                           </label>
-                          <span className="text-xs text-indigo-300 font-mono">
+                          <span className="text-xs text-blue-300 font-mono">
                             {currentScale !== null ? `Skala: ${currentScale}/10` : <span className="text-slate-500 italic">Belum dipilih</span>}
                           </span>
                         </div>
@@ -897,11 +903,12 @@ export default function AbsensiForm({ event }: Props) {
                               key={num}
                               type="button"
                               onClick={() => setFeedbackResponses((prev) => ({ ...prev, [field.label]: num }))}
-                              className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                              className={`min-h-[44px] py-2 rounded-xl text-xs font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
                                 currentScale === num
-                                  ? 'bg-indigo-600 text-white glow-indigo scale-105 shadow-md'
+                                  ? 'bg-blue-600 text-white glow-blue scale-105 shadow-md'
                                   : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white border border-slate-700'
                               }`}
+                              aria-label={`Pilih skala nilai ${num} dari 10 untuk ${field.label}`}
                             >
                               {num}
                             </button>

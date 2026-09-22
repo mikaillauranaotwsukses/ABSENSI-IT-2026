@@ -228,8 +228,8 @@ function NewEventContent() {
 
   return (
     <main className="min-h-screen animated-bg text-white">
-      <div className="fixed w-96 h-96 rounded-full bg-indigo-700/20 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
-      <div className="fixed w-72 h-72 rounded-full bg-purple-700/20 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
+      <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
+      <div className="fixed w-72 h-72 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6 slide-up">
@@ -245,10 +245,10 @@ function NewEventContent() {
         </div>
 
         {/* ── QUICK TEMPLATE IMPORTER / COPY BAR ── */}
-        <div className="glass-card rounded-2xl p-5 border border-indigo-500/30 shadow-xl mb-6 slide-up space-y-4">
+        <div className="tech-card rounded-2xl p-5 border border-blue-500/30 shadow-xl mb-6 slide-up space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-indigo-300 flex items-center gap-2">
-              <span>⚡</span> Fitur Cepat: Salin / Gunakan Template Form
+            <h3 className="text-sm font-bold text-blue-300 flex items-center gap-2">
+              <span className="text-amber-400">⚡</span> Fitur Cepat: Salin / Gunakan Template Form
             </h3>
             <span className="text-[10px] text-slate-400">Efisien & Tanpa Ketik Ulang</span>
           </div>
@@ -262,7 +262,7 @@ function NewEventContent() {
                   key={key}
                   type="button"
                   onClick={() => applyPreset(key)}
-                  className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-indigo-600/30 border border-slate-700 hover:border-indigo-500/50 text-left transition-all text-xs flex items-center gap-2"
+                  className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-blue-600/20 border border-slate-700 hover:border-blue-500/40 text-left transition-all text-xs flex items-center gap-2"
                 >
                   <span className="text-base">{item.icon}</span>
                   <span className="text-slate-200 font-semibold truncate">{item.name}</span>
@@ -279,7 +279,7 @@ function NewEventContent() {
                 <select
                   value={selectedCopyId}
                   onChange={(e) => setSelectedCopyId(e.target.value)}
-                  className="flex-1 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                  className="flex-1 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">— Pilih Event Sumber yang Ingin Disalin —</option>
                   {allEvents.map((ev) => (
@@ -294,7 +294,7 @@ function NewEventContent() {
                     type="button"
                     disabled={!selectedCopyId}
                     onClick={() => applyCopyFromEvent('all')}
-                    className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold disabled:opacity-40 transition-all shadow"
+                    className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl btn-primary text-xs font-bold disabled:opacity-40 transition-all shadow"
                   >
                     📋 Salin Semua
                   </button>
@@ -302,7 +302,7 @@ function NewEventContent() {
                     type="button"
                     disabled={!selectedCopyId}
                     onClick={() => applyCopyFromEvent('form')}
-                    className="px-2.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium disabled:opacity-40 transition-all"
+                    className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium disabled:opacity-40 transition-all border border-slate-700"
                     title="Hanya salin pertanyaan form absensi"
                   >
                     Hanya Form
@@ -311,7 +311,7 @@ function NewEventContent() {
                     type="button"
                     disabled={!selectedCopyId}
                     onClick={() => applyCopyFromEvent('feedback')}
-                    className="px-2.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium disabled:opacity-40 transition-all"
+                    className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium disabled:opacity-40 transition-all border border-slate-700"
                     title="Hanya salin pertanyaan feedback"
                   >
                     Hanya Feedback
@@ -330,7 +330,7 @@ function NewEventContent() {
 
         <div className="space-y-6">
           {/* Info event */}
-          <div className="glass-card rounded-2xl p-6 slide-up space-y-5">
+          <div className="tech-card rounded-2xl p-6 slide-up space-y-5 border border-slate-700/60">
             <h2 className="font-semibold text-slate-200 flex items-center gap-2">📋 Informasi Event</h2>
 
             <div>
@@ -342,7 +342,7 @@ function NewEventContent() {
                 value={namaEvent}
                 onChange={(e) => setNamaEvent(e.target.value)}
                 placeholder="cth: Rapat Perdana IT 26"
-                className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all"
+                className="input-glow w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all focus:border-blue-500"
               />
             </div>
 
@@ -355,7 +355,7 @@ function NewEventContent() {
                 onChange={(e) => setDeskripsi(e.target.value)}
                 placeholder="Informasi penting yang tampil di halaman absensi..."
                 rows={4}
-                className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all resize-none"
+                className="input-glow w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all resize-none focus:border-blue-500"
               />
             </div>
 
@@ -377,13 +377,13 @@ function NewEventContent() {
           </div>
 
           {/* Builder Tab Navigation */}
-          <div className="flex p-1.5 bg-slate-800/80 rounded-2xl border border-slate-700/50 slide-up">
+          <div className="flex p-1.5 bg-slate-900/90 rounded-2xl border border-slate-700/70 slide-up">
             <button
               type="button"
               onClick={() => setActiveTab('form')}
               className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'form'
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
+                  ? 'bg-blue-600 text-white shadow-lg glow-blue'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -397,7 +397,7 @@ function NewEventContent() {
               onClick={() => setActiveTab('feedback')}
               className={`flex-1 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'feedback'
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg glow-indigo'
+                  ? 'bg-blue-600 text-white shadow-lg glow-blue'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -410,7 +410,7 @@ function NewEventContent() {
 
           {/* Tab 1: Form Absensi Builder */}
           {activeTab === 'form' && (
-            <div className="glass-card rounded-2xl p-6 slide-up space-y-4">
+            <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold text-slate-200 flex items-center gap-2">
                   📝 Form Builder — Absensi & Registrasi
@@ -426,7 +426,7 @@ function NewEventContent() {
 
           {/* Tab 2: Feedback Builder */}
           {activeTab === 'feedback' && (
-            <div className="glass-card rounded-2xl p-6 slide-up space-y-4">
+            <div className="tech-card rounded-2xl p-6 slide-up space-y-4 border border-slate-700/60">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold text-slate-200 flex items-center gap-2">
                   ⭐ Form Builder — Feedback & Evaluasi Acara
@@ -447,7 +447,7 @@ function NewEventContent() {
           <div className="flex gap-3 slide-up">
             <Link
               href="/portal-it-admin/events"
-              className="flex-1 py-3 rounded-xl border border-slate-600/50 text-slate-300 hover:text-white text-sm font-medium transition-all text-center"
+              className="flex-1 py-3.5 rounded-xl border border-slate-600/50 text-slate-300 hover:text-white text-sm font-semibold transition-all text-center flex items-center justify-center"
             >
               Batal
             </Link>
@@ -455,9 +455,9 @@ function NewEventContent() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold transition-all glow-indigo disabled:opacity-60"
+              className="flex-1 py-3.5 rounded-xl btn-primary text-sm uppercase tracking-wider font-bold transition-all glow-blue disabled:opacity-60"
             >
-              {saving ? 'Menyimpan...' : 'Simpan Event'}
+              {saving ? 'Menyimpan...' : 'Simpan Event →'}
             </button>
           </div>
         </div>

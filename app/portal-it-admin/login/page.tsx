@@ -52,14 +52,14 @@ export default function AdminLoginPage() {
 
   return (
     <main className="min-h-screen animated-bg flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Decorative blobs */}
-      <div className="fixed w-96 h-96 rounded-full bg-indigo-700/20 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
-      <div className="fixed w-80 h-80 rounded-full bg-purple-700/20 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
+      {/* Background Tech Orbs */}
+      <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
+      <div className="fixed w-80 h-80 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
-      <div className="relative z-10 w-full max-w-md scale-in">
+      <div className="relative z-10 w-full max-w-md scale-in space-y-6">
         {/* Logo / Title */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-white p-2.5 flex items-center justify-center mx-auto mb-4 border border-white/40 shadow-2xl shadow-indigo-500/30 glow-indigo">
+        <div className="text-center space-y-3">
+          <div className="w-20 h-20 rounded-2xl bg-white p-2.5 flex items-center justify-center mx-auto border-2 border-blue-500/30 shadow-2xl glow-blue transition-transform hover:scale-105">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/favicon.ico"
@@ -67,16 +67,26 @@ export default function AdminLoginPage() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-2xl font-bold text-white">Portal Admin</h1>
-          <p className="text-slate-400 text-sm mt-1">Absensi IT 26 — Dashboard Administrator</p>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full badge-tech-blue text-[11px] font-bold tracking-wider uppercase mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              Admin Portal IT
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Portal Admin <span className="gradient-text-ifest">IT 2026</span>
+            </h1>
+            <p className="text-slate-400 text-xs sm:text-sm max-w-xs mx-auto mt-1">
+              Dashboard Administrator & Manajemen Absensi Acara
+            </p>
+          </div>
         </div>
 
-        {/* Form */}
-        <div className="glass rounded-2xl p-8">
-          <form onSubmit={handleLogin} className="space-y-5">
+        {/* Form Card */}
+        <div className="tech-card p-6 sm:p-8 shadow-2xl border border-blue-500/20">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email Admin
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                Email Admin <span className="text-red-400">*</span>
               </label>
               <input
                 id="admin-email"
@@ -85,13 +95,13 @@ export default function AdminLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="admin@example.com"
-                className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all"
+                className="input-glow w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all focus:border-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Password
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                Password <span className="text-red-400">*</span>
               </label>
               <div className="relative">
                 <input
@@ -101,12 +111,13 @@ export default function AdminLoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="input-glow w-full bg-slate-800/60 border border-slate-600/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all pr-11"
+                  className="input-glow w-full bg-slate-900/80 border border-slate-700/80 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm transition-all pr-11 focus:border-blue-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
+                  aria-label={showPass ? 'Sembunyikan password' : 'Lihat password'}
                 >
                   {showPass ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -123,26 +134,25 @@ export default function AdminLoginPage() {
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-sm fade-in">
-                {error}
+              <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 fade-in">
+                <span>⚠️</span>
+                <span>{error}</span>
               </div>
             )}
 
             <button
+              id="admin-submit"
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm transition-all glow-indigo disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full btn-primary h-12 text-sm uppercase tracking-wider font-bold rounded-xl mt-2 disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Masuk...
                 </span>
               ) : (
-                'Masuk'
+                'Masuk Dashboard →'
               )}
             </button>
           </form>

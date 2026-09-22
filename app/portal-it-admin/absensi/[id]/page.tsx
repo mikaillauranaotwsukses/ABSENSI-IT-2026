@@ -48,7 +48,8 @@ export default async function AbsensiReportPage({ params }: Props) {
 
   return (
     <main className="min-h-screen animated-bg text-white">
-      <div className="fixed w-96 h-96 rounded-full bg-indigo-700/20 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
+      <div className="fixed w-96 h-96 rounded-full bg-blue-600/15 -top-24 -left-24 blur-3xl pointer-events-none z-0" />
+      <div className="fixed w-72 h-72 rounded-full bg-amber-500/10 bottom-0 right-0 translate-x-1/4 translate-y-1/4 blur-3xl pointer-events-none z-0" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
         {/* Header Navigation */}
@@ -61,7 +62,7 @@ export default async function AbsensiReportPage({ params }: Props) {
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-white">Laporan & Evaluasi Event</h1>
-              <p className="text-indigo-300 text-sm font-semibold">{event.nama_event}</p>
+              <p className="text-blue-300 text-sm font-semibold">{event.nama_event}</p>
             </div>
           </div>
         </div>

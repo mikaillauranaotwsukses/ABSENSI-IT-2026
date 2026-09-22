@@ -22,7 +22,7 @@ export default function MemberQRCard({ event, member, absensi }: Props) {
       {/* Digital Festival Pass Container */}
       <div className="relative rounded-3xl bg-[#101728] border-2 border-blue-500/30 overflow-hidden shadow-2xl glow-blue">
         {/* Top Header Ticket Banner */}
-        <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-5 text-center text-white relative">
+        <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-800 p-5 text-center text-white relative">
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-black/25 backdrop-blur-md border border-white/20 text-[#ffc878] text-[11px] font-mono font-bold uppercase tracking-wider mb-2">
             <span>⚡</span> OFFICIAL DIGITAL EVENT PASS
           </div>

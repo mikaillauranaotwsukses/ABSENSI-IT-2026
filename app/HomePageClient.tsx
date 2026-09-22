@@ -78,7 +78,7 @@ export default function HomePageClient({ events, error }: Props) {
           <div className="flex flex-col md:flex-row items-center justify-between gap-5">
             {member ? (
               <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 border-2 border-blue-400/40 flex items-center justify-center text-white font-extrabold text-2xl shrink-0 shadow-lg glow-blue">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 border-2 border-blue-400/40 flex items-center justify-center text-white font-extrabold text-2xl shrink-0 shadow-lg glow-blue">
                   {member.nama.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -198,7 +198,8 @@ export default function HomePageClient({ events, error }: Props) {
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 placeholder="Cari nama event..."
-                className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-blue-500"
+                aria-label="Cari nama event"
+                className="input-glow w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:border-blue-500"
               />
             </div>
           </div>
