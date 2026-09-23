@@ -20,11 +20,14 @@ import {
 import {
   parseEventConfig,
   cleanEventDeskripsi,
+  encodeEventDeskripsi,
 } from '@/lib/eventConfig';
 import DeleteEventButton from '../../DeleteEventButton';
 import Link from 'next/link';
 
-interface Props { event: Event; }
+interface Props {
+  event: Event;
+}
 
 type BuilderTab = 'form' | 'feedback';
 
@@ -38,6 +41,7 @@ export default function EditEventForm({ event }: Props) {
   const [status,             setStatus]             = useState(event.status);
   const [isQrEnabled,        setIsQrEnabled]        = useState(initialConfig.is_qr_enabled);
   const [isFeedbackEnabled,  setIsFeedbackEnabled]  = useState(initialConfig.is_feedback_enabled);
+  const [maxResponses,       setMaxResponses]       = useState<number>(initialConfig.max_responses_per_user || 1);
   const [fields,             setFields]             = useState<FormField[]>(event.form_schema || []);
   const [feedbackFields,     setFeedbackFields]     = useState<FormField[]>(
     event.feedback_schema && event.feedback_schema.length > 0
@@ -96,6 +100,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
     const sourceConfig = parseEventConfig(source);
     setIsQrEnabled(sourceConfig.is_qr_enabled);
     setIsFeedbackEnabled(sourceConfig.is_feedback_enabled);
+    setMaxResponses(sourceConfig.max_responses_per_user || 1);
 
     setCopyNotice(`✓ Susunan ${mode === 'all' ? 'Form & Feedback' : mode === 'form' ? 'Form Absensi' : 'Feedback'} berhasil disalin dari "${source.nama_event}"!`);
     setTimeout(() => setCopyNotice(''), 5000);
@@ -113,7 +118,7 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
 
     const payload: any = {
       nama_event:          namaEvent.trim(),
-      deskripsi:           cleanEventDeskripsi(deskripsi).trim(),
+      deskripsi:           encodeEventDeskripsi(deskripsi, { max_responses: maxResponses }),
       status,
       is_qr_enabled:       isQrEnabled,
       is_feedback_enabled: isFeedbackEnabled,
@@ -304,6 +309,37 @@ UPDATE public."event" SET is_feedback_enabled = true WHERE is_feedback_enabled I
             >
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${isFeedbackEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
+          </div>
+
+          {/* Batas Pengisian per Anggota */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 gap-3">
+            <div className="pr-4">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🔁</span>
+                <p className="text-sm font-medium text-slate-200">Batas Pengisian per Anggota</p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  maxResponses === 1
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                    : maxResponses === 2
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                }`}>
+                  {maxResponses === 1 ? '1x (Sekali Saja)' : maxResponses === 2 ? '2x (Maksimal 2 Kali)' : 'Bebas / Tanpa Batas'}
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs mt-1">
+                Tentukan berapa kali setiap mahasiswa dapat mengirim respon. Pilih 2x jika form ini mengizinkan 2 pilihan atau pendaftaran ganda.
+              </p>
+            </div>
+            <select
+              value={maxResponses}
+              onChange={(e) => setMaxResponses(Number(e.target.value))}
+              className="bg-slate-900 border border-slate-600 rounded-xl px-3 py-2 text-xs text-white focus:border-blue-500 focus:outline-none shrink-0"
+            >
+              <option value={1}>1x — Sekali Saja (Mode Absensi Ketat)</option>
+              <option value={2}>2x — Maksimal 2 Kali Pengisian</option>
+              <option value={0}>Bebas — Tanpa Batas Pengisian</option>
+            </select>
           </div>
         </div>
       </div>

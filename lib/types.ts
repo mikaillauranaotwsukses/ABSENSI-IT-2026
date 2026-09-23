@@ -45,6 +45,7 @@ export interface Event {
   status: boolean;
   is_qr_enabled?: boolean;              // Whether QR ticket check-in is enabled (default: true)
   is_feedback_enabled?: boolean;        // Whether feedback tab/form is enabled (default: true)
+  max_responses_per_user?: number;      // 1 (default) | 2 | 0 (unlimited)
   form_schema: FormField[];
   feedback_schema?: FormField[];        // Dynamic custom feedback schema
   created_at: string;
@@ -54,10 +55,11 @@ export interface Absensi {
   id: string;
   event_id: string;
   nrp: string;
-  data_respons: Record<string, string | number>;
+  data_respons: Record<string, any>;
   is_form_filled?: boolean;             // True if user submitted the dynamic form
   is_qr_scanned?: boolean;              // True if committee scanned member's QR code
   qr_scanned_at?: string;               // Timestamp when QR was scanned by admin
+  submission_no?: number;               // 1 for 1st response, 2 for 2nd response, etc.
   created_at: string;
   anggota?: Anggota;
   event?: Event;

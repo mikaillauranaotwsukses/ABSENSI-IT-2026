@@ -24,13 +24,25 @@ type SubmitState = 'idle' | 'loading' | 'success' | 'error';
 export default function AbsensiForm({ event }: Props) {
   const supabase = createClient();
   const { member, loading: authLoading } = useMemberAuth();
-  const { is_qr_enabled: isQrEnabled, is_feedback_enabled: isFeedbackEnabled } = parseEventConfig(event);
+  const eventConfig = parseEventConfig(event);
+  const { is_qr_enabled: isQrEnabled, is_feedback_enabled: isFeedbackEnabled, max_responses_per_user: maxResponses } = eventConfig;
 
   const [tabMode,          setTabMode]          = useState<TabMode>('form');
   const [existingAbsensi,  setExistingAbsensi]  = useState<Absensi | null>(null);
   const [existingFeedback, setExistingFeedback] = useState<Feedback | null>(null);
   const [isEditing,        setIsEditing]        = useState(false);
   const [isEditingFeedback,setIsEditingFeedback]= useState(false);
+
+  // Multiple Submissions State
+  interface SubmissionEntry {
+    id: string;
+    rowId: string;
+    submission_no: number;
+    created_at: string;
+    data_respons: Record<string, string>;
+  }
+  const [mySubmissions, setMySubmissions] = useState<SubmissionEntry[]>([]);
+  const [editingSubmissionIndex, setEditingSubmissionIndex] = useState<number | null>(null);
 
   // Fallback if current active tab is disabled
   useEffect(() => {
@@ -63,26 +75,53 @@ export default function AbsensiForm({ event }: Props) {
         { label: 'Kritik, Saran & Masukan untuk Panitia', type: 'textarea', required: false },
       ];
 
-  // ── Lookup existing Absensi record for logged-in member ──
+  // ── Lookup existing Absensi record(s) for logged-in member ──
   const fetchExistingAbsensi = useCallback(async () => {
     if (!member?.nrp) return;
 
-    const { data: dataAbsensi } = await supabase
+    const { data: rows } = await supabase
       .from('absensi')
       .select('*')
       .eq('event_id', event.id)
       .eq('nrp', member.nrp)
-      .maybeSingle();
+      .order('created_at', { ascending: true });
 
-    if (dataAbsensi) {
-      setExistingAbsensi(dataAbsensi as Absensi);
-      if (dataAbsensi.data_respons && typeof dataAbsensi.data_respons === 'object') {
-        setResponses(dataAbsensi.data_respons as Record<string, string>);
-      }
+    const subs: SubmissionEntry[] = [];
+    if (rows && rows.length > 0) {
+      rows.forEach((row, rowIdx) => {
+        if (row.data_respons?.__submissions && Array.isArray(row.data_respons.__submissions)) {
+          row.data_respons.__submissions.forEach((subItem: any, sIdx: number) => {
+            subs.push({
+              id: `${row.id}_${sIdx}`,
+              rowId: row.id,
+              submission_no: subItem.submission_no || sIdx + 1,
+              created_at: subItem.created_at || row.created_at,
+              data_respons: (subItem.data_respons || {}) as Record<string, string>,
+            });
+          });
+        } else if (row.is_form_filled || (row.data_respons && Object.keys(row.data_respons).length > 0)) {
+          subs.push({
+            id: row.id,
+            rowId: row.id,
+            submission_no: rowIdx + 1,
+            created_at: row.created_at,
+            data_respons: (row.data_respons || {}) as Record<string, string>,
+          });
+        }
+      });
+    }
+
+    setMySubmissions(subs);
+
+    if (subs.length > 0) {
+      setExistingAbsensi(rows![0] as Absensi);
+      setResponses(subs[subs.length - 1].data_respons);
+      setEditingSubmissionIndex(subs.length - 1);
       setIsEditing(false);
     } else {
       setExistingAbsensi(null);
       setResponses({});
+      setEditingSubmissionIndex(null);
       setIsEditing(true);
     }
   }, [event.id, member?.nrp, supabase]);
@@ -131,14 +170,28 @@ export default function AbsensiForm({ event }: Props) {
 
       const counts: Record<string, Record<string, number>> = {};
       data.forEach((row: any) => {
-        const resp = row.data_respons;
-        if (resp && typeof resp === 'object') {
-          Object.entries(resp).forEach(([fLabel, chosen]) => {
-            if (chosen && typeof chosen === 'string') {
-              if (!counts[fLabel]) counts[fLabel] = {};
-              counts[fLabel][chosen] = (counts[fLabel][chosen] || 0) + 1;
+        if (row.data_respons?.__submissions && Array.isArray(row.data_respons.__submissions)) {
+          row.data_respons.__submissions.forEach((subItem: any) => {
+            const resp = subItem.data_respons;
+            if (resp && typeof resp === 'object') {
+              Object.entries(resp).forEach(([fLabel, chosen]) => {
+                if (chosen && typeof chosen === 'string') {
+                  if (!counts[fLabel]) counts[fLabel] = {};
+                  counts[fLabel][chosen] = (counts[fLabel][chosen] || 0) + 1;
+                }
+              });
             }
           });
+        } else {
+          const resp = row.data_respons;
+          if (resp && typeof resp === 'object') {
+            Object.entries(resp).forEach(([fLabel, chosen]) => {
+              if (chosen && typeof chosen === 'string') {
+                if (!counts[fLabel]) counts[fLabel] = {};
+                counts[fLabel][chosen] = (counts[fLabel][chosen] || 0) + 1;
+              }
+            });
+          }
         }
       });
       setQuotaCounts(counts);
@@ -274,28 +327,111 @@ export default function AbsensiForm({ event }: Props) {
       .filter((f) => f.type !== 'info' && isFieldVisible(f))
       .forEach((f) => { dataRespons[f.label] = responses[f.label] || ''; });
 
-    const payload: any = {
-      ...(existingAbsensi ? { id: existingAbsensi.id } : {}),
-      event_id:       event.id,
-      nrp:            member.nrp,
-      data_respons:   dataRespons,
-      is_form_filled: true,
-    };
+    let saveError: any = null;
 
-    let { error } = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
+    // A. If user is editing a specific existing submission
+    if (editingSubmissionIndex !== null && mySubmissions[editingSubmissionIndex]) {
+      const targetSub = mySubmissions[editingSubmissionIndex];
+      const { data: parentRow } = await supabase
+        .from('absensi')
+        .select('*')
+        .eq('id', targetSub.rowId)
+        .maybeSingle();
 
-    if (error && (error.message?.includes('is_form_filled') || error.message?.includes('schema cache') || error.code === 'PGRST204')) {
-      delete payload.is_form_filled;
-      const fallbackRes = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
-      error = fallbackRes.error;
+      if (parentRow?.data_respons?.__submissions && Array.isArray(parentRow.data_respons.__submissions)) {
+        const updatedSubs = [...parentRow.data_respons.__submissions];
+        updatedSubs[editingSubmissionIndex] = {
+          ...updatedSubs[editingSubmissionIndex],
+          data_respons: dataRespons,
+          updated_at: new Date().toISOString(),
+        };
+        const { error: errUpdate } = await supabase.from('absensi').update({
+          data_respons: {
+            ...parentRow.data_respons,
+            ...dataRespons,
+            __submissions: updatedSubs,
+          },
+          is_form_filled: true,
+        }).eq('id', targetSub.rowId);
+        saveError = errUpdate;
+      } else {
+        const { error: errUpdate } = await supabase.from('absensi').update({
+          data_respons: dataRespons,
+          is_form_filled: true,
+        }).eq('id', targetSub.rowId);
+        saveError = errUpdate;
+      }
+    } else {
+      // B. User is submitting a NEW response!
+      if (maxResponses === 1) {
+        // Single response mode: upsert
+        const payload: any = {
+          ...(existingAbsensi ? { id: existingAbsensi.id } : {}),
+          event_id:       event.id,
+          nrp:            member.nrp,
+          data_respons:   dataRespons,
+          is_form_filled: true,
+        };
+        const { error: errUpsert } = await supabase.from('absensi').upsert(payload, { onConflict: 'event_id, nrp' });
+        saveError = errUpsert;
+      } else {
+        // Multi-response mode:
+        // 1. Try standard insert as independent row
+        const newPayload: any = {
+          event_id:       event.id,
+          nrp:            member.nrp,
+          data_respons:   dataRespons,
+          is_form_filled: true,
+        };
+        const { error: errInsert } = await supabase.from('absensi').insert(newPayload);
+
+        // 2. If insert fails because UNIQUE(event_id, nrp) constraint is still active in Postgres
+        if (errInsert && (errInsert.code === '23505' || errInsert.message?.includes('duplicate key') || errInsert.message?.includes('unique'))) {
+          const { data: firstRow } = await supabase
+            .from('absensi')
+            .select('*')
+            .eq('event_id', event.id)
+            .eq('nrp', member.nrp)
+            .maybeSingle();
+
+          if (firstRow) {
+            const existingSubs = firstRow.data_respons?.__submissions || [
+              {
+                submission_no: 1,
+                created_at: firstRow.created_at,
+                data_respons: firstRow.data_respons || {},
+              }
+            ];
+            const newEntry = {
+              submission_no: existingSubs.length + 1,
+              created_at: new Date().toISOString(),
+              data_respons: dataRespons,
+            };
+            const { error: errFallback } = await supabase.from('absensi').update({
+              data_respons: {
+                ...firstRow.data_respons,
+                ...dataRespons,
+                __submissions: [...existingSubs, newEntry],
+              },
+              is_form_filled: true,
+            }).eq('id', firstRow.id);
+            saveError = errFallback;
+          } else {
+            saveError = errInsert;
+          }
+        } else {
+          saveError = errInsert;
+        }
+      }
     }
 
-    if (error) {
+    if (saveError) {
       setSubmitState('error');
-      setErrorMsg(error.message);
+      setErrorMsg(saveError.message);
     } else {
       setSubmitState('success');
       fetchExistingAbsensi();
+      fetchQuotaCounts();
     }
   };
 
@@ -407,6 +543,19 @@ export default function AbsensiForm({ event }: Props) {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
+          {(maxResponses === 0 || mySubmissions.length < maxResponses) && (
+            <button
+              onClick={() => {
+                setSubmitState('idle');
+                setResponses({});
+                setEditingSubmissionIndex(null);
+                setIsEditing(true);
+              }}
+              className="btn-primary h-11 text-xs uppercase tracking-wider font-bold"
+            >
+              <NotePencil size={15} weight="bold" /> Kirim Tanggapan Lain (ke-{mySubmissions.length + 1})
+            </button>
+          )}
           {isQrEnabled && (
             <button
               onClick={() => { setSubmitState('idle'); setTabMode('qr'); }}
@@ -418,7 +567,7 @@ export default function AbsensiForm({ event }: Props) {
           {isFeedbackEnabled && (
             <button
               onClick={() => { setSubmitState('idle'); setTabMode('feedback'); }}
-              className="btn-primary h-11 text-xs uppercase tracking-wider font-bold"
+              className="btn-secondary h-11 text-xs uppercase tracking-wider font-bold"
             >
               <Star size={15} weight="fill" /> Isi Feedback Acara
             </button>
@@ -505,62 +654,135 @@ export default function AbsensiForm({ event }: Props) {
       {/* ── TAB 1: FORMULIR ── */}
       {tabMode === 'form' && (
         <form onSubmit={handleSubmit} className="tech-card p-6 sm:p-8 slide-up space-y-6 border border-blue-500/25">
-          <div className="border-b border-slate-800 pb-3">
-            <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
-              <NotePencil size={18} weight="bold" className="text-blue-300" />
-              {isQrEnabled ? 'Formulir & Konfirmasi Kehadiran' : 'Formulir Pengisian Data'}
-            </h2>
+          <div className="border-b border-slate-800 pb-3 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-2">
+                <NotePencil size={18} weight="bold" className="text-blue-400" />
+                Formulir Kegiatan
+              </h2>
+              <p className="text-slate-400 text-xs mt-0.5">
+                {event.nama_event} &mdash; Angkatan 2026
+              </p>
+            </div>
+            {isEditing && mySubmissions.length > 0 && (
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30">
+                {editingSubmissionIndex !== null ? `Edit Respon #${editingSubmissionIndex + 1}` : `Respon Baru (${mySubmissions.length + 1})`}
+              </span>
+            )}
           </div>
 
-          {/* Warning Alert if user ALREADY submitted before */}
-          {existingAbsensi?.is_form_filled && !isEditing && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-amber-950/30 border border-amber-500/30 space-y-3 slide-up">
-              <div className="flex items-start gap-3">
-                <Warning size={22} weight="bold" className="text-[#ffc878] shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-[#ffc878] font-bold text-sm">Formulir Telah Diisi Sebelumnya</h4>
-                  <p className="text-slate-300 text-xs mt-1 leading-relaxed">
-                    Kamu sudah mengirimkan respon untuk formulir ini pada{' '}
-                    <span className="text-amber-200 font-bold font-mono">
-                      {new Date(existingAbsensi.created_at).toLocaleString('id-ID', {
-                        day: 'numeric', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit',
-                      })}
-                    </span>.
-                  </p>
+          {/* Riwayat Tanggapan if user already submitted */}
+          {mySubmissions.length > 0 && !isEditing && (
+            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-700/80 space-y-4 slide-up">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl p-2 rounded-xl bg-blue-600/20 text-blue-300 border border-blue-500/30">📋</span>
+                  <div>
+                    <h4 className="text-white font-bold text-sm sm:text-base">Riwayat Tanggapan Anda</h4>
+                    <p className="text-slate-400 text-xs">
+                      Tercatat <span className="text-blue-300 font-bold font-mono">{mySubmissions.length}</span> tanggapan
+                      {maxResponses > 0 ? ` dari batas ${maxResponses}x pengisian` : ' (Bebas / Multi-Respon)'}.
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="btn-secondary h-10 text-xs font-bold uppercase tracking-wider"
-                >
-                  <PencilSimple size={13} weight="bold" /> Edit / Ubah Jawaban Saya
-                </button>
-                {isQrEnabled && (
+                {(maxResponses === 0 || mySubmissions.length < maxResponses) && (
                   <button
                     type="button"
-                    onClick={() => setTabMode('qr')}
-                    className="btn-primary h-10 text-xs font-bold uppercase tracking-wider"
+                    onClick={() => {
+                      setResponses({});
+                      setEditingSubmissionIndex(null);
+                      setIsEditing(true);
+                      setSubmitState('idle');
+                    }}
+                    className="btn-primary h-9 px-3 text-xs font-bold shrink-0 shadow-md"
                   >
-                    <DeviceMobile size={13} weight="bold" /> Buka Tiket QR Saya
+                    <NotePencil size={14} weight="bold" /> + Isi Formulir Lagi (Tanggapan ke-{mySubmissions.length + 1})
                   </button>
                 )}
               </div>
+
+              {/* List of submissions */}
+              <div className="space-y-2.5">
+                {mySubmissions.map((sub, sIdx) => (
+                  <div
+                    key={sIdx}
+                    className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-600 transition-all"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          Tanggapan #{sub.submission_no}
+                        </span>
+                        <span className="text-slate-400 text-xs font-mono">
+                          {new Date(sub.created_at).toLocaleString('id-ID', {
+                            day: 'numeric', month: 'short', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          })} WIB
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-300">
+                        {Object.entries(sub.data_respons)
+                          .filter(([k]) => !k.startsWith('__'))
+                          .slice(0, 3)
+                          .map(([k, v], vIdx) => (
+                            <span key={vIdx} className="truncate max-w-xs">
+                              <strong className="text-slate-400 font-medium">{k}:</strong> {String(v)}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingSubmissionIndex(sIdx);
+                        setResponses(sub.data_respons);
+                        setIsEditing(true);
+                        setSubmitState('idle');
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-blue-300 text-xs font-bold transition-all flex items-center justify-center gap-1.5 shrink-0 self-start sm:self-center"
+                    >
+                      <PencilSimple size={12} weight="bold" /> Edit Tanggapan #{sub.submission_no}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {maxResponses > 0 && mySubmissions.length >= maxResponses && (
+                <p className="text-[11px] text-amber-400/90 flex items-center gap-1.5 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/20">
+                  <span>ℹ️</span>
+                  <span>Batas pengisian ({maxResponses}x) telah terpenuhi. Kamu masih dapat mengubah jawaban tanggapan yang telah dikirim di atas.</span>
+                </p>
+              )}
             </div>
           )}
 
           {/* Dynamic fields */}
           {isEditing && (event.form_schema as FormField[]).length > 0 && (
             <div className="space-y-5 fade-in">
-              {existingAbsensi?.is_form_filled && (
-                <div className="p-3 rounded-xl bg-blue-600/15 border border-blue-500/30 text-blue-300 text-xs flex items-center gap-2">
-                  <PencilSimple size={13} weight="bold" className="shrink-0" />
-                  <span>Kamu sedang memperbarui respon formulir sebelumnya. Silakan sesuaikan jawabanmu.</span>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-blue-600/15 border border-blue-500/30 text-xs">
+                <div className="flex items-center gap-2 text-blue-300">
+                  <PencilSimple size={14} weight="bold" className="shrink-0" />
+                  <span>
+                    {editingSubmissionIndex !== null
+                      ? `Kamu sedang mengubah jawaban Tanggapan #${mySubmissions[editingSubmissionIndex]?.submission_no ?? editingSubmissionIndex + 1}`
+                      : `Kamu sedang mengisi Tanggapan Baru (ke-${mySubmissions.length + 1})`}
+                  </span>
                 </div>
-              )}
+                {mySubmissions.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditingSubmissionIndex(mySubmissions.length - 1);
+                      setResponses(mySubmissions[mySubmissions.length - 1].data_respons);
+                    }}
+                    className="text-slate-400 hover:text-white transition-colors underline font-medium text-[11px]"
+                  >
+                    Batal
+                  </button>
+                )}
+              </div>
 
               {(event.form_schema as FormField[])
                 .filter((field) => isFieldVisible(field))
@@ -834,9 +1056,13 @@ export default function AbsensiForm({ event }: Props) {
               className="w-full btn-primary h-12 text-sm uppercase tracking-wider font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitState === 'loading' || !allUploadsComplete ? (
-                <span>Menyimpan Formulir...</span>
+                <span>Menyimpan Tanggapan...</span>
+              ) : editingSubmissionIndex !== null ? (
+                `Simpan Perubahan Tanggapan #${mySubmissions[editingSubmissionIndex]?.submission_no ?? editingSubmissionIndex + 1} →`
+              ) : mySubmissions.length > 0 ? (
+                `Kirim Tanggapan ke-${mySubmissions.length + 1} Sekarang →`
               ) : (
-                existingAbsensi?.is_form_filled ? 'Perbarui Jawaban Formulir →' : 'Kirim Formulir Sekarang →'
+                'Kirim Formulir Sekarang →'
               )}
             </button>
           )}
